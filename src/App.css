@@ -7,17 +7,22 @@
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.dwt-logo {
+  height: 3vmin;
+  pointer-events: none;
+}
+
+.ds-logo {
+  height: 3vmin;
+  pointer-events: none;
+  float: right;
 }
 
 .App-header {
   background-color: #282c34;
   min-height: 5vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);

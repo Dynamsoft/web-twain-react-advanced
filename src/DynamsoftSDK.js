@@ -279,7 +279,7 @@ export default class DWT extends React.Component {
                     this._iBottom = bottom;
                     this.isSelectedArea = true;
                 });
-                this.DWObject.RegisterEvent('OnImageAreaDeselected', (index) => {
+                this.DWObject.RegisterEvent('OnImageAreaDeSelected', (index) => {
                     this.isSelectedArea = false;
                     this._iLeft = 0;
                     this._iTop = 0;
@@ -296,7 +296,7 @@ export default class DWT extends React.Component {
                     this.updatePageInfo();
                 });
                 this.DWObject.RegisterEvent("OnMouseClick", () => {
-                    this.updatePageInfo();
+
                 });
                 $('#DWTNonInstallContainerID').hide();
 
@@ -515,6 +515,7 @@ export default class DWT extends React.Component {
         this.DWObject.IfDisableSourceAfterAcquire = true;
         this.DWObject.AcquireImage();
     }
+
     btnLoadImagesOrPDFs() {
         var OnPDFSuccess = () => {
             this.appendMessage("Loaded an image successfully.<br/>");
@@ -780,11 +781,13 @@ export default class DWT extends React.Component {
             DWTemessageContainer.innerHTML = objString;
 
             var _divMessageContainer = document.getElementById("DWTemessage");
-            _divMessageContainer.ondblclick = function () {
-                this.innerHTML = "";
-                this._strTempStr = "";
-            }
+            _divMessageContainer.ondblclick = this.clearMessages;
         }
+    }
+
+    clearMessages() {
+        document.getElementById("DWTemessage").innerHTML = "";
+        this._strTempStr = "";
     }
 
     initiateInputs() {
@@ -922,6 +925,7 @@ export default class DWT extends React.Component {
             }
         }
     }
+
     //--------------------------------------------------------------------------------------
     //************************** Upload Image***********************************
     //--------------------------------------------------------------------------------------
@@ -1196,12 +1200,14 @@ export default class DWT extends React.Component {
     }
 
     logResult(results, bBarcode) {
-        var strMsg = ["------------------------------------------<br />"];
+        var strMsg = [];
         if (bBarcode) {
             if (results.length === 0) {
                 strMsg.push("No barcode found for the selected format(s).<br /><br />");
             } else {
-                strMsg.push("<b>Total barcode(s) found: ", results.length, "</b><br /><br />");
+                strMsg.push("<div style='width:100%; text-align:center;'><a href='#'  class='clearRects'> ~~~~~~~~~~~~ Clear ~~~~~~~~~~~~ </a></div>");
+                strMsg.push("<b>Total barcode(s) found: ", results.length, "</b><br /><br /> ");
+
                 for (var i = 0; i < results.length; ++i) {
                     var result = results[i];
                     var arr = ["<b>Barcode ", (i + 1), "</b><br />",
@@ -1212,9 +1218,15 @@ export default class DWT extends React.Component {
                     ];
                     strMsg = strMsg.concat(arr);
                 }
+                strMsg.push("<div style='width:100%; text-align:center;'><a href='#'  class='clearRects'> ~~~~~~~~~~~~ Clear ~~~~~~~~~~~~ </a></div>");
             }
         }
         this.appendMessage(strMsg.join(""), true);
+
+        $(".clearRects").on('click', () => {
+            this.clearBarcodeRect();
+            this.clearMessages();
+        });
     }
 
     convertTextForHTML(str) {

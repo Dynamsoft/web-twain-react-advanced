@@ -256,8 +256,8 @@ export default class DWT extends React.Component {
             return;
         }
         Dynamsoft.WebTwainEnv.RegisterEvent('OnWebTwainReady', () => {
-            this.showAbleWidthOri = $("#dwtcontrolContainer").width() - 2;//2 for border
-            this.showAbleHeightOri = $("#dwtcontrolContainer").height() - 4;//4 for border
+            this.showAbleWidthOri = $("#" + this.containerId).width() - 2;//2 for border
+            this.showAbleHeightOri = $("#" + this.containerId).height() - 4;//4 for border
             this.dwtChangePageBtns = $("button[name='dwt-changePage']");
             this.DWObject = Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId);
             if (this.DWObject) {
@@ -1086,26 +1086,51 @@ export default class DWT extends React.Component {
             }
             this.DWObject.Addon.OCR.SetLanguage('eng');
             this.DWObject.Addon.OCR.SetOutputFormat(window.EnumDWT_OCROutputFormat.OCROF_TEXT);
-            this.DWObject.Addon.OCR.Recognize(
-                this.DWObject.CurrentImageIndexInBuffer,
-                (iImageID, result) => {
-                    if (result === null)
-                        return null;
-                    var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
-                        _resultToShow = [];
-                    for (var i = 0; i < _textResult.length; i++) {
-                        if (i === 0 && _textResult[i].trim() === "")
-                            continue;
-                        _resultToShow.push(_textResult[i] + '<br />');
+            if (this.isSelectedArea) {
+                this.DWObject.Addon.OCR.RecognizeRect(
+                    this.DWObject.CurrentImageIndexInBuffer,
+                    this._iLeft, this._iTop, this._iRight, this._iBottom,
+                    (index, left, top, right, bottom, result) => {
+                        if (result === null)
+                            return null;
+                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
+                            _resultToShow = [];
+                        for (var i = 0; i < _textResult.length; i++) {
+                            if (i === 0 && _textResult[i].trim() === "")
+                                continue;
+                            _resultToShow.push(_textResult[i] + '<br />');
+                        }
+                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
+                        _resultToShow.push('</p>');
+                        this.appendMessage(_resultToShow.join(''), true, true);
+                    },
+                    function (errorcode, errorstring, result) {
+                        alert(errorstring);
                     }
-                    _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
-                    _resultToShow.push('</p>');
-                    this.appendMessage(_resultToShow.join(''), true, true);
-                },
-                function (errorcode, errorstring, result) {
-                    alert(errorstring);
-                }
-            );
+                );
+            }
+            else {
+                this.DWObject.Addon.OCR.Recognize(
+                    this.DWObject.CurrentImageIndexInBuffer,
+                    (index, result) => {
+                        if (result === null)
+                            return null;
+                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
+                            _resultToShow = [];
+                        for (var i = 0; i < _textResult.length; i++) {
+                            if (i === 0 && _textResult[i].trim() === "")
+                                continue;
+                            _resultToShow.push(_textResult[i] + '<br />');
+                        }
+                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
+                        _resultToShow.push('</p>');
+                        this.appendMessage(_resultToShow.join(''), true, true);
+                    },
+                    function (errorcode, errorstring, result) {
+                        alert(errorstring);
+                    }
+                );
+            }
         }
     }
 
@@ -1241,7 +1266,7 @@ export default class DWT extends React.Component {
 
     drawBarcodeRect(results) {
         var zoom;
-        var dwtDiv = $("#dwtcontrolContainer");
+        var dwtDiv = $("#" + this.containerId);
         if (this.dwt.showAbleWidth >= this.dwt.ImageWidth && this.dwt.showAbleHeight >= this.dwt.ImageHeight) {
             zoom = 1;
         } else if (this.dwt.showAbleWidth / this.dwt.showAbleHeight >= this.dwt.ImageWidth / this.dwt.ImageHeight) {

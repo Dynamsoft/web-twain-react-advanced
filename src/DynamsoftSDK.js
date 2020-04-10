@@ -1,6 +1,7 @@
 import React from 'react';
 import './DynamsoftSDK.css';
 import Dynamsoft from 'dwt';
+import dynamsoft from 'dynamsoft-sdk';
 import $ from 'jquery';
 
 class UI extends React.Component {
@@ -10,15 +11,15 @@ class UI extends React.Component {
                 <div id="DWTcontainerTop">
                     <div id="divEdit">
                         <ul className="operateGrp">
-                            <li><img src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" id="btnEditor" onClick={this.props.btnShowImageEditor_onclick} /> </li>
-                            <li><img src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" id="btnRotateL" onClick={this.props.btnRotateLeft_onclick} /> </li>
-                            <li><img src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" id="btnRotateR" onClick={this.props.btnRotateRight_onclick} /> </li>
-                            <li><img src="Images/Rotate180.png" alt="Rotate 180" title="Rotate 180" onClick={this.props.btnRotate180_onclick} /> </li>
-                            <li><img src="Images/Mirror.png" title="Mirror" alt="Mirror" id="btnMirror" onClick={this.props.btnMirror_onclick} /> </li>
-                            <li><img src="Images/Flip.png" title="Flip" alt="Flip" id="btnFlip" onClick={this.props.btnFlip_onclick} /> </li>
-                            <li><img src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" id="DW_btnRemoveCurrentImage" onClick={this.props.btnRemoveCurrentImage_onclick} /></li>
-                            <li><img src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" id="DW_btnRemoveAllImages" onClick={this.props.btnRemoveAllImages_onclick} /></li>
-                            <li><img src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" id="btnChangeImageSize" onClick={this.props.btnChangeImageSize_onclick} /> </li>
+                            <li><img src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" id="btnEditor" onClick={this.props.btnShowImageEditor} /> </li>
+                            <li><img src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" id="btnRotateL" onClick={this.props.btnRotateLeft} /> </li>
+                            <li><img src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" id="btnRotateR" onClick={this.props.btnRotateRight} /> </li>
+                            <li><img src="Images/Rotate180.png" alt="Rotate 180" title="Rotate 180" onClick={this.props.btnRotate180} /> </li>
+                            <li><img src="Images/Mirror.png" title="Mirror" alt="Mirror" id="btnMirror" onClick={this.props.btnMirror} /> </li>
+                            <li><img src="Images/Flip.png" title="Flip" alt="Flip" id="btnFlip" onClick={this.props.btnFlip} /> </li>
+                            <li><img src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" id="DW_btnRemoveCurrentImage" onClick={this.props.btnRemoveCurrentImage} /></li>
+                            <li><img src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" id="DW_btnRemoveAllImages" onClick={this.props.btnRemoveAllImages} /></li>
+                            <li><img src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" id="btnChangeImageSize" onClick={this.props.btnChangeImageSize} /> </li>
                             <li><img src="Images/Crop.png" title="Crop" alt="Crop" id="btnCrop" /></li>
                         </ul>
                         <div id="ImgSizeEditor" style={{ visibility: "hidden" }}>
@@ -39,8 +40,8 @@ class UI extends React.Component {
                                         <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
                                 </li>
                                 <li style={{ textAlign: "center" }}>
-                                    <input type="button" value="   OK   " id="btnChangeImageSizeOK" onClick={this.props.btnChangeImageSizeOK_onclick} />
-                                    <input type="button" value=" Cancel " id="btnCancelChange" onClick={this.props.btnCancelChange_onclick} />
+                                    <input type="button" value="   OK   " id="btnChangeImageSizeOK" onClick={this.props.btnChangeImageSizeOK} />
+                                    <input type="button" value=" Cancel " id="btnCancelChange" onClick={this.props.btnCancelChange} />
                                 </li>
                             </ul>
                         </div>
@@ -48,20 +49,20 @@ class UI extends React.Component {
                     <div id={this.props.containerId}></div>
                     <div id="btnGroupBtm" className="clearfix">
                         <div className="ct-lt">Page:
-                        <button id="DW_btnFirstImage" onClick={this.props.btnFirstImage_onclick}> |&lt; </button>
+                        <button name="dwt-changePage" id="DW_btnFirstImage" onClick={this.props.btnFirstImage}> |&lt; </button>
                             &nbsp;
-                        <button id="DW_btnPreImage" onClick={this.props.btnPreImage_onclick}> &lt; </button>
+                        <button name="dwt-changePage" id="DW_btnPreImage" onClick={this.props.btnPreImage}> &lt; </button>
                             &nbsp;&nbsp;&nbsp;&nbsp;
-                        <input type="text" size="2" id="DW_CurrentImage" readOnly="readonly" />
+                        <input name="dwt-changePage" type="text" size="2" id="DW_CurrentImage" readOnly="readonly" />
                             /
-                        <input type="text" size="2" id="DW_TotalImage" readOnly="readonly" />
+                        <input name="dwt-changePage" type="text" size="2" id="DW_TotalImage" readOnly="readonly" />
                             &nbsp;&nbsp;&nbsp;&nbsp;
-                        <button id="DW_btnNextImage" onClick={this.props.btnNextImage_onclick}> &gt; </button>
+                        <button name="dwt-changePage" id="DW_btnNextImage" onClick={this.props.btnNextImage}> &gt; </button>
                             &nbsp;
-                        <button id="DW_btnLastImage" onClick={this.props.btnLastImage_onclick}> &gt;| </button>
+                        <button name="dwt-changePage" id="DW_btnLastImage" onClick={this.props.btnLastImage}> &gt;| </button>
                         </div>
                         <div className="ct-rt">Preview Mode:
-                        <select size="1" id="DW_PreviewMode" onChange={this.props.setlPreviewMode}>
+                        <select name="dwt-changePage" size="1" id="DW_PreviewMode" onChange={this.props.setlPreviewMode}>
                                 <option value="0">1X1</option>
                                 <option value="1">2X2</option>
                                 <option value="2">3X3</option>
@@ -122,7 +123,7 @@ class UI extends React.Component {
                                             </ul>
                                         </li>
                                         <li className="tc">
-                                            <button id="btnScan" onClick={this.props.acquireImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer" }}>Scan</button>
+                                            <button id="btnScan" onClick={this.props.acquireImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "100%" }}>Scan</button>
                                         </li>
                                     </ul>
                                     <div id="tblLoadImage" style={{ visibility: "hidden" }}>
@@ -143,48 +144,67 @@ class UI extends React.Component {
                                 <div id="div_LoadLocalImage" style={{ display: "none" }} className="divTableStyle">
                                     <ul>
                                         <li className="tc">
-                                            <button className="btnOrg" onClick={this.props.btnLoadImagesOrPDFs_onclick} >Load</button>
+                                            <button className="btnOrg" onClick={this.props.btnLoadImagesOrPDFs} style={{ width: "100%" }}>Load</button>
                                         </li>
                                     </ul>
                                 </div>
                             </li>
-                        </ul>
-                    </div>
-                    <div id="divUpload" className="divinput mt30" style={{ position: "relative" }}>
-                        <ul>
-                            <li className="toggle">Save Documents</li>
                             <li>
-                                <p>File Name:</p>
-                                <input type="text" size="20" id="txt_fileName" />
-                            </li>
-                            <li style={{ paddingRight: "0" }}>
-                                <label htmlFor="imgTypebmp">
-                                    <input type="radio" value="bmp" name="ImageType" id="imgTypebmp" onClick={this.props.rd_onclick} />
+                                <div className="divType">
+                                    <div className="mark_arrow collapsed"></div>
+                                    Save Documents</div>
+                                <div id="div_SaveImages" style={{ display: "none" }} className="divTableStyle">
+                                    <ul>
+                                        <li>
+                                            <label htmlFor="txt_fileName" style={{ width: "100%" }}>
+                                                <span style={{ width: "25%" }}>File Name:</span>
+                                                <input style={{ width: "70%", marginLeft: "2%" }} type="text" size="20" id="txt_fileName" />
+                                            </label>
+                                        </li>
+                                        <li style={{ paddingRight: "0" }}>
+                                            <label htmlFor="imgTypebmp">
+                                                <input type="radio" value="bmp" name="ImageType" id="imgTypebmp" onClick={this.props.rd} />
                                     BMP</label>
-                                <label htmlFor="imgTypejpeg">
-                                    <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" onClick={this.props.rd_onclick} />
+                                            <label htmlFor="imgTypejpeg">
+                                                <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" onClick={this.props.rd} />
                                     JPEG</label>
-                                <label htmlFor="imgTypetiff">
-                                    <input type="radio" value="tif" name="ImageType" id="imgTypetiff" onClick={this.props.rdTIFF_onclick} />
+                                            <label htmlFor="imgTypetiff">
+                                                <input type="radio" value="tif" name="ImageType" id="imgTypetiff" onClick={this.props.rdTIFF} />
                                     TIFF</label>
-                                <label htmlFor="imgTypepng">
-                                    <input type="radio" value="png" name="ImageType" id="imgTypepng" onClick={this.props.rd_onclick} />
+                                            <label htmlFor="imgTypepng">
+                                                <input type="radio" value="png" name="ImageType" id="imgTypepng" onClick={this.props.rd} />
                                     PNG</label>
-                                <label htmlFor="imgTypepdf">
-                                    <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" onClick={this.props.rdPDF_onclick} />
+                                            <label htmlFor="imgTypepdf">
+                                                <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" onClick={this.props.rdPDF} />
                                     PDF</label>
-                            </li>
-                            <li>
-                                <label htmlFor="MultiPageTIFF">
-                                    <input type="checkbox" id="MultiPageTIFF" disabled="" />
+                                        </li>
+                                        <li>
+                                            <label htmlFor="MultiPageTIFF">
+                                                <input type="checkbox" id="MultiPageTIFF" disabled="" />
                                     Multi-Page TIFF</label>
-                                <label htmlFor="MultiPagePDF">
-                                    <input type="checkbox" id="MultiPagePDF" disabled="" />
+                                            <label htmlFor="MultiPagePDF">
+                                                <input type="checkbox" id="MultiPagePDF" disabled="" />
                                     Multi-Page PDF</label>
+                                        </li>
+                                        <li>
+                                            <button id="btnSave" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('local') }} >Save to Local</button>
+                                            <button id="btnUpload" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('server') }} >Upload to Server</button>
+                                        </li>
+                                    </ul>
+                                </div>
                             </li>
                             <li>
-                                <button id="btnSave" className="btnOrg" onClick={() => { this.props.saveUploadImage('local') }} >Save to Local</button>
-                                <button id="btnUpload" className="btnOrg" onClick={() => { this.props.saveUploadImage('server') }} >Upload to Server</button>
+                                <div className="divType">
+                                    <div className="mark_arrow collapsed"></div>
+                                    Recognize</div>
+                                <div id="div_Recognize" style={{ display: "none" }} className="divTableStyle">
+                                    <ul>
+                                        <li className="tc">
+                                            <button className="btnOrg" id="btn-readBarcode" style={{ width: "47%" }} >Read Barcode</button>
+                                            <button className="btnOrg" id="btn-OCR" style={{ marginLeft: "2%", width: "47%" }}>OCR (English)</button>
+                                        </li>
+                                    </ul>
+                                </div>
                             </li>
                         </ul>
                     </div>
@@ -204,21 +224,41 @@ export default class DWT extends React.Component {
         this.state = {
         }
     }
-
+    isHtml5 = !!(Dynamsoft.Lib.env.bWin && Dynamsoft.Lib.product.bChromeEdition);
     DWObject = null;
     containerId = 'dwtcontrolContainer';
-    productKey = 't0138TQMAABo+FiBiLSeuawQO6hwa5rfo9HYbwuF6dgFdY7OnHgczZjnqKyrSixkQ22rok4bfKVV9ysKOHDCpcyDFbiEXkEWMPJlliF1SwmT6cGDEm9WGsRuz8N9e7PSZK04UG0kYiw2FeQTe7oo482UkYSw2FOZJZD4+XcMJIwljz0Zrm1updQOUq6ha';
+    productKey = 't0140cQMAAGnOvWTyoOR4HEFckJJmzMWpZcPSHyXGAvYGxgEkg5fBnRoFPslaAayuNOe5B/gp7plUCIUAtf6Ttb98d7Ifv/3A6Mxsu7CZLJhKHUuMorfuu/E/ZrOfuSyoMz7zjXKjgvHcMO1HiGbvyHv+GBWM54ZpP4Wej2RorGBUMJ4b4tx40yqnXlIiqvs=';
     _strTempStr = '';
     re = /^\d+$/;
     strre = /^[\s\w]+$/;
     refloat = /^\d+\.*\d*$/i;
+    isSelectedArea = false;
     _iLeft = 0;
     _iTop = 0;
     _iRight = 0;
     _iBottom = 0;
     DWTSourceCount = 0;
+    dwt = {};
+    showAbleWidthOri = 0;
+    showAbleHeightOri = 0;
+    dwtChangePageBtns = null;
     componentDidMount() {
+        if (Dynamsoft && (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition)) {
+            var ObjString = [];
+            ObjString.push('<div style="padding:0 20px;">');
+            ObjString.push(
+                "Please note that your current browser can't run this sample, please use modern browsers like Chrome, Firefox, Edge or IE 11."
+            );
+            ObjString.push('</div>');
+            Dynamsoft.WebTwainEnv.ShowDialog(400, 180, ObjString.join(''));
+            if (document.getElementsByClassName("dynamsoft-dialog-close"))
+                document.getElementsByClassName("dynamsoft-dialog-close")[0].style.display = "none";
+            return;
+        }
         Dynamsoft.WebTwainEnv.RegisterEvent('OnWebTwainReady', () => {
+            this.showAbleWidthOri = $("#dwtcontrolContainer").width() - 2;//2 for border
+            this.showAbleHeightOri = $("#dwtcontrolContainer").height() - 4;//4 for border
+            this.dwtChangePageBtns = $("button[name='dwt-changePage']");
             this.DWObject = Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId);
             if (this.DWObject) {
                 this.DWObject.RegisterEvent("OnPostTransfer", () => {
@@ -237,8 +277,10 @@ export default class DWT extends React.Component {
                     this._iTop = top;
                     this._iRight = right;
                     this._iBottom = bottom;
+                    this.isSelectedArea = true;
                 });
                 this.DWObject.RegisterEvent('OnImageAreaDeselected', (index) => {
+                    this.isSelectedArea = false;
                     this._iLeft = 0;
                     this._iTop = 0;
                     this._iRight = 0;
@@ -318,17 +360,17 @@ export default class DWT extends React.Component {
 
                 for (i = 0; i < document.links.length; i++) {
                     if (document.links[i].className === "ShowtblLoadImage") {
-                        document.links[i].onclick = this.showtblLoadImage_onclick;
+                        document.links[i].onclick = this.showtblLoadImage;
                     }
                     if (document.links[i].className === "ClosetblLoadImage") {
-                        document.links[i].onclick = this.closetblLoadImage_onclick;
+                        document.links[i].onclick = this.closetblLoadImage;
                     }
                 }
                 if (vCount === 0) {
                     if (Dynamsoft.Lib.env.bWin) {
                         if (document.getElementById("aNoScanner") && window['bDWTOnlineDemo']) {
                             if (document.getElementById("div_ScanImage").style.display === "")
-                                this.showtblLoadImage_onclick();
+                                this.showtblLoadImage();
                         }
                         if (document.getElementById("Resolution"))
                             document.getElementById("Resolution").style.display = "none";
@@ -342,6 +384,9 @@ export default class DWT extends React.Component {
                 this.updatePageInfo();
                 this.setDefaultValue();
                 this.setlPreviewMode();
+                $("#btn-OCR").hide();
+                this.initDbr();
+                this.initOCR();
             }
         });
         this.initiateInputs();
@@ -369,20 +414,40 @@ export default class DWT extends React.Component {
         Dynamsoft.WebTwainEnv.Load();
     }
 
-    appendMessage(strMessage) {
+    appendMessage(strMessage, bClearOld, bNoScroll) {
+        if (bClearOld)
+            this._strTempStr = "";
         this._strTempStr += strMessage;
         var _divMessageContainer = document.getElementById("DWTemessage");
         if (_divMessageContainer) {
             _divMessageContainer.innerHTML = this._strTempStr;
-            _divMessageContainer.scrollTop = _divMessageContainer.scrollHeight;
+            if (bNoScroll)
+                _divMessageContainer.scrollTop = 0;
+            else
+                _divMessageContainer.scrollTop = _divMessageContainer.scrollHeight;
         }
     }
 
     updatePageInfo() {
-        if (document.getElementById("DW_TotalImage"))
-            document.getElementById("DW_TotalImage").value = this.DWObject.HowManyImagesInBuffer;
-        if (document.getElementById("DW_CurrentImage"))
-            document.getElementById("DW_CurrentImage").value = this.DWObject.CurrentImageIndexInBuffer + 1;
+        if (document.getElementById("DW_TotalImage") && document.getElementById("DW_CurrentImage")) {
+            if (document.getElementById("DW_CurrentImage").value === this.DWObject.CurrentImageIndexInBuffer + 1 &&
+                document.getElementById("DW_TotalImage").value === this.DWObject.HowManyImagesInBuffer)
+                return;
+        }
+        else
+            return;
+        document.getElementById("DW_TotalImage").value = this.DWObject.HowManyImagesInBuffer;
+        document.getElementById("DW_CurrentImage").value = this.DWObject.CurrentImageIndexInBuffer + 1;
+        this.isSelectedArea = false;
+        this.updateBtnsState();
+        this.clearBarcodeRect();
+        if (this.checkIfImagesInBuffer(false)) {
+            this.dwt.curImageTimeStamp = (new Date()).getTime();
+            this.dwt.showAbleWidth = this.DWObject.HowManyImagesInBuffer > 1 ? this.showAbleWidthOri - 16 : this.showAbleWidthOri;
+            this.dwt.showAbleHeight = this.showAbleHeightOri;
+            this.dwt.ImageWidth = this.DWObject.GetImageWidth(this.DWObject.CurrentImageIndexInBuffer);
+            this.dwt.ImageHeight = this.DWObject.GetImageHeight(this.DWObject.CurrentImageIndexInBuffer);
+        }
     }
 
     checkErrorString() {
@@ -450,7 +515,7 @@ export default class DWT extends React.Component {
         this.DWObject.IfDisableSourceAfterAcquire = true;
         this.DWObject.AcquireImage();
     }
-    btnLoadImagesOrPDFs_onclick() {
+    btnLoadImagesOrPDFs() {
         var OnPDFSuccess = () => {
             this.appendMessage("Loaded an image successfully.<br/>");
             this.updatePageInfo();
@@ -466,24 +531,25 @@ export default class DWT extends React.Component {
         this.DWObject.LoadImageEx("", 5 /*EnumDWT_ImageType.IT_ALL*/, OnPDFSuccess, OnPDFFailure);
     }
 
-    checkIfImagesInBuffer() {
+    checkIfImagesInBuffer(bAppendMSG) {
         if (this.DWObject.HowManyImagesInBuffer === 0) {
-            this.appendMessage("There is no image in buffer.<br />")
+            if (bAppendMSG)
+                this.appendMessage("There is no image in buffer.<br />")
             return false;
         }
         else
             return true;
     }
 
-    btnShowImageEditor_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnShowImageEditor() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.ShowImageEditor();
     }
 
-    btnRotateRight_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnRotateRight() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.RotateRight(this.DWObject.CurrentImageIndexInBuffer);
@@ -493,8 +559,8 @@ export default class DWT extends React.Component {
         }
     }
 
-    btnRotateLeft_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnRotateLeft() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.RotateLeft(this.DWObject.CurrentImageIndexInBuffer);
@@ -504,8 +570,8 @@ export default class DWT extends React.Component {
         }
     }
 
-    btnRotate180_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnRotate180() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.Rotate(this.DWObject.CurrentImageIndexInBuffer, 180, true);
@@ -515,8 +581,8 @@ export default class DWT extends React.Component {
         }
     }
 
-    btnMirror_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnMirror() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.Mirror(this.DWObject.CurrentImageIndexInBuffer);
@@ -526,8 +592,8 @@ export default class DWT extends React.Component {
         }
     }
 
-    btnFlip_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnFlip() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.Flip(this.DWObject.CurrentImageIndexInBuffer);
@@ -538,8 +604,8 @@ export default class DWT extends React.Component {
     }
 
     /*----------------------Crop Method---------------------*/
-    btnCrop_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnCrop() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         if (this._iLeft !== 0 || this._iTop !== 0 || this._iRight !== 0 || this._iBottom !== 0) {
@@ -562,8 +628,8 @@ export default class DWT extends React.Component {
     }
 
     /*----------------Change Image Size--------------------*/
-    btnChangeImageSize_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnChangeImageSize() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         switch (document.getElementById("ImgSizeEditor").style.visibility) {
@@ -582,11 +648,11 @@ export default class DWT extends React.Component {
             document.getElementById("img_height").value = iHeight;
     }
 
-    btnCancelChange_onclick() {
+    btnCancelChange() {
         document.getElementById("ImgSizeEditor").style.visibility = "hidden";
     }
 
-    btnChangeImageSizeOK_onclick() {
+    btnChangeImageSizeOK() {
         document.getElementById("img_height").className = "";
         document.getElementById("img_width").className = "";
         if (!this.re.test(document.getElementById("img_height").value)) {
@@ -644,34 +710,34 @@ export default class DWT extends React.Component {
             <UI
                 containerId={this.containerId}
                 acquireImage={() => this.acquireImage()}
-                btnLoadImagesOrPDFs_onclick={() => this.btnLoadImagesOrPDFs_onclick()}
-                btnShowImageEditor_onclick={() => this.btnShowImageEditor_onclick()}
-                btnRotateLeft_onclick={() => this.btnRotateLeft_onclick()}
-                btnRotateRight_onclick={() => this.btnRotateRight_onclick()}
-                btnRotate180_onclick={() => this.btnRotate180_onclick()}
-                btnMirror_onclick={() => this.btnMirror_onclick()}
-                btnFlip_onclick={() => this.btnFlip_onclick()}
-                btnCrop_onclick={() => this.btnCrop_onclick()}
-                btnChangeImageSize_onclick={() => this.btnChangeImageSize_onclick()}
-                btnCancelChange_onclick={() => this.btnCancelChange_onclick()}
-                btnChangeImageSizeOK_onclick={() => this.btnChangeImageSizeOK_onclick()}
+                source_onchange={() => this.source_onchange()}
+                btnLoadImagesOrPDFs={() => this.btnLoadImagesOrPDFs()}
+                btnShowImageEditor={() => this.btnShowImageEditor()}
+                btnRotateLeft={() => this.btnRotateLeft()}
+                btnRotateRight={() => this.btnRotateRight()}
+                btnRotate180={() => this.btnRotate180()}
+                btnMirror={() => this.btnMirror()}
+                btnFlip={() => this.btnFlip()}
+                btnCrop={() => this.btnCrop()}
+                btnChangeImageSize={() => this.btnChangeImageSize()}
+                btnCancelChange={() => this.btnCancelChange()}
+                btnChangeImageSizeOK={() => this.btnChangeImageSizeOK()}
                 saveUploadImage={(_type) => this.saveUploadImage(_type)}
-                btnFirstImage_onclick={() => this.btnFirstImage_onclick()}
+                btnFirstImage={() => this.btnFirstImage()}
                 btnPreImage_wheel={() => this.btnPreImage_wheel()}
                 btnNextImage_wheel={() => this.btnNextImage_wheel()}
-                btnPreImage_onclick={() => this.btnPreImage_onclick()}
-                btnNextImage_onclick={() => this.btnNextImage_onclick()}
-                btnLastImage_onclick={() => this.btnLastImage_onclick()}
-                btnRemoveCurrentImage_onclick={() => this.btnRemoveCurrentImage_onclick()}
-                btnRemoveAllImages_onclick={() => this.btnRemoveAllImages_onclick()}
+                btnPreImage={() => this.btnPreImage()}
+                btnNextImage={() => this.btnNextImage()}
+                btnLastImage={() => this.btnLastImage()}
+                btnRemoveCurrentImage={() => this.btnRemoveCurrentImage()}
+                btnRemoveAllImages={() => this.btnRemoveAllImages()}
                 setlPreviewMode={() => this.setlPreviewMode()}
-                rdTIFF_onclick={() => this.rdTIFF_onclick()}
-                rdPDF_onclick={() => this.rdPDF_onclick()}
-                rd_onclick={() => this.rd_onclick()}
+                rdTIFF={() => this.rdTIFF()}
+                rdPDF={() => this.rdPDF()}
+                rd={() => this.rd()}
             />
         );
     }
-
 
     /**
      * Supporting functions
@@ -689,7 +755,8 @@ export default class DWT extends React.Component {
     InitMessageBody() {
         var MessageBody = document.getElementById("divNoteMessage");
         if (MessageBody) {
-            var ObjString = "<div><p>Platform & Browser Support: </p>Internet Explorer 8 or above (32 bit/64 bit), any version of Chrome (32 bit/64 bit), any version of Firefox on Windows; Safari, Chrome and Firefox on Mac OS X 10.7 or later; Chrome and Firefox v27 or above (64 bit) on Ubuntu 16.04+, Debian 8+";
+            var ObjString = "<div><p><strong>Platform & Browser Support:</strong> </p> Chrome|Firefox|Edge on Windows   ";
+            ObjString += "<p><strong>OCR:</strong> </p> Only English with OCR Basic is demonstrated, check <u><a href='https://www.dynamsoft.com/Products/ocr-basic-languages.aspx'>here</a></u> for other supported languages and <u><a href='https://www.dynamsoft.com/Products/cpp-ocr-library.aspx'>here</a></u> for the differences betwen two available OCR engines. <br />"
             ObjString += ".</div>";
 
             MessageBody.style.display = "";
@@ -781,14 +848,14 @@ export default class DWT extends React.Component {
     //--------------------------------------------------------------------------------------
     saveUploadImage(type) {
         if (type === 'local') {
-            this.btnSave_onclick();
+            this.btnSave();
         } else if (type === 'server') {
-            this.btnUpload_onclick()
+            this.btnUpload()
         }
     }
 
-    btnSave_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnSave() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         var i, strimgType_save;
@@ -858,8 +925,8 @@ export default class DWT extends React.Component {
     //--------------------------------------------------------------------------------------
     //************************** Upload Image***********************************
     //--------------------------------------------------------------------------------------
-    btnUpload_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnUpload() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         var i, strHTTPServer, strActionPage, strImageType;
@@ -958,11 +1025,246 @@ export default class DWT extends React.Component {
     }
 
     //--------------------------------------------------------------------------------------
+    //************************** Recognize ***********************************
+    //--------------------------------------------------------------------------------------
+
+    initDbr() {
+        dynamsoft.dbrEnv.productKey = this.productKey;
+        dynamsoft.BarcodeReader.initServiceConnection().then(() => {
+            this.initReadBtn();
+        }, (ex) => {
+            alert('Init DBR failed' + (ex.message || ex));
+        });
+    }
+
+    initOCR() {
+        this.downloadOCRBasic(true);
+    }
+
+    downloadOCRBasic(bDownloadDLL) {
+        var strOCRPath = Dynamsoft.WebTwainEnv.ResourcesPath + "/OCRResources/OCR.zip",
+            strOCRLangPath = Dynamsoft.WebTwainEnv.ResourcesPath + '/OCRResources/OCRBasicLanguages/English.zip';
+
+        if (bDownloadDLL) {
+            if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
+                this.downloadOCRBasic(false);
+            } else {
+                this.DWObject.Addon.OCR.Download(
+                    strOCRPath,
+                    () => { /*console.log('OCR dll is installed');*/
+                        this.downloadOCRBasic(false);
+                    },
+                    (errorCode, errorString) => {
+                        console.log(errorString);
+                    }
+                );
+            }
+        } else {
+            this.DWObject.Addon.OCR.DownloadLangData(
+                strOCRLangPath,
+                () => {
+                    $("#btn-OCR").show();
+                    $("#btn-OCR").click(() => {
+                        this.DoOCR();
+                    });
+                },
+                function (errorCode, errorString) {
+                    console.log(errorString);
+                });
+        }
+    }
+
+    DoOCR() {
+        if (this.DWObject) {
+            if (!this.checkIfImagesInBuffer()) {
+                alert("Please scan or load an image first.");
+                return;
+            }
+            this.DWObject.Addon.OCR.SetLanguage('eng');
+            this.DWObject.Addon.OCR.SetOutputFormat(window.EnumDWT_OCROutputFormat.OCROF_TEXT);
+            this.DWObject.Addon.OCR.Recognize(
+                this.DWObject.CurrentImageIndexInBuffer,
+                (iImageID, result) => {
+                    if (result === null)
+                        return null;
+                    var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
+                        _resultToShow = [];
+                    for (var i = 0; i < _textResult.length; i++) {
+                        if (i === 0 && _textResult[i].trim() === "")
+                            continue;
+                        _resultToShow.push(_textResult[i] + '<br />');
+                    }
+                    _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
+                    _resultToShow.push('</p>');
+                    this.appendMessage(_resultToShow.join(''), true, true);
+                },
+                function (errorcode, errorstring, result) {
+                    alert(errorstring);
+                }
+            );
+        }
+    }
+
+    clearBarcodeRect() {
+        if (this.isHtml5) {
+            $(".barcodeInfoRect").remove();
+        }
+    }
+
+    updateBtnsState() {
+        if (this.checkIfImagesInBuffer(false)) {
+            this.dwtChangePageBtns.prop("disabled", false);
+            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
+                $("#DW_btnFirstImage").prop("disabled", true);
+                $("#DW_btnPreImage").prop("disabled", true);
+            }
+            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
+                $("#DW_btnNextImage").prop("disabled", true);
+                $("#DW_btnLastImage").prop("disabled", true);
+            }
+        }
+        else {
+            this.dwtChangePageBtns.prop("disabled", true);
+        }
+    }
+
+    initReadBtn() {
+        $("#btn-readBarcode").click(() => {
+            var btn = $(this);
+            btn.prop("disabled", true);
+            this.dwtChangePageBtns.prop("disabled", true);
+            this.clearBarcodeRect();
+
+            if (!this.checkIfImagesInBuffer(true)) {
+                alert("There is no image in the buffer.");
+                btn.prop("disabled", false);
+                return;
+            }
+            var dbrObject = new dynamsoft.BarcodeReader();
+
+            var settings = dbrObject.getRuntimeSettings();
+            if (this.DWObject.GetImageBitDepth(this.DWObject.CurrentImageIndexInBuffer) === 1)
+                settings.scaleDownThreshold = 214748347;
+            else
+                settings.scaleDownThreshold = 2300;
+            settings.barcodeFormatIds = dynamsoft.BarcodeReader.EnumBarcodeFormat.All;
+            settings.region.measuredByPercentage = 0;
+            if (this.isSelectedArea) {
+                settings.region.left = this._iLeft;
+                settings.region.top = this._iTop;
+                settings.region.right = this._iRight;
+                settings.region.bottom = this._iBottom;
+            }
+            else {
+                settings.region.left = 0;
+                settings.region.top = 0;
+                settings.region.right = 0;
+                settings.region.bottom = 0;
+            }
+            dbrObject.updateRuntimeSettings(settings);
+
+            //dbrRead callback
+            var userData = this.dwt.curImageTimeStamp;
+            var onDbrReadSuccess = (results) => {
+                this.logResult(results, true);
+                if (results.length !== 0 && this.dwt.curImageTimeStamp === userData) {
+                    this.drawBarcodeRect(results);
+                }
+                readBarcodeFinally();
+            };
+            var onDbrReadFail = function () {
+                readBarcodeFinally();
+            };
+
+            // HTML5 browsers: use url
+            if (this.isHtml5) {
+                var dwtUrl = this.DWObject.GetImagePartURL(this.DWObject.CurrentImageIndexInBuffer);
+                dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
+            } else {
+                alert("Current browser is not supported!")
+            }
+        });
+        // finally after #btn-readBarcode click
+        var readBarcodeFinally = () => {
+            $("#btn-readBarcode").prop("disabled", false);
+            //enable change-page btns
+            this.updateBtnsState();
+        };
+
+        $("#btn-readBarcode").prop("disabled", false);
+        $("#btn-readBarcode").text('Read Barcode');
+    }
+
+    logResult(results, bBarcode) {
+        var strMsg = ["------------------------------------------<br />"];
+        if (bBarcode) {
+            if (results.length === 0) {
+                strMsg.push("No barcode found for the selected format(s).<br /><br />");
+            } else {
+                strMsg.push("<b>Total barcode(s) found: ", results.length, "</b><br /><br />");
+                for (var i = 0; i < results.length; ++i) {
+                    var result = results[i];
+                    var arr = ["<b>Barcode ", (i + 1), "</b><br />",
+                        "<b>Type: <span style='color:#fe8e14'>", result.BarcodeFormatString, "</span></b><br />",
+                        "<b>Value: <span style='color:#fe8e14'>", this.convertTextForHTML(result.BarcodeText), "</span></b>",
+                        "<b>Data: ", dynamsoft.lib.stringify(result.BarcodeBytes), "</b><br />",
+                        "<b>Angle: ", result.LocalizationResult.Angle, "</b><br />"
+                    ];
+                    strMsg = strMsg.concat(arr);
+                }
+            }
+        }
+        this.appendMessage(strMsg.join(""), true);
+    }
+
+    convertTextForHTML(str) {
+        str = str.replace(/</g, '&lt;');
+        str = str.replace(/>/g, '&gt;');
+        str = ['<pre class="resultPre">', str, '</pre>'].join('');
+        if ((str.indexOf('\n') & str.indexOf('\r')) !== -1) {
+            str = '<br />' + str;
+        }
+        return str;
+    }
+
+    drawBarcodeRect(results) {
+        var zoom;
+        var dwtDiv = $("#dwtcontrolContainer");
+        if (this.dwt.showAbleWidth >= this.dwt.ImageWidth && this.dwt.showAbleHeight >= this.dwt.ImageHeight) {
+            zoom = 1;
+        } else if (this.dwt.showAbleWidth / this.dwt.showAbleHeight >= this.dwt.ImageWidth / this.dwt.ImageHeight) {
+            zoom = this.dwt.showAbleHeight / this.dwt.ImageHeight;
+        } else {
+            zoom = this.dwt.showAbleWidth / this.dwt.ImageWidth;
+        }
+        for (var i = 0; i < results.length; ++i) {
+            var result = results[i];
+            var loc = result.LocalizationResult;
+            loc.left = Math.min(loc.X1, loc.X2, loc.X3, loc.X4);
+            loc.top = Math.min(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
+            loc.right = Math.max(loc.X1, loc.X2, loc.X3, loc.X4);
+            loc.bottom = Math.max(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
+            // HTML5 borwsers: show rectangles and numbers. We use div to manually draw the rectangles, you can use OverlayRectangle as well
+            if (this.isHtml5) {
+                var leftBase = 1 + this.dwt.showAbleWidth / 2 - this.dwt.ImageWidth / 2 * zoom;
+                var topBase = 1 + this.dwt.showAbleHeight / 2 - this.dwt.ImageHeight / 2 * zoom;
+                var left = dwtDiv[0].offsetLeft + leftBase + loc.left * zoom;
+                var top = dwtDiv[0].offsetTop + topBase + loc.top * zoom;
+                var width = (loc.right - loc.left) * zoom;
+                var height = (loc.bottom - loc.top) * zoom;
+                dwtDiv.append(['<div class="barcodeInfoRect" style="left:', left, 'px;top:', top, 'px;width:', width, 'px;height:', height, 'px;">',
+                    '<div class="spanContainer">', '<span>[', i + 1, ']</span></div></div>'].join(''));
+            } else {
+                alert('The broowser is not supported!');
+            }
+        }
+    }
+    //--------------------------------------------------------------------------------------
     //************************** Navigator functions***********************************
     //--------------------------------------------------------------------------------------
 
-    btnFirstImage_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnFirstImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.CurrentImageIndexInBuffer = 0;
@@ -971,16 +1273,16 @@ export default class DWT extends React.Component {
 
     btnPreImage_wheel() {
         if (this.DWObject.HowManyImagesInBuffer !== 0)
-            this.btnPreImage_onclick()
+            this.btnPreImage()
     }
 
     btnNextImage_wheel() {
         if (this.DWObject.HowManyImagesInBuffer !== 0)
-            this.btnNextImage_onclick()
+            this.btnNextImage()
     }
 
-    btnPreImage_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnPreImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         else if (this.DWObject.CurrentImageIndexInBuffer === 0) {
@@ -989,8 +1291,9 @@ export default class DWT extends React.Component {
         this.DWObject.CurrentImageIndexInBuffer = this.DWObject.CurrentImageIndexInBuffer - 1;
         this.updatePageInfo();
     }
-    btnNextImage_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+
+    btnNextImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         else if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
@@ -1000,17 +1303,16 @@ export default class DWT extends React.Component {
         this.updatePageInfo();
     }
 
-
-    btnLastImage_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnLastImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.CurrentImageIndexInBuffer = this.DWObject.HowManyImagesInBuffer - 1;
         this.updatePageInfo();
     }
 
-    btnRemoveCurrentImage_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnRemoveCurrentImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.RemoveAllSelectedImages();
@@ -1024,9 +1326,8 @@ export default class DWT extends React.Component {
         }
     }
 
-
-    btnRemoveAllImages_onclick() {
-        if (!this.checkIfImagesInBuffer()) {
+    btnRemoveAllImages() {
+        if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
         this.DWObject.RemoveAllImages();
@@ -1047,7 +1348,7 @@ export default class DWT extends React.Component {
             else {
                 tmpstr = tmpstr.replace('Crop_gray.', 'Crop.');
                 btnCrop.src = tmpstr;
-                btnCrop.onclick = () => { this.btnCrop_onclick(); };
+                btnCrop.onclick = () => { this.btnCrop(); };
             }
         }
 
@@ -1066,7 +1367,7 @@ export default class DWT extends React.Component {
     //--------------------------------------------------------------------------------------
     //*********************************radio response***************************************
     //--------------------------------------------------------------------------------------
-    rdTIFF_onclick() {
+    rdTIFF() {
         var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
         _chkMultiPageTIFF.disabled = false;
         _chkMultiPageTIFF.checked = false;
@@ -1076,7 +1377,7 @@ export default class DWT extends React.Component {
         _chkMultiPagePDF.disabled = true;
     }
 
-    rdPDF_onclick() {
+    rdPDF() {
         var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
         _chkMultiPageTIFF.checked = false;
         _chkMultiPageTIFF.disabled = true;
@@ -1087,7 +1388,7 @@ export default class DWT extends React.Component {
 
     }
 
-    rd_onclick() {
+    rd() {
         var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
         _chkMultiPageTIFF.checked = false;
         _chkMultiPageTIFF.disabled = true;

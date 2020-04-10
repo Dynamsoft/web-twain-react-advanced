@@ -413,7 +413,7 @@ div.divinput {
     border-bottom: solid 1px #ccc;
 }
 
-#ScanWrapper select, #divUpload input[type='text'] {
+#ScanWrapper select, #div_SaveImages input[type='text'] {
     margin-top: 3px;
     margin-bottom: 6px;
     height: 26px;
@@ -540,50 +540,46 @@ select#Resolution {
     color: #61c2ec;
 }
 
-/*#divUpload*/
+/*#div_SaveImages*/
 
-#divUpload input[type='text'] {
+#div_SaveImages input[type='text'] {
     width: 100%;
     padding-left: 5px;
 }
 
-#divUpload li label {
+#div_SaveImages li label {
     display: inline-block;
     margin: 0 8px 0 0;
     font-size: 12px;
 }
 
-#divUpload li img {
+#div_SaveImages li img {
     margin-right: 2px;
 }
 
-#divUpload li label:last-child {
+#div_SaveImages li label:last-child {
     margin-right: 0;
 }
 
-#divUpload li input {
+#div_SaveImages li input {
     width: 15px;
     height: 15px;
     vertical-align: middle;
 }
 
-#divUpload li:nth-child(3) {
+#div_SaveImages li:nth-child(3) {
     margin: 5px 0 8px;
 }
 
-#divUpload li {
-    padding: 0 20px;
-}
-
-#divUpload li:nth-child(2) {
+#div_SaveImages li:nth-child(2) {
     padding-top: 12px;
 }
 
-#divUpload input[type='button'] {
+#div_SaveImages input[type='button'] {
     margin: 14px 0 20px 0;
 }
 
-#divUpload #btnSave, #divUpload #btnUpload {
+#div_SaveImages #btnSave, #div_SaveImages #btnUpload {
     padding: 0;
     width: 115px;
     height: 30px;
@@ -593,7 +589,7 @@ select#Resolution {
     cursor: pointer;
 }
 
-#divUpload #btnUpload {
+#div_SaveImages #btnUpload {
     width: 138px;
     margin-right: 0;
 }
@@ -628,13 +624,24 @@ select#Resolution {
 }
 
 #DWTemessage {
-    padding: 6px 0 0 8px;
     margin-top: 3px;
     width: 647px;
     height: 160px;
+    *height: 116px;
     border: solid 1px #ccc;
-    overflow-y: scroll;
+    overflow-y: auto;
     background: #fff;
+    line-height: 20px;
+    padding: 0px 5px;
+    word-wrap: break-word;
+    word-break: break-all;
+    font-size: 12px;
+}
+
+#DWTemessage b {
+    color: black;
+    font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
+    font-weight: normal;
 }
 
 #divNoteMessage {
@@ -965,4 +972,20 @@ select#Resolution {
     height: 17px;
     color: #ccc;
     overflow: hidden;
+}
+
+#dwtcontrolContainer .barcodeInfoRect {
+    position: absolute;
+    z-index: 10;
+    border: 1px solid red;
+}
+
+#dwtcontrolContainer .barcodeInfoRect .spanContainer {
+    position: absolute;
+    left: 0px;
+    top: -14px;
+    color: blue;
+    font-size: 12px;
+    font-weight: bold;
+    /*background-color:#fff;*/
 }

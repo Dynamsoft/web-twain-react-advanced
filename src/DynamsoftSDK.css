@@ -440,7 +440,7 @@ div.divinput {
     padding-left: 0;
 }
 
-select#source {
+select#source, select#cameras {
     margin-top: 3px;
     padding-left: 3px;
     width: 100%;
@@ -482,7 +482,7 @@ select#Resolution {
     vertical-align: middle;
 }
 
-#btnScan {
+#btnScan, #btn-grab, #btn-switch {
     margin-top: 10px;
     margin-bottom: 5px;
     width: 90px;

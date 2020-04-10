@@ -76,7 +76,7 @@ class UI extends React.Component {
                     <div id="divScanner" className="divinput">
                         <ul className="PCollapse">
                             <li>
-                                <div className="divType">
+                                <div className="divType" selfvalue="scan">
                                     <div className="mark_arrow expanded"></div>
                                     Custom Scan</div>
                                 <div id="div_ScanImage" className="divTableStyle">
@@ -137,8 +137,34 @@ class UI extends React.Component {
                                     </div>
                                 </div>
                             </li>
+                            <li>
+                                <div className="divType" selfvalue="capture">
+                                    <div className="mark_arrow collapsed"></div>
+                                    Use Webcams</div>
+                                <div id="div_CaptureImage" style={{ display: "none" }} className="divTableStyle">
+                                    <ul id="ulCaptureImageHIDE">
+                                        <li>
+                                            <label htmlFor="cameras">
+                                                <p>Select a Camera:</p>
+                                                <select size="1" id="cameras" style={{ position: "relative" }} onChange={this.props.camera_onchange}>
+                                                    <option value="NotACamera">Select a Camera..</option>
+                                                </select>
+                                                <ul>{
+                                                    Object.values(this.props.cameraSettings).map((topItem, key) =>
+                                                        <li>{topItem.name}</li>
+                                                    )
+                                                }</ul>
+                                            </label>
+                                        </li>
+                                        <li className="tc">
+                                            <button id="btn-switch" onClick={this.props.switchViews} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "48%" }}>Show Video</button>
+                                            <button id="btn-grab" onClick={this.props.captureImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", marginLeft: "2%", cursor: "pointer", width: "48%" }}>Capture</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
                             <li id="liLoadImage">
-                                <div className="divType">
+                                <div className="divType" selfvalue="load">
                                     <div className="mark_arrow collapsed"></div>
                                     Load Images or PDFs</div>
                                 <div id="div_LoadLocalImage" style={{ display: "none" }} className="divTableStyle">
@@ -150,7 +176,7 @@ class UI extends React.Component {
                                 </div>
                             </li>
                             <li>
-                                <div className="divType">
+                                <div className="divType" selfvalue="save">
                                     <div className="mark_arrow collapsed"></div>
                                     Save Documents</div>
                                 <div id="div_SaveImages" style={{ display: "none" }} className="divTableStyle">
@@ -194,7 +220,7 @@ class UI extends React.Component {
                                 </div>
                             </li>
                             <li>
-                                <div className="divType">
+                                <div className="divType" selfvalue="recognize">
                                     <div className="mark_arrow collapsed"></div>
                                     Recognize</div>
                                 <div id="div_Recognize" style={{ display: "none" }} className="divTableStyle">
@@ -222,10 +248,12 @@ export default class DWT extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-        }
+            cameraSettings: {}
+        };
     }
     isHtml5 = !!(Dynamsoft.Lib.env.bWin && Dynamsoft.Lib.product.bChromeEdition);
     DWObject = null;
+    isVideoOn = false;
     containerId = 'dwtcontrolContainer';
     productKey = 't0140cQMAAGnOvWTyoOR4HEFckJJmzMWpZcPSHyXGAvYGxgEkg5fBnRoFPslaAayuNOe5B/gp7plUCIUAtf6Ttb98d7Ifv/3A6Mxsu7CZLJhKHUuMorfuu/E/ZrOfuSyoMz7zjXKjgvHcMO1HiGbvyHv+GBWM54ZpP4Wej2RorGBUMJ4b4tx40yqnXlIiqvs=';
     _strTempStr = '';
@@ -301,15 +329,12 @@ export default class DWT extends React.Component {
                 $('#DWTNonInstallContainerID').hide();
 
                 var twainsource = document.getElementById("source");
-                if (!twainsource) {
-                    twainsource = document.getElementById("webcamsource");
-                }
                 var vCount = this.DWObject.SourceCount;
                 this.DWTSourceCount = vCount;
 
                 if (twainsource) {
                     twainsource.options.length = 0;
-                    for (var i = 0; i < vCount; i++) {
+                    for (let i = 0; i < vCount; i++) {
                         twainsource.options.add(new Option(this.DWObject.GetSourceNameItems(i), i));
                     }
                 }
@@ -329,7 +354,7 @@ export default class DWT extends React.Component {
                 if (vCount > 0) {
                     this.source_onchange(false);
                 }
-
+                this.refershCameraList();
                 if (Dynamsoft.Lib.env.bWin)
                     this.DWObject.MouseShape = false;
 
@@ -358,7 +383,7 @@ export default class DWT extends React.Component {
                         document.getElementById("ShowUI").style.display = "";
                 }
 
-                for (i = 0; i < document.links.length; i++) {
+                for (let i = 0; i < document.links.length; i++) {
                     if (document.links[i].className === "ShowtblLoadImage") {
                         document.links[i].onclick = this.showtblLoadImage;
                     }
@@ -396,6 +421,16 @@ export default class DWT extends React.Component {
         this.loadDWT();
 
         $("ul.PCollapse li>div").click(function () {
+            switch ($(this).attr("selfvalue")) {
+                case "capture":
+                    break;
+                case "scan":
+                case "load":
+                case "save":
+                    Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId).Addon.Webcam.StopVideo();
+                    document.getElementById("cameras").selectedIndex = 0; break;
+                default: break;
+            }
             if ($(this).next().css("display") === "none") {
                 $(".divType").next().hide("normal");
                 $(".divType").children(".mark_arrow").removeClass("expanded");
@@ -482,8 +517,7 @@ export default class DWT extends React.Component {
         this.DWObject.OpenSource();
         this.DWObject.IfShowUI = document.getElementById("ShowUI").checked;
 
-        var i;
-        for (i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             if (document.getElementsByName("PixelType").item(i).checked === true)
                 this.DWObject.PixelType = i;
         }
@@ -681,7 +715,7 @@ export default class DWT extends React.Component {
         }
     }
 
-    source_onchange(bWebcam) {
+    source_onchange() {
         if (document.getElementById("divTwainType"))
             document.getElementById("divTwainType").style.display = "";
 
@@ -709,9 +743,13 @@ export default class DWT extends React.Component {
     render() {
         return (
             <UI
+                cameraSettings={this.state.cameraSettings}
                 containerId={this.containerId}
                 acquireImage={() => this.acquireImage()}
+                switchViews={() => this.switchViews()}
+                captureImage={() => this.captureImage()}
                 source_onchange={() => this.source_onchange()}
+                camera_onchange={() => this.camera_onchange()}
                 btnLoadImagesOrPDFs={() => this.btnLoadImagesOrPDFs()}
                 btnShowImageEditor={() => this.btnShowImageEditor()}
                 btnRotateLeft={() => this.btnRotateLeft()}
@@ -792,7 +830,7 @@ export default class DWT extends React.Component {
 
     initiateInputs() {
         var allinputs = document.getElementsByTagName("input");
-        for (var i = 0; i < allinputs.length; i++) {
+        for (let i = 0; i < allinputs.length; i++) {
             if (allinputs[i].type === "checkbox") {
                 allinputs[i].checked = false;
             }
@@ -861,7 +899,7 @@ export default class DWT extends React.Component {
         if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
-        var i, strimgType_save;
+        let i, strimgType_save;
         var NM_imgType_save = document.getElementsByName("ImageType");
         for (i = 0; i < 5; i++) {
             if (NM_imgType_save.item(i).checked === true) {
@@ -933,7 +971,7 @@ export default class DWT extends React.Component {
         if (!this.checkIfImagesInBuffer(true)) {
             return;
         }
-        var i, strHTTPServer, strActionPage, strImageType;
+        let i, strHTTPServer, strActionPage, strImageType;
 
         var _txtFileName = document.getElementById("txt_fileName");
         if (_txtFileName)
@@ -1041,99 +1079,6 @@ export default class DWT extends React.Component {
         });
     }
 
-    initOCR() {
-        this.downloadOCRBasic(true);
-    }
-
-    downloadOCRBasic(bDownloadDLL) {
-        var strOCRPath = Dynamsoft.WebTwainEnv.ResourcesPath + "/OCRResources/OCR.zip",
-            strOCRLangPath = Dynamsoft.WebTwainEnv.ResourcesPath + '/OCRResources/OCRBasicLanguages/English.zip';
-
-        if (bDownloadDLL) {
-            if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
-                this.downloadOCRBasic(false);
-            } else {
-                this.DWObject.Addon.OCR.Download(
-                    strOCRPath,
-                    () => { /*console.log('OCR dll is installed');*/
-                        this.downloadOCRBasic(false);
-                    },
-                    (errorCode, errorString) => {
-                        console.log(errorString);
-                    }
-                );
-            }
-        } else {
-            this.DWObject.Addon.OCR.DownloadLangData(
-                strOCRLangPath,
-                () => {
-                    $("#btn-OCR").show();
-                    $("#btn-OCR").click(() => {
-                        this.DoOCR();
-                    });
-                },
-                function (errorCode, errorString) {
-                    console.log(errorString);
-                });
-        }
-    }
-
-    DoOCR() {
-        if (this.DWObject) {
-            if (!this.checkIfImagesInBuffer()) {
-                alert("Please scan or load an image first.");
-                return;
-            }
-            this.DWObject.Addon.OCR.SetLanguage('eng');
-            this.DWObject.Addon.OCR.SetOutputFormat(window.EnumDWT_OCROutputFormat.OCROF_TEXT);
-            if (this.isSelectedArea) {
-                this.DWObject.Addon.OCR.RecognizeRect(
-                    this.DWObject.CurrentImageIndexInBuffer,
-                    this._iLeft, this._iTop, this._iRight, this._iBottom,
-                    (index, left, top, right, bottom, result) => {
-                        if (result === null)
-                            return null;
-                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
-                            _resultToShow = [];
-                        for (var i = 0; i < _textResult.length; i++) {
-                            if (i === 0 && _textResult[i].trim() === "")
-                                continue;
-                            _resultToShow.push(_textResult[i] + '<br />');
-                        }
-                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
-                        _resultToShow.push('</p>');
-                        this.appendMessage(_resultToShow.join(''), true, true);
-                    },
-                    function (errorcode, errorstring, result) {
-                        alert(errorstring);
-                    }
-                );
-            }
-            else {
-                this.DWObject.Addon.OCR.Recognize(
-                    this.DWObject.CurrentImageIndexInBuffer,
-                    (index, result) => {
-                        if (result === null)
-                            return null;
-                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
-                            _resultToShow = [];
-                        for (var i = 0; i < _textResult.length; i++) {
-                            if (i === 0 && _textResult[i].trim() === "")
-                                continue;
-                            _resultToShow.push(_textResult[i] + '<br />');
-                        }
-                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
-                        _resultToShow.push('</p>');
-                        this.appendMessage(_resultToShow.join(''), true, true);
-                    },
-                    function (errorcode, errorstring, result) {
-                        alert(errorstring);
-                    }
-                );
-            }
-        }
-    }
-
     clearBarcodeRect() {
         if (this.isHtml5) {
             $(".barcodeInfoRect").remove();
@@ -1224,6 +1169,101 @@ export default class DWT extends React.Component {
         $("#btn-readBarcode").text('Read Barcode');
     }
 
+
+
+    initOCR() {
+        this.downloadOCRBasic(true);
+    }
+
+    downloadOCRBasic(bDownloadDLL) {
+        var strOCRPath = Dynamsoft.WebTwainEnv.ResourcesPath + "/OCRResources/OCR.zip",
+            strOCRLangPath = Dynamsoft.WebTwainEnv.ResourcesPath + '/OCRResources/OCRBasicLanguages/English.zip';
+
+        if (bDownloadDLL) {
+            if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
+                this.downloadOCRBasic(false);
+            } else {
+                this.DWObject.Addon.OCR.Download(
+                    strOCRPath,
+                    () => { /*console.log('OCR dll is installed');*/
+                        this.downloadOCRBasic(false);
+                    },
+                    (errorCode, errorString) => {
+                        console.log(errorString);
+                    }
+                );
+            }
+        } else {
+            this.DWObject.Addon.OCR.DownloadLangData(
+                strOCRLangPath,
+                () => {
+                    $("#btn-OCR").show();
+                    $("#btn-OCR").click(() => {
+                        this.DoOCR();
+                    });
+                },
+                function (errorCode, errorString) {
+                    console.log(errorString);
+                });
+        }
+    }
+
+    DoOCR() {
+        if (this.DWObject) {
+            if (!this.checkIfImagesInBuffer()) {
+                alert("Please scan or load an image first.");
+                return;
+            }
+            this.DWObject.Addon.OCR.SetLanguage('eng');
+            this.DWObject.Addon.OCR.SetOutputFormat(window.EnumDWT_OCROutputFormat.OCROF_TEXT);
+            if (this.isSelectedArea) {
+                this.DWObject.Addon.OCR.RecognizeRect(
+                    this.DWObject.CurrentImageIndexInBuffer,
+                    this._iLeft, this._iTop, this._iRight, this._iBottom,
+                    (index, left, top, right, bottom, result) => {
+                        if (result === null)
+                            return null;
+                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
+                            _resultToShow = [];
+                        for (let i = 0; i < _textResult.length; i++) {
+                            if (i === 0 && _textResult[i].trim() === "")
+                                continue;
+                            _resultToShow.push(_textResult[i] + '<br />');
+                        }
+                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
+                        _resultToShow.push('</p>');
+                        this.appendMessage(_resultToShow.join(''), true, true);
+                    },
+                    function (errorcode, errorstring, result) {
+                        alert(errorstring);
+                    }
+                );
+            }
+            else {
+                this.DWObject.Addon.OCR.Recognize(
+                    this.DWObject.CurrentImageIndexInBuffer,
+                    (index, result) => {
+                        if (result === null)
+                            return null;
+                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
+                            _resultToShow = [];
+                        for (let i = 0; i < _textResult.length; i++) {
+                            if (i === 0 && _textResult[i].trim() === "")
+                                continue;
+                            _resultToShow.push(_textResult[i] + '<br />');
+                        }
+                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
+                        _resultToShow.push('</p>');
+                        this.appendMessage(_resultToShow.join(''), true, true);
+                    },
+                    function (errorcode, errorstring, result) {
+                        alert(errorstring);
+                    }
+                );
+            }
+        }
+    }
+
     logResult(results, bBarcode) {
         var strMsg = [];
         if (bBarcode) {
@@ -1233,7 +1273,7 @@ export default class DWT extends React.Component {
                 strMsg.push("<div style='width:100%; text-align:center;'><a href='#'  class='clearRects'> ~~~~~~~~~~~~ Clear ~~~~~~~~~~~~ </a></div>");
                 strMsg.push("<b>Total barcode(s) found: ", results.length, "</b><br /><br /> ");
 
-                for (var i = 0; i < results.length; ++i) {
+                for (let i = 0; i < results.length; ++i) {
                     var result = results[i];
                     var arr = ["<b>Barcode ", (i + 1), "</b><br />",
                         "<b>Type: <span style='color:#fe8e14'>", result.BarcodeFormatString, "</span></b><br />",
@@ -1274,7 +1314,7 @@ export default class DWT extends React.Component {
         } else {
             zoom = this.dwt.showAbleWidth / this.dwt.ImageWidth;
         }
-        for (var i = 0; i < results.length; ++i) {
+        for (let i = 0; i < results.length; ++i) {
             var result = results[i];
             var loc = result.LocalizationResult;
             loc.left = Math.min(loc.X1, loc.X2, loc.X3, loc.X4);
@@ -1433,5 +1473,296 @@ export default class DWT extends React.Component {
         var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
         _chkMultiPagePDF.checked = false;
         _chkMultiPagePDF.disabled = true;
+    }
+    //--------------------------------------------------------------------------------------
+    //*********************************    Webcam    ***************************************
+    //--------------------------------------------------------------------------------------
+
+    refershCameraList() {
+        var arySource = this.DWObject.Addon.Webcam.GetSourceList();
+        if (arySource.length === 0) {
+            alert("Seems there is no webcam connected to your device!");
+        } else {
+            document.getElementById("cameras").length = 1;
+            for (let i = 0; i < arySource.length; i++) {
+                document.getElementById("cameras").options.add(new Option(arySource[i], arySource[i]), i + 1);
+                // Get Webcam Source names and put them in a drop-down box
+            }
+        }
+    }
+
+    camera_onchange() {
+        this.DWObject.Addon.Webcam.StopVideo();
+        let cameraName = document.getElementById("cameras").options[document.getElementById("cameras").selectedIndex].value;
+        if (cameraName === "NotACamera") return;
+        if (this.DWObject.Addon.Webcam.SelectSource(cameraName)) {
+            var mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
+                _mediaTypes = {},
+                _currentmT = mediaTypes.GetCurrent();
+            var frameRates = this.DWObject.Addon.Webcam.GetFrameRate(),
+                _frameRates = {},
+                _currentfR = frameRates.GetCurrent();
+            var resolutions = this.DWObject.Addon.Webcam.GetResolution(),
+                _resolutions = {},
+                _currentRes = resolutions.GetCurrent();
+            var _advancedSettings = {},
+                _advancedCameraSettings = {};
+            mediaTypes = mediaTypes._resultlist;
+            frameRates = frameRates._resultlist;
+            resolutions = resolutions._resultlist;
+            for (let i = 0; i < mediaTypes.length - 1; i++) {
+                if (mediaTypes[i] !== _currentmT)
+                    _mediaTypes["mT-key" + i.toString()] = {
+                        "name": mediaTypes[i].toString()
+                    };
+                else {
+                    _mediaTypes["mT-key" + i.toString()] = {
+                        "name": mediaTypes[i].toString(),
+                        "icon": "checkmark"
+                    };
+                }
+            }
+            for (let i = 0; i < frameRates.length - 1; i++) {
+                if (frameRates[i] !== _currentfR)
+                    _frameRates["fR-key" + i.toString()] = {
+                        "name": frameRates[i].toString()
+                    };
+                else {
+                    _frameRates["fR-key" + i.toString()] = {
+                        "name": frameRates[i].toString(),
+                        "icon": "checkmark"
+                    };
+                }
+            }
+            for (let i = 0; i < resolutions.length - 1; i++) {
+                if (resolutions[i] !== _currentRes)
+                    _resolutions["res-key" + i.toString()] = {
+                        "name": resolutions[i].toString()
+                    };
+                else {
+                    _resolutions["res-key" + i.toString()] = {
+                        "name": resolutions[i].toString(),
+                        "icon": "checkmark"
+                    };
+                }
+            }
+            for (let item in window.EnumDWT_VideoProperty) {
+                _advancedSettings["adv-key" + window.EnumDWT_VideoProperty[item].toString() + "-" + item.substr(3)] = {
+                    "name": item.substr(3)
+                };
+            }
+            for (let item in window.EnumDWT_CameraControlProperty) {
+                _advancedCameraSettings["advc-key" + window.EnumDWT_CameraControlProperty[item].toString() + "-" + item.substr(4)] = {
+                    "name": item.substr(4)
+                };
+            }
+            this.setState({
+                cameraSettings: {
+                    "mT": {
+                        "name": "Media Type",
+                        "items": _mediaTypes
+                    },
+                    "fR": {
+                        "name": "Frame Rate",
+                        "items": _frameRates
+                    },
+                    "res": {
+                        "name": "Resolution",
+                        "items": _resolutions
+                    },
+                    "adv": {
+                        "name": "Advanced Video Setting",
+                        "items": _advancedSettings
+                    },
+                    "advc": {
+                        "name": "Advanced Camera Setting",
+                        "items": _advancedCameraSettings
+                    }
+                }
+            });
+
+            /*return {
+                callback: (key) => {
+                    if (-1 !== key.lastIndexOf("-")) {
+                        var _temp = key.split("-");
+                        var fold = _temp[0];
+                        var item = parseInt(_temp[1].substr(3));
+                        switch (fold) {
+                            default: break;
+                            case "mT":
+                                this.playVideo({
+                                    mT: mediaTypes[item]
+                                });
+                                break;
+                            case "fR":
+                                this.playVideo({
+                                    fR: frameRates[item]
+                                });
+                                break;
+                            case "res":
+                                this.playVideo({
+                                    res: resolutions[item]
+                                });
+                                break;
+                            case "adv":
+                                this.playVideo({
+                                    adv: item,
+                                    title: _temp[2]
+                                });
+                                break;
+                            case "advc":
+                                this.playVideo({
+                                    advc: item,
+                                    title: _temp[2]
+                                });
+                                break;*/
+            this.SetIfWebcamPlayVideo(true);
+        } else {
+            alert("Can't use the Webcam " + document.getElementById("cameras").options[document.getElementById("cameras")
+                .selectedIndex].text + ", please make sure it's not in use!");
+        }
+    }
+
+    playVideo(config) {
+        setTimeout(() => {
+            var basicSetting, moreSetting;
+            if (config) {
+                if (isFinite(config.adv)) {
+                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(config.adv);
+                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(config.adv);
+                    this.showRangePicker({
+                        bCamera: false,
+                        id: config.adv,
+                        value: basicSetting.GetValue(),
+                        min: moreSetting.GetMinValue(),
+                        max: moreSetting.GetMaxValue(),
+                        defaultvalue: moreSetting.GetDefaultValue(),
+                        step: moreSetting.GetSteppingDelta(),
+                        title: config.title
+                    });
+                    return;
+                } else if (isFinite(config.advc)) {
+                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(config.advc);
+                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(config.advc);
+                    this.showRangePicker({
+                        bCamera: true,
+                        id: config.advc,
+                        value: basicSetting.GetValue(),
+                        min: moreSetting.GetMinValue(),
+                        max: moreSetting.GetMaxValue(),
+                        defaultvalue: moreSetting.GetDefaultValue(),
+                        step: moreSetting.GetSteppingDelta(),
+                        title: config.title
+                    });
+                    return;
+                } else {
+                    this.DWObject.Addon.Webcam.StopVideo();
+                    if (config.fR) {
+                        this.DWObject.Addon.Webcam.SetFrameRate(config.fR);
+                    } else if (config.mT) {
+                        this.DWObject.Addon.Webcam.SetMediaType(config.mT);
+                    } else if (config.res) {
+                        this.DWObject.Addon.Webcam.SetResolution(config.res);
+                    }
+                }
+            }
+            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, function () { });
+        }, 30);
+    }
+
+    showRangePicker(property) {
+        $("#ValueSelector").html("");
+        $("#ValueSelector").append(
+            ["<div style='text-align:center'>",
+                "<span class='rangeCurrent' id='currentValue_", property.title, "'>", property.value, "</span><br />",
+                "<span>", property.min, "</span>", "<input type = 'range' min = '",
+                property.min, "' max='", property.max, "' step='",
+                property.step, "' value='", property.value, "'/>",
+                "<span>", property.max, "</span><br /></div>"
+            ].join("")
+        );
+        let rangeCurrentValue = property.value;
+        $("#ValueSelector input").off('change').on('input', function (evt) {
+            rangeCurrentValue = evt.originalEvent.target.value;
+            $("#ValueSelector .rangeCurrent").html(evt.originalEvent.target.value);
+        });
+        let _btn = {
+            "OK": function () {
+                $("#ValueSelector").html("");
+                $(this).dialog("close");
+                setTimeout(function () {
+                    if (property.bCamera) {
+                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, rangeCurrentValue, false);
+                    } else
+                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, rangeCurrentValue, false);
+                }, 100);
+            },
+            "Reset": function () {
+                $("#ValueSelector").html("");
+                $(this).dialog("close");
+                setTimeout(function () {
+                    if (property.bCamera) {
+                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, property.defaultvalue, true);
+                    } else
+                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, property.defaultvalue, true);
+                }, 100);
+            },
+            "Cancle": function () {
+                $("#ValueSelector").html("");
+                $(this).dialog("close");
+            }
+        };
+        $("#ValueSelector").dialog({
+            title: property.title,
+            resizable: true,
+            width: 400,
+            height: "auto",
+            modal: true,
+            buttons: _btn
+        });
+    }
+
+    switchViews() {
+        if (this.isVideoOn === false) {
+            // continue the video
+            this.SetIfWebcamPlayVideo(true);
+        } else {
+            // stop the video
+            this.SetIfWebcamPlayVideo(false);
+        }
+    }
+
+    SetIfWebcamPlayVideo(bShow) {
+        try {
+            if (bShow) {
+                this.DWObject.Addon.Webcam.StopVideo();
+                setTimeout(() => {
+                    this.playVideo();
+                    this.isVideoOn = true;
+                    document.getElementById("btn-grab").style.backgroundColor = "rgb(80, 168, 225)";
+                    document.getElementById("btn-grab").disabled = "";
+                    document.getElementById("btn-switch").innerHTML = "Hide Video";
+                }, 30);
+            } else {
+                this.DWObject.Addon.Webcam.StopVideo();
+                this.isVideoOn = false;
+                document.getElementById("btn-grab").style.backgroundColor = "#aaa";
+                document.getElementById("btn-grab").disabled = "disabled";
+                document.getElementById("btn-switch").innerHTML = "Show Video";
+            }
+        } catch (ex) {
+            console.log(ex);
+        }
+    }
+
+    captureImage() {
+        if (this.DWObject) {
+            var funCaptureImage = () => {
+                setTimeout(() => {
+                    this.SetIfWebcamPlayVideo(false);
+                }, 50);
+            };
+            this.DWObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
+        }
     }
 }

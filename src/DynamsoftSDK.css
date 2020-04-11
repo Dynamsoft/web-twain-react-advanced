@@ -457,32 +457,7 @@ select#Resolution {
     width: 192px;
     height: 26px;
 }
-
-#divProductDetail li {
-    margin-top: 8px;
-}
-
-#divProductDetail li:first-child {
-    margin-top: 3px;
-}
-
-#divProductDetail li label {
-    display: inline-block;
-    margin: 0 28px 0 0;
-    font-size: 12px;
-}
-
-#divProductDetail li label:last-child {
-    margin: 0;
-}
-
-#divProductDetail li label input {
-    width: 15px;
-    height: 15px;
-    vertical-align: middle;
-}
-
-#btnScan, #btn-grab, #btn-switch {
+.majorButton {
     margin-top: 10px;
     margin-bottom: 5px;
     width: 90px;
@@ -504,10 +479,6 @@ select#Resolution {
     margin: 15px 0;
     width: 90px;
     height: 30px;
-}
-
-#div_ScanImage {
-    position: relative;
 }
 
 #tblLoadImage {
@@ -595,6 +566,12 @@ select#Resolution {
 }
 
 /*=============== DWTcontainerBtm ===============*/
+
+#DWTcontainerBody {
+    position: relative;
+    float: left;
+    width: 980px
+}
 
 #DWTcontainerBtm {
     position: relative;
@@ -936,8 +913,6 @@ select#Resolution {
 #demoList .container {
     width: 870px;
 }
-
-#demoList .d-btn {}
 
 #demoList .content table {
     width: 100%;

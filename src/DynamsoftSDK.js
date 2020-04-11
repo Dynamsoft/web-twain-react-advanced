@@ -4,240 +4,343 @@ import Dynamsoft from 'dwt';
 import dynamsoft from 'dynamsoft-sdk';
 import $ from 'jquery';
 
-class UI extends React.Component {
+class DWTView extends React.Component {
+    render() {
+        return (
+            <div id="DWTcontainerTop">
+                <div id="divEdit">
+                    <ul className="operateGrp">
+                        <li><img src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" id="btnEditor" onClick={this.props.btnShowImageEditor} /> </li>
+                        <li><img src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" id="btnRotateL" onClick={this.props.btnRotateLeft} /> </li>
+                        <li><img src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" id="btnRotateR" onClick={this.props.btnRotateRight} /> </li>
+                        <li><img src="Images/Rotate180.png" alt="Rotate 180" title="Rotate 180" onClick={this.props.btnRotate180} /> </li>
+                        <li><img src="Images/Mirror.png" title="Mirror" alt="Mirror" id="btnMirror" onClick={this.props.btnMirror} /> </li>
+                        <li><img src="Images/Flip.png" title="Flip" alt="Flip" id="btnFlip" onClick={this.props.btnFlip} /> </li>
+                        <li><img src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" id="DW_btnRemoveCurrentImage" onClick={this.props.btnRemoveCurrentImage} /></li>
+                        <li><img src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" id="DW_btnRemoveAllImages" onClick={this.props.btnRemoveAllImages} /></li>
+                        <li><img src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" id="btnChangeImageSize" onClick={this.props.btnChangeImageSize} /> </li>
+                        <li><img src="Images/Crop.png" title="Crop" alt="Crop" id="btnCrop" /></li>
+                    </ul>
+                    <div id="ImgSizeEditor" style={{ visibility: "hidden" }}>
+                        <ul>
+                            <li>
+                                <label htmlFor="img_height">New Height :
+                                <input type="text" id="img_height" style={{ width: "50%" }} size="10" />
+                                pixel</label>
+                            </li>
+                            <li>
+                                <label htmlFor="img_width">New Width :&nbsp;
+                                <input type="text" id="img_width" style={{ width: "50%" }} size="10" />
+                                pixel</label>
+                            </li>
+                            <li>Interpolation method:
+                            <select size="1" id="InterpolationMethod">
+
+                                    <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
+                            </li>
+                            <li style={{ textAlign: "center" }}>
+                                <input type="button" value="   OK   " id="btnChangeImageSizeOK" onClick={this.props.btnChangeImageSizeOK} />
+                                <input type="button" value=" Cancel " id="btnCancelChange" onClick={this.props.btnCancelChange} />
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div id={this.props.containerId}></div>
+                <div id="btnGroupBtm" className="clearfix">
+                    <div className="ct-lt">Page:
+                        <button name="control-changePage" id="DW_btnFirstImage" onClick={this.props.btnFirstImage}> |&lt; </button>
+                        &nbsp;
+                        <button name="control-changePage" id="DW_btnPreImage" onClick={this.props.btnPreImage}> &lt; </button>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <input name="control-changePage" type="text" size="2" id="DW_CurrentImage" readOnly="readonly" />
+                        /
+                        <input name="control-changePage" type="text" size="2" id="DW_TotalImage" readOnly="readonly" />
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <button name="control-changePage" id="DW_btnNextImage" onClick={this.props.btnNextImage}> &gt; </button>
+                        &nbsp;
+                        <button name="control-changePage" id="DW_btnLastImage" onClick={this.props.btnLastImage}> &gt;| </button>
+                    </div>
+                    <div className="ct-rt">Preview Mode:
+                        <select name="control-changePage" size="1" id="DW_PreviewMode" onChange={this.props.setlPreviewMode}>
+                            <option value="0">1X1</option>
+                            <option value="1">2X2</option>
+                            <option value="2">3X3</option>
+                            <option value="3">4X4</option>
+                            <option value="4">5X5</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
+
+class DWTController extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleScannerSetupChange = this.handleScannerSetupChange.bind(this);
+        this.handleSourceChange = this.handleSourceChange.bind(this);
+        this.handleCameraChange = this.handleCameraChange.bind(this);
+    }
+    handleScannerSetupChange(e, option) {
+        switch (option.substr(0, 1)) {
+            default: break;
+            case "b":
+                this.props.onScannerSetupChange(option, "b", e.target.checked);
+                break;
+            case "n":
+                this.props.onScannerSetupChange(option, "n", e.target.value);
+                break;
+        }
+    }
+    handleSourceChange(e) {
+        this.props.onSourceChange(e.target.value);
+    }
+    handleCameraChange(e) {
+        this.props.onCameraChange(e.target.value);
+    }
+    render() {
+        return (
+            <div id="ScanWrapper">
+                <div id="divScanner" className="divinput">
+                    <ul className="PCollapse">
+                        <li>
+                            <div className="divType" selfvalue="scan">
+                                <div className="mark_arrow expanded"></div>
+                                    Custom Scan</div>
+                            <div className="divTableStyle">
+                                <ul>
+                                    <li>
+                                        <p>Select Source:</p>
+                                        <select value={this.props.deviceSetup.currentScanner} style={{ width: "100%" }} onChange={this.handleSourceChange}>
+                                            {
+                                                this.props.scanners.length > 0 ?
+                                                    this.props.scanners.map((_name, _index) =>
+                                                        <option value={_name} key={_index}>{_name}</option>
+                                                    )
+                                                    :
+                                                    <option value="noscanner">Looking for devices..</option>
+                                            }
+                                        </select>
+                                    </li>
+                                    <li>
+                                        <ul>
+                                            <li>
+                                                {
+                                                    this.props.deviceSetup.noUI ? "" : (
+                                                        <span style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
+                                                            checked={this.props.deviceSetup.bShowUI}
+                                                            onChange={(e) => this.handleScannerSetupChange(e, "bShowUI")}
+                                                        />Show UI&nbsp;</span>
+                                                    )
+                                                }
+                                                <span style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
+                                                    checked={this.props.deviceSetup.bADF}
+                                                    onChange={(e) => this.handleScannerSetupChange(e, "bADF")}
+                                                />Page Feeder&nbsp;</span>
+                                                <span style={{ width: "32%" }}><input type="checkbox"
+                                                    checked={this.props.deviceSetup.bDuplex}
+                                                    onChange={(e) => this.handleScannerSetupChange(e, "bDuplex")}
+                                                />Duplex</span>
+                                            </li>
+                                            <li>
+                                                <select style={{ width: "48%", marginRight: "4%" }}
+                                                    value={this.props.deviceSetup.nPixelType}
+                                                    onChange={(e) => this.handleScannerSetupChange(e, "nPixelType")}>
+                                                    <option value="0">B&amp;W</option>
+                                                    <option value="1">Gray</option>
+                                                    <option value="2">Color</option>
+                                                </select>
+                                                <select style={{ width: "48%" }}
+                                                    value={this.props.deviceSetup.nResolution}
+                                                    onChange={(e) => this.handleScannerSetupChange(e, "nResolution")}>
+                                                    <option value="100">100 DPI</option>
+                                                    <option value="200">200 DPI</option>
+                                                    <option value="300">300 DPI</option>
+                                                </select>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li className="tc">
+                                        <button className="majorButton" onClick={this.props.acquireImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "100%" }}>Scan</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div className="divType" selfvalue="capture">
+                                <div className="mark_arrow collapsed"></div>
+                                    Use Webcams</div>
+                            <div style={{ display: "none" }} className="divTableStyle">
+                                <ul>
+                                    <li>
+                                        <p>Select a Camera:</p>
+                                        <select value={this.props.currentCamera} style={{ width: "100%" }} onChange={this.handleCameraChange}>
+                                            {
+                                                this.props.cameras.length > 0 ?
+                                                    this.props.cameras.map((_name, _index) =>
+                                                        <option value={_index} key={_index}>{_name}</option>
+                                                    )
+                                                    :
+                                                    <option value="nocamera">Looking for devices..</option>
+                                            }
+                                        </select>
+                                        <ul>{
+                                            Object.values(this.props.cameraSettings).map((topItem, key) =>
+                                                <li>{topItem.name}</li>
+                                            )
+                                        }</ul>
+                                    </li>
+                                    <li className="tc">
+                                        <button className="majorButton" onClick={this.props.switchViews} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "48%" }}>Show Video</button>
+                                        <button className="majorButton" onClick={this.props.captureImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", marginLeft: "2%", cursor: "pointer", width: "48%" }}>Capture</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li id="liLoadImage">
+                            <div className="divType" selfvalue="load">
+                                <div className="mark_arrow collapsed"></div>
+                                    Load Images or PDFs</div>
+                            <div id="div_LoadLocalImage" style={{ display: "none" }} className="divTableStyle">
+                                <ul>
+                                    <li className="tc">
+                                        <button className="btnOrg" onClick={this.props.btnLoadImagesOrPDFs} style={{ width: "100%" }}>Load</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div className="divType" selfvalue="save">
+                                <div className="mark_arrow collapsed"></div>
+                                    Save Documents</div>
+                            <div id="div_SaveImages" style={{ display: "none" }} className="divTableStyle">
+                                <ul>
+                                    <li>
+                                        <label htmlFor="txt_fileName" style={{ width: "100%" }}>
+                                            <span style={{ width: "25%" }}>File Name:</span>
+                                            <input style={{ width: "70%", marginLeft: "2%" }} type="text" size="20" id="txt_fileName" />
+                                        </label>
+                                    </li>
+                                    <li style={{ paddingRight: "0" }}>
+                                        <label htmlFor="imgTypebmp">
+                                            <input type="radio" value="bmp" name="ImageType" id="imgTypebmp" onClick={this.props.rd} />
+                                    BMP</label>
+                                        <label htmlFor="imgTypejpeg">
+                                            <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" onClick={this.props.rd} />
+                                    JPEG</label>
+                                        <label htmlFor="imgTypetiff">
+                                            <input type="radio" value="tif" name="ImageType" id="imgTypetiff" onClick={this.props.rdTIFF} />
+                                    TIFF</label>
+                                        <label htmlFor="imgTypepng">
+                                            <input type="radio" value="png" name="ImageType" id="imgTypepng" onClick={this.props.rd} />
+                                    PNG</label>
+                                        <label htmlFor="imgTypepdf">
+                                            <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" onClick={this.props.rdPDF} />
+                                    PDF</label>
+                                    </li>
+                                    <li>
+                                        <label htmlFor="MultiPageTIFF">
+                                            <input type="checkbox" id="MultiPageTIFF" disabled="" />
+                                    Multi-Page TIFF</label>
+                                        <label htmlFor="MultiPagePDF">
+                                            <input type="checkbox" id="MultiPagePDF" disabled="" />
+                                    Multi-Page PDF</label>
+                                    </li>
+                                    <li>
+                                        <button id="btnSave" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('local') }} >Save to Local</button>
+                                        <button id="btnUpload" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('server') }} >Upload to Server</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div className="divType" selfvalue="recognize">
+                                <div className="mark_arrow collapsed"></div>
+                                    Recognize</div>
+                            <div id="div_Recognize" style={{ display: "none" }} className="divTableStyle">
+                                <ul>
+                                    <li className="tc">
+                                        <button className="btnOrg" id="btn-readBarcode" style={{ width: "47%" }} >Read Barcode</button>
+                                        <button className="btnOrg" id="btn-OCR" style={{ marginLeft: "2%", width: "47%" }}>OCR (English)</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        );
+    }
+}
+
+class DWTOutPut extends React.Component {
+    render() {
+        return (
+            <div id="DWTemessageContainer"></div>
+        );
+    }
+}
+
+class DynamsoftNotes extends React.Component {
+    render() {
+        return (
+            <div id="divNoteMessage"> </div>
+        );
+    }
+}
+
+class DWTUserInterface extends React.Component {
     render() {
         return (
             <div id="DWTcontainer" className="container">
-                <div id="DWTcontainerTop">
-                    <div id="divEdit">
-                        <ul className="operateGrp">
-                            <li><img src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" id="btnEditor" onClick={this.props.btnShowImageEditor} /> </li>
-                            <li><img src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" id="btnRotateL" onClick={this.props.btnRotateLeft} /> </li>
-                            <li><img src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" id="btnRotateR" onClick={this.props.btnRotateRight} /> </li>
-                            <li><img src="Images/Rotate180.png" alt="Rotate 180" title="Rotate 180" onClick={this.props.btnRotate180} /> </li>
-                            <li><img src="Images/Mirror.png" title="Mirror" alt="Mirror" id="btnMirror" onClick={this.props.btnMirror} /> </li>
-                            <li><img src="Images/Flip.png" title="Flip" alt="Flip" id="btnFlip" onClick={this.props.btnFlip} /> </li>
-                            <li><img src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" id="DW_btnRemoveCurrentImage" onClick={this.props.btnRemoveCurrentImage} /></li>
-                            <li><img src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" id="DW_btnRemoveAllImages" onClick={this.props.btnRemoveAllImages} /></li>
-                            <li><img src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" id="btnChangeImageSize" onClick={this.props.btnChangeImageSize} /> </li>
-                            <li><img src="Images/Crop.png" title="Crop" alt="Crop" id="btnCrop" /></li>
-                        </ul>
-                        <div id="ImgSizeEditor" style={{ visibility: "hidden" }}>
-                            <ul>
-                                <li>
-                                    <label htmlFor="img_height">New Height :
-                                        <input type="text" id="img_height" style={{ width: "50%" }} size="10" />
-                                        pixel</label>
-                                </li>
-                                <li>
-                                    <label htmlFor="img_width">New Width :&nbsp;
-                                        <input type="text" id="img_width" style={{ width: "50%" }} size="10" />
-                                        pixel</label>
-                                </li>
-                                <li>Interpolation method:
-                                    <select size="1" id="InterpolationMethod">
+                <div id="DWTcontainerBody" style={{ textAlign: "left" }} className="clearfix">
+                    <DWTView
+                        containerId={this.props.containerId}
+                        btnShowImageEditor={() => this.btnShowImageEditor()}
+                        btnRotateLeft={() => this.props.btnRotateLeft()}
+                        btnRotateRight={() => this.props.btnRotateRight()}
+                        btnRotate180={() => this.props.btnRotate180()}
+                        btnMirror={() => this.props.btnMirror()}
+                        btnFlip={() => this.props.btnFlip()}
+                        //btnCrop={() => this.props.btnCrop()}
+                        btnRemoveCurrentImage={() => this.props.btnRemoveCurrentImage()}
+                        btnRemoveAllImages={() => this.props.btnRemoveAllImages()}
+                        btnChangeImageSize={() => this.props.btnChangeImageSize()}
+                        btnChangeImageSizeOK={() => this.props.btnChangeImageSizeOK()}
+                        btnCancelChange={() => this.props.btnCancelChange()}
 
-                                        <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
-                                </li>
-                                <li style={{ textAlign: "center" }}>
-                                    <input type="button" value="   OK   " id="btnChangeImageSizeOK" onClick={this.props.btnChangeImageSizeOK} />
-                                    <input type="button" value=" Cancel " id="btnCancelChange" onClick={this.props.btnCancelChange} />
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div id={this.props.containerId}></div>
-                    <div id="btnGroupBtm" className="clearfix">
-                        <div className="ct-lt">Page:
-                        <button name="dwt-changePage" id="DW_btnFirstImage" onClick={this.props.btnFirstImage}> |&lt; </button>
-                            &nbsp;
-                        <button name="dwt-changePage" id="DW_btnPreImage" onClick={this.props.btnPreImage}> &lt; </button>
-                            &nbsp;&nbsp;&nbsp;&nbsp;
-                        <input name="dwt-changePage" type="text" size="2" id="DW_CurrentImage" readOnly="readonly" />
-                            /
-                        <input name="dwt-changePage" type="text" size="2" id="DW_TotalImage" readOnly="readonly" />
-                            &nbsp;&nbsp;&nbsp;&nbsp;
-                        <button name="dwt-changePage" id="DW_btnNextImage" onClick={this.props.btnNextImage}> &gt; </button>
-                            &nbsp;
-                        <button name="dwt-changePage" id="DW_btnLastImage" onClick={this.props.btnLastImage}> &gt;| </button>
-                        </div>
-                        <div className="ct-rt">Preview Mode:
-                        <select name="dwt-changePage" size="1" id="DW_PreviewMode" onChange={this.props.setlPreviewMode}>
-                                <option value="0">1X1</option>
-                                <option value="1">2X2</option>
-                                <option value="2">3X3</option>
-                                <option value="3">4X4</option>
-                                <option value="4">5X5</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div id="ScanWrapper">
-                    <div id="divScanner" className="divinput">
-                        <ul className="PCollapse">
-                            <li>
-                                <div className="divType" selfvalue="scan">
-                                    <div className="mark_arrow expanded"></div>
-                                    Custom Scan</div>
-                                <div id="div_ScanImage" className="divTableStyle">
-                                    <ul id="ulScaneImageHIDE">
-                                        <li>
-                                            <label htmlFor="source">
-                                                <p>Select Source:</p>
-                                            </label>
-                                            <select size="1" id="source" style={{ position: "relative" }} onChange={this.props.source_onchange}>
-                                                <option value="0">Looking for devices..</option></select>
-                                        </li>
-                                        <li id="divProductDetail">
-                                            <ul id="divTwainType">
-                                                <li>
-                                                    <label id="lblShowUI" htmlFor="ShowUI">
-                                                        <input type="checkbox" id="ShowUI" />Show UI&nbsp;
-                                                </label>
-                                                    <label htmlFor="ADF">
-                                                        <input type="checkbox" id="ADF" />AutoFeeder&nbsp;
-                                                </label>
-                                                    <label htmlFor="Duplex">
-                                                        <input type="checkbox" id="Duplex" />Duplex
-                                                </label>
-                                                </li>
-                                                <li>Pixel Type:
-                                                <label htmlFor="BW" style={{ marginLeft: "5px" }}>
-                                                        <input type="radio" id="BW" name="PixelType" />B&amp;W
-                                                </label>
-                                                    <label htmlFor="Gray">
-                                                        <input type="radio" id="Gray" name="PixelType" />Gray
-                                                </label>
-                                                    <label htmlFor="RGB">
-                                                        <input type="radio" id="RGB" name="PixelType" />Color
-                                                </label>
-                                                </li>
-                                                <li>
-                                                    <span>Resolution:</span>
-                                                    <select size="1" id="Resolution">
-                                                        <option value="100">100</option>
-                                                        <option value="200">200</option>
-                                                        <option value="300">300</option>
-                                                    </select>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li className="tc">
-                                            <button id="btnScan" onClick={this.props.acquireImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "100%" }}>Scan</button>
-                                        </li>
-                                    </ul>
-                                    <div id="tblLoadImage" style={{ visibility: "hidden" }}>
-                                        <a href="return false" className="ClosetblLoadImage"><img src="Images/icon-ClosetblLoadImage.png" alt="Close tblLoadImage" /></a>
-                                        <p>You can Install a Virtual Scanner:</p>
-                                        <p>
-                                            <a id="samplesource32bit" href="https://download.dynamsoft.com/tool/twainds.win32.installer.2.1.3.msi">32-bit Sample Source</a>
-                                            <a id="samplesource64bit" style={{ display: "none" }} href="https://download.dynamsoft.com/tool/twainds.win64.installer.2.1.3.msi">64-bit Sample Source</a> from
-                                        <a target="_blank" rel="noopener noreferrer" href="http://www.twain.org">TWG</a>
-                                        </p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div className="divType" selfvalue="capture">
-                                    <div className="mark_arrow collapsed"></div>
-                                    Use Webcams</div>
-                                <div id="div_CaptureImage" style={{ display: "none" }} className="divTableStyle">
-                                    <ul id="ulCaptureImageHIDE">
-                                        <li>
-                                            <label htmlFor="cameras">
-                                                <p>Select a Camera:</p>
-                                                <select size="1" id="cameras" style={{ position: "relative" }} onChange={this.props.camera_onchange}>
-                                                    <option value="NotACamera">Select a Camera..</option>
-                                                </select>
-                                                <ul>{
-                                                    Object.values(this.props.cameraSettings).map((topItem, key) =>
-                                                        <li>{topItem.name}</li>
-                                                    )
-                                                }</ul>
-                                            </label>
-                                        </li>
-                                        <li className="tc">
-                                            <button id="btn-switch" onClick={this.props.switchViews} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "48%" }}>Show Video</button>
-                                            <button id="btn-grab" onClick={this.props.captureImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", marginLeft: "2%", cursor: "pointer", width: "48%" }}>Capture</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li id="liLoadImage">
-                                <div className="divType" selfvalue="load">
-                                    <div className="mark_arrow collapsed"></div>
-                                    Load Images or PDFs</div>
-                                <div id="div_LoadLocalImage" style={{ display: "none" }} className="divTableStyle">
-                                    <ul>
-                                        <li className="tc">
-                                            <button className="btnOrg" onClick={this.props.btnLoadImagesOrPDFs} style={{ width: "100%" }}>Load</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li>
-                                <div className="divType" selfvalue="save">
-                                    <div className="mark_arrow collapsed"></div>
-                                    Save Documents</div>
-                                <div id="div_SaveImages" style={{ display: "none" }} className="divTableStyle">
-                                    <ul>
-                                        <li>
-                                            <label htmlFor="txt_fileName" style={{ width: "100%" }}>
-                                                <span style={{ width: "25%" }}>File Name:</span>
-                                                <input style={{ width: "70%", marginLeft: "2%" }} type="text" size="20" id="txt_fileName" />
-                                            </label>
-                                        </li>
-                                        <li style={{ paddingRight: "0" }}>
-                                            <label htmlFor="imgTypebmp">
-                                                <input type="radio" value="bmp" name="ImageType" id="imgTypebmp" onClick={this.props.rd} />
-                                    BMP</label>
-                                            <label htmlFor="imgTypejpeg">
-                                                <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" onClick={this.props.rd} />
-                                    JPEG</label>
-                                            <label htmlFor="imgTypetiff">
-                                                <input type="radio" value="tif" name="ImageType" id="imgTypetiff" onClick={this.props.rdTIFF} />
-                                    TIFF</label>
-                                            <label htmlFor="imgTypepng">
-                                                <input type="radio" value="png" name="ImageType" id="imgTypepng" onClick={this.props.rd} />
-                                    PNG</label>
-                                            <label htmlFor="imgTypepdf">
-                                                <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" onClick={this.props.rdPDF} />
-                                    PDF</label>
-                                        </li>
-                                        <li>
-                                            <label htmlFor="MultiPageTIFF">
-                                                <input type="checkbox" id="MultiPageTIFF" disabled="" />
-                                    Multi-Page TIFF</label>
-                                            <label htmlFor="MultiPagePDF">
-                                                <input type="checkbox" id="MultiPagePDF" disabled="" />
-                                    Multi-Page PDF</label>
-                                        </li>
-                                        <li>
-                                            <button id="btnSave" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('local') }} >Save to Local</button>
-                                            <button id="btnUpload" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('server') }} >Upload to Server</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li>
-                                <div className="divType" selfvalue="recognize">
-                                    <div className="mark_arrow collapsed"></div>
-                                    Recognize</div>
-                                <div id="div_Recognize" style={{ display: "none" }} className="divTableStyle">
-                                    <ul>
-                                        <li className="tc">
-                                            <button className="btnOrg" id="btn-readBarcode" style={{ width: "47%" }} >Read Barcode</button>
-                                            <button className="btnOrg" id="btn-OCR" style={{ marginLeft: "2%", width: "47%" }}>OCR (English)</button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+                        btnFirstImage={() => this.props.btnFirstImage()}
+                        //btnPreImage_wheel={() => this.props.btnPreImage_wheel()}
+                        //btnNextImage_wheel={() => this.props.btnNextImage_wheel()}
+                        btnPreImage={() => this.props.btnPreImage()}
+                        btnNextImage={() => this.props.btnNextImage()}
+                        btnLastImage={() => this.props.btnLastImage()}
+                        setlPreviewMode={() => this.props.setlPreviewMode()}
+                    />
+                    <DWTController
+                        scanners={this.props.scanners}
+                        cameras={this.props.cameras}
+                        deviceSetup={this.props.deviceSetup}
+                        cameraSettings={this.props.cameraSettings}
+
+                        acquireImage={() => this.props.acquireImage()}
+                        onScannerSetupChange={(option, type, value) => this.props.onScannerSetupChange(option, type, value)}
+                        onSourceChange={(value) => this.props.onSourceChange(value)}
+                        onCameraChange={(value) => this.props.onCameraChange(value)}
+
+                        switchViews={() => this.props.switchViews()}
+                        captureImage={() => this.props.captureImage()}
+                        btnLoadImagesOrPDFs={() => this.props.btnLoadImagesOrPDFs()}
+                        btnShowImageEditor={() => this.props.btnShowImageEditor()}
+                        rdTIFF={() => this.props.rdTIFF()}
+                        rdPDF={() => this.props.rdPDF()}
+                        rd={() => this.props.rd()}
+                    />
                 </div>
                 <div id="DWTcontainerBtm" style={{ textAlign: "left" }} className="clearfix">
-                    <div id="DWTemessageContainer"></div>
-                    <div id="divNoteMessage"> </div>
+                    <DWTOutPut />
+                    <DynamsoftNotes />
                 </div>
             </div>
         );
@@ -248,27 +351,45 @@ export default class DWT extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            cameraSettings: {}
+            dwt: null,
+            zones: {
+                count: 0,
+                rects: [] //x,y,width,height
+            },
+            scanners: [],
+            deviceSetup: {
+                currentScanner: "Looking for devices..",
+                currentCamera: "Looking for devices..",
+                bShowUI: false,
+                bADF: false,
+                bDuplex: false,
+                nPixelType: "0",
+                nResolution: "100"
+            },
+            cameras: [],
+            cameraSettings: {},
+            exception: {}
         };
     }
     isHtml5 = !!(Dynamsoft.Lib.env.bWin && Dynamsoft.Lib.product.bChromeEdition);
-    DWObject = null;
     isVideoOn = false;
+    isSelectedArea = false;
+    DWObject = null;
+    dbrObject = null;
     containerId = 'dwtcontrolContainer';
     productKey = 't0140cQMAAGnOvWTyoOR4HEFckJJmzMWpZcPSHyXGAvYGxgEkg5fBnRoFPslaAayuNOe5B/gp7plUCIUAtf6Ttb98d7Ifv/3A6Mxsu7CZLJhKHUuMorfuu/E/ZrOfuSyoMz7zjXKjgvHcMO1HiGbvyHv+GBWM54ZpP4Wej2RorGBUMJ4b4tx40yqnXlIiqvs=';
     _strTempStr = '';
     re = /^\d+$/;
     strre = /^[\s\w]+$/;
     refloat = /^\d+\.*\d*$/i;
-    isSelectedArea = false;
+    showAbleWidthOri = 0;
+    showAbleHeightOri = 0;
     _iLeft = 0;
     _iTop = 0;
     _iRight = 0;
     _iBottom = 0;
-    DWTSourceCount = 0;
-    dwt = {};
-    showAbleWidthOri = 0;
-    showAbleHeightOri = 0;
+    _DWObject = {};
+
     dwtChangePageBtns = null;
     componentDidMount() {
         if (Dynamsoft && (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition)) {
@@ -286,8 +407,11 @@ export default class DWT extends React.Component {
         Dynamsoft.WebTwainEnv.RegisterEvent('OnWebTwainReady', () => {
             this.showAbleWidthOri = $("#" + this.containerId).width() - 2;//2 for border
             this.showAbleHeightOri = $("#" + this.containerId).height() - 4;//4 for border
-            this.dwtChangePageBtns = $("button[name='dwt-changePage']");
-            this.DWObject = Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId);
+            this.dwtChangePageBtns = $("button[name='control-changePage']");
+            this.setState({
+                dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId)
+            })
+            this.DWObject = this.state.dwt;
             if (this.DWObject) {
                 this.DWObject.RegisterEvent("OnPostTransfer", () => {
                     this.updatePageInfo();
@@ -300,64 +424,44 @@ export default class DWT extends React.Component {
                     this.updatePageInfo();
                     this.checkErrorString();
                 });
-                this.DWObject.RegisterEvent('OnImageAreaSelected', (index, left, top, right, bottom) => {
-                    this._iLeft = left;
-                    this._iTop = top;
-                    this._iRight = right;
-                    this._iBottom = bottom;
-                    this.isSelectedArea = true;
+                this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
+                    let oldReacts = this.state.zones.rects;
+                    oldReacts.push({ x: left, y: top, width: right - left, height: bottom - top });
+                    this.setState({
+                        zones: {
+                            count: sAreaIndex,
+                            rects: oldReacts
+                        }
+                    });
                 });
-                this.DWObject.RegisterEvent('OnImageAreaDeSelected', (index) => {
-                    this.isSelectedArea = false;
-                    this._iLeft = 0;
-                    this._iTop = 0;
-                    this._iRight = 0;
-                    this._iBottom = 0;
+                this.DWObject.RegisterEvent('OnImageAreaDeSelected', (nImageIndex) => {
+                    this.setState({
+                        zones: {
+                            count: 0,
+                            rects: []
+                        }
+                    });
                 });
-                this.DWObject.RegisterEvent("OnGetFilePath", (bSave, count, index, path, name) => { });
                 this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => {
-                    this._iLeft = 0;
-                    this._iTop = 0;
-                    this._iRight = 0;
-                    this._iBottom = 0;
+                    this.setState({
+                        zones: {
+                            count: 0,
+                            rects: []
+                        }
+                    });
                     this.DWObject.CurrentImageIndexInBuffer = index;
                     this.updatePageInfo();
                 });
-                this.DWObject.RegisterEvent("OnMouseClick", () => {
 
-                });
-                $('#DWTNonInstallContainerID').hide();
-
-                var twainsource = document.getElementById("source");
-                var vCount = this.DWObject.SourceCount;
-                this.DWTSourceCount = vCount;
-
-                if (twainsource) {
-                    twainsource.options.length = 0;
-                    for (let i = 0; i < vCount; i++) {
-                        twainsource.options.add(new Option(this.DWObject.GetSourceNameItems(i), i));
-                    }
-                }
-                var liNoScanner = document.getElementById("pNoScanner");
-                // If source list need to be displayed, fill in the source items.
-                if (vCount === 0) {
-                    if (liNoScanner) {
-                        if (Dynamsoft.Lib.env.bWin) {
-
-                            liNoScanner.style.display = "block";
-                            liNoScanner.style.textAlign = "center";
-                        }
-                        else
-                            liNoScanner.style.display = "none";
-                    }
-                }
-                if (vCount > 0) {
-                    this.source_onchange(false);
-                }
+                let vCount = this.DWObject.SourceCount;
+                let sourceNames = [];
+                for (let i = 0; i < vCount; i++)
+                    sourceNames.push(this.DWObject.GetSourceNameItems(i));
+                this.setState({ scanners: sourceNames });
+                this.source_onchange("firstScanner");
                 this.refershCameraList();
                 if (Dynamsoft.Lib.env.bWin)
                     this.DWObject.MouseShape = false;
-
                 var btnScan = document.getElementById("btnScan");
                 if (btnScan) {
                     if (vCount === 0)
@@ -368,43 +472,6 @@ export default class DWT extends React.Component {
                         document.getElementById("btnScan").style.backgroundColor = "#50a8e1";
                         document.getElementById("btnScan").style.cursor = "pointer";
                     }
-                }
-
-                if (!Dynamsoft.Lib.env.bWin && vCount > 0) {
-                    if (document.getElementById("lblShowUI"))
-                        document.getElementById("lblShowUI").style.display = "none";
-                    if (document.getElementById("ShowUI"))
-                        document.getElementById("ShowUI").style.display = "none";
-                }
-                else {
-                    if (document.getElementById("lblShowUI"))
-                        document.getElementById("lblShowUI").style.display = "";
-                    if (document.getElementById("ShowUI"))
-                        document.getElementById("ShowUI").style.display = "";
-                }
-
-                for (let i = 0; i < document.links.length; i++) {
-                    if (document.links[i].className === "ShowtblLoadImage") {
-                        document.links[i].onclick = this.showtblLoadImage;
-                    }
-                    if (document.links[i].className === "ClosetblLoadImage") {
-                        document.links[i].onclick = this.closetblLoadImage;
-                    }
-                }
-                if (vCount === 0) {
-                    if (Dynamsoft.Lib.env.bWin) {
-                        if (document.getElementById("aNoScanner") && window['bDWTOnlineDemo']) {
-                            if (document.getElementById("div_ScanImage").style.display === "")
-                                this.showtblLoadImage();
-                        }
-                        if (document.getElementById("Resolution"))
-                            document.getElementById("Resolution").style.display = "none";
-                    }
-                }
-                else {
-                    var divBlank = document.getElementById("divBlank");
-                    if (divBlank)
-                        divBlank.style.display = "none";
                 }
                 this.updatePageInfo();
                 this.setDefaultValue();
@@ -420,26 +487,26 @@ export default class DWT extends React.Component {
         this.InitDWTdivMsg(false);
         this.loadDWT();
 
-        $("ul.PCollapse li>div").click(function () {
-            switch ($(this).attr("selfvalue")) {
+        $("ul.PCollapse li>div").click(function (event) {
+            let _this = $(event.target);
+            switch (_this.attr("selfvalue")) {
                 case "capture":
                     break;
                 case "scan":
                 case "load":
                 case "save":
-                    Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId).Addon.Webcam.StopVideo();
-                    document.getElementById("cameras").selectedIndex = 0; break;
+                    this.DWObject.Addon.Webcam.StopVideo(); break;
                 default: break;
             }
-            if ($(this).next().css("display") === "none") {
+            if (_this.next().css("display") === "none") {
                 $(".divType").next().hide("normal");
                 $(".divType").children(".mark_arrow").removeClass("expanded");
                 $(".divType").children(".mark_arrow").addClass("collapsed");
-                $(this).next().show("normal");
-                $(this).children(".mark_arrow").removeClass("collapsed");
-                $(this).children(".mark_arrow").addClass("expanded");
+                _this.next().show("normal");
+                _this.children(".mark_arrow").removeClass("collapsed");
+                _this.children(".mark_arrow").addClass("expanded");
             }
-        });
+        }.bind(this));
 
     }
 
@@ -467,6 +534,7 @@ export default class DWT extends React.Component {
         if (document.getElementById("DW_TotalImage") && document.getElementById("DW_CurrentImage")) {
             if (document.getElementById("DW_CurrentImage").value === this.DWObject.CurrentImageIndexInBuffer + 1 &&
                 document.getElementById("DW_TotalImage").value === this.DWObject.HowManyImagesInBuffer)
+                // no page change
                 return;
         }
         else
@@ -477,11 +545,11 @@ export default class DWT extends React.Component {
         this.updateBtnsState();
         this.clearBarcodeRect();
         if (this.checkIfImagesInBuffer(false)) {
-            this.dwt.curImageTimeStamp = (new Date()).getTime();
-            this.dwt.showAbleWidth = this.DWObject.HowManyImagesInBuffer > 1 ? this.showAbleWidthOri - 16 : this.showAbleWidthOri;
-            this.dwt.showAbleHeight = this.showAbleHeightOri;
-            this.dwt.ImageWidth = this.DWObject.GetImageWidth(this.DWObject.CurrentImageIndexInBuffer);
-            this.dwt.ImageHeight = this.DWObject.GetImageHeight(this.DWObject.CurrentImageIndexInBuffer);
+            this._DWObject.curImageTimeStamp = (new Date()).getTime();
+            this._DWObject.showAbleWidth = this.DWObject.HowManyImagesInBuffer > 1 ? this.showAbleWidthOri - 16 : this.showAbleWidthOri;
+            this._DWObject.showAbleHeight = this.showAbleHeightOri;
+            this._DWObject.ImageWidth = this.DWObject.GetImageWidth(this.DWObject.CurrentImageIndexInBuffer);
+            this._DWObject.ImageHeight = this.DWObject.GetImageHeight(this.DWObject.CurrentImageIndexInBuffer);
         }
     }
 
@@ -508,46 +576,26 @@ export default class DWT extends React.Component {
     }
 
     acquireImage() {
-        var cIndex = document.getElementById("source").selectedIndex;
-        if (cIndex < 0)
-            return;
-
-        this.DWObject.SelectSourceByIndex(cIndex);
         this.DWObject.CloseSource();
         this.DWObject.OpenSource();
-        this.DWObject.IfShowUI = document.getElementById("ShowUI").checked;
-
-        for (let i = 0; i < 3; i++) {
-            if (document.getElementsByName("PixelType").item(i).checked === true)
-                this.DWObject.PixelType = i;
-        }
-        if (this.DWObject.ErrorCode !== 0) {
-            this.appendMessage('<b>Error setting PixelType value: </b>');
-            this.appendMessage("<span style='color:#cE5E04'><b>" + this.DWObject.ErrorString + "</b></span><br />");
-        }
-        this.DWObject.Resolution = document.getElementById("Resolution").value;
-        if (this.DWObject.ErrorCode !== 0) {
-            this.appendMessage('<b>Error setting Resolution value: </b>');
-            this.appendMessage("<span style='color:#cE5E04'><b>" + this.DWObject.ErrorString + "</b></span><br />");
-        }
-
-        var bADFChecked = document.getElementById("ADF").checked;
-        this.DWObject.IfFeederEnabled = bADFChecked;
-        if (bADFChecked === true && this.DWObject.ErrorCode !== 0) {
-            this.appendMessage('<b>Error setting ADF value: </b>');
-            this.appendMessage("<span style='color:#cE5E04'><b>" + this.DWObject.ErrorString + "</b></span><br />");
-        }
-
-        var bDuplexChecked = document.getElementById("Duplex").checked;
-        this.DWObject.IfDuplexEnabled = bDuplexChecked;
-        if (bDuplexChecked === true && this.DWObject.ErrorCode !== 0) {
-            this.appendMessage('<b>Error setting Duplex value: </b>');
-            this.appendMessage("<span style='color:#cE5E04'><b>" + this.DWObject.ErrorString + "</b></span><br />");
-        }
-        if (Dynamsoft.Lib.env.bWin || (!Dynamsoft.Lib.env.bWin && this.DWObject.ImageCaptureDriverType === 0))
-            this.appendMessage("Pixel Type: " + this.DWObject.PixelType + "<br />Resolution: " + this.DWObject.Resolution + "<br />");
-        this.DWObject.IfDisableSourceAfterAcquire = true;
-        this.DWObject.AcquireImage();
+        this.DWObject.AcquireImage({
+            IfShowUI: this.state.deviceSetup.bShowUI,
+            PixelType: this.state.deviceSetup.nPixelType,
+            Resolution: this.state.deviceSetup.nResolution,
+            IfFeederEnabled: this.state.deviceSetup.bADF,
+            IfDuplexEnabled: this.state.deviceSetup.bDuplex,
+            IfDisableSourceAfterAcquire: true,
+            IfGetImageInfo: true,
+            IfGetExtImageInfo: true,
+            extendedImageInfoQueryLevel: 0
+            /**
+             * NOTE: No errors are being logged!!
+             */
+        }, () => {
+            console.log("Acquire success!");
+        }, () => {
+            console.log("Acquire failure!");
+        });
     }
 
     btnLoadImagesOrPDFs() {
@@ -715,67 +763,45 @@ export default class DWT extends React.Component {
         }
     }
 
-    source_onchange() {
-        if (document.getElementById("divTwainType"))
-            document.getElementById("divTwainType").style.display = "";
-
-        if (document.getElementById("source")) {
-            var cIndex = document.getElementById("source").selectedIndex;
-            if (Dynamsoft.Lib.env.bMac) {
-                var strSourceName = this.DWObject.GetSourceNameItems(cIndex);
-                if (strSourceName.indexOf("ICA") === 0) {
-                    if (document.getElementById("lblShowUI"))
-                        document.getElementById("lblShowUI").style.display = "none";
-                    if (document.getElementById("ShowUI"))
-                        document.getElementById("ShowUI").style.display = "none";
-                } else {
-                    if (document.getElementById("lblShowUI"))
-                        document.getElementById("lblShowUI").style.display = "";
-                    if (document.getElementById("ShowUI"))
-                        document.getElementById("ShowUI").style.display = "";
+    source_onchange(value) {
+        if (value === "noscanner") {
+            let oldDeviceSetup = this.state.deviceSetup;
+            oldDeviceSetup.currentScanner = "noscanner";
+            this.setState({
+                deviceSetup: oldDeviceSetup
+            });
+            return;
+        }
+        if (value == "firstScanner")
+            this.DWObject.SelectSourceByIndex(0);
+        else
+            for (let i = 0; i < this.DWObject.SourceCount; i++) {
+                if (this.DWObject.GetSourceNameItems(i) === value) {
+                    this.DWObject.SelectSourceByIndex(i);
+                    break;
                 }
             }
-            else
-                this.DWObject.SelectSourceByIndex(cIndex);
+        let strSourceName = this.DWObject.CurrentSourceName;
+        let oldDeviceSetup = this.state.deviceSetup;
+        oldDeviceSetup.currentScanner = strSourceName;
+        this.setState({
+            deviceSetup: oldDeviceSetup
+        });
+        if (Dynamsoft.Lib.env.bMac) {
+            if (strSourceName.indexOf("ICA") === 0) {
+                let oldDeviceSetup = this.state.deviceSetup;
+                oldDeviceSetup.noUI = true;
+                this.setState({
+                    deviceSetup: oldDeviceSetup
+                });
+            } else {
+                let oldDeviceSetup = this.state.deviceSetup;
+                oldDeviceSetup.noUI = false;
+                this.setState({
+                    deviceSetup: oldDeviceSetup
+                });
+            }
         }
-    }
-
-    render() {
-        return (
-            <UI
-                cameraSettings={this.state.cameraSettings}
-                containerId={this.containerId}
-                acquireImage={() => this.acquireImage()}
-                switchViews={() => this.switchViews()}
-                captureImage={() => this.captureImage()}
-                source_onchange={() => this.source_onchange()}
-                camera_onchange={() => this.camera_onchange()}
-                btnLoadImagesOrPDFs={() => this.btnLoadImagesOrPDFs()}
-                btnShowImageEditor={() => this.btnShowImageEditor()}
-                btnRotateLeft={() => this.btnRotateLeft()}
-                btnRotateRight={() => this.btnRotateRight()}
-                btnRotate180={() => this.btnRotate180()}
-                btnMirror={() => this.btnMirror()}
-                btnFlip={() => this.btnFlip()}
-                btnCrop={() => this.btnCrop()}
-                btnChangeImageSize={() => this.btnChangeImageSize()}
-                btnCancelChange={() => this.btnCancelChange()}
-                btnChangeImageSizeOK={() => this.btnChangeImageSizeOK()}
-                saveUploadImage={(_type) => this.saveUploadImage(_type)}
-                btnFirstImage={() => this.btnFirstImage()}
-                btnPreImage_wheel={() => this.btnPreImage_wheel()}
-                btnNextImage_wheel={() => this.btnNextImage_wheel()}
-                btnPreImage={() => this.btnPreImage()}
-                btnNextImage={() => this.btnNextImage()}
-                btnLastImage={() => this.btnLastImage()}
-                btnRemoveCurrentImage={() => this.btnRemoveCurrentImage()}
-                btnRemoveAllImages={() => this.btnRemoveAllImages()}
-                setlPreviewMode={() => this.setlPreviewMode()}
-                rdTIFF={() => this.rdTIFF()}
-                rdPDF={() => this.rdPDF()}
-                rd={() => this.rd()}
-            />
-        );
     }
 
     /**
@@ -1073,6 +1099,7 @@ export default class DWT extends React.Component {
     initDbr() {
         dynamsoft.dbrEnv.productKey = this.productKey;
         dynamsoft.BarcodeReader.initServiceConnection().then(() => {
+            this.dbrObject = new dynamsoft.BarcodeReader();
             this.initReadBtn();
         }, (ex) => {
             alert('Init DBR failed' + (ex.message || ex));
@@ -1085,49 +1112,39 @@ export default class DWT extends React.Component {
         }
     }
 
-    updateBtnsState() {
-        if (this.checkIfImagesInBuffer(false)) {
-            this.dwtChangePageBtns.prop("disabled", false);
-            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
-                $("#DW_btnFirstImage").prop("disabled", true);
-                $("#DW_btnPreImage").prop("disabled", true);
-            }
-            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
-                $("#DW_btnNextImage").prop("disabled", true);
-                $("#DW_btnLastImage").prop("disabled", true);
-            }
-        }
-        else {
-            this.dwtChangePageBtns.prop("disabled", true);
-        }
-    }
-
     initReadBtn() {
         $("#btn-readBarcode").click(() => {
             var btn = $(this);
             btn.prop("disabled", true);
             this.dwtChangePageBtns.prop("disabled", true);
             this.clearBarcodeRect();
-
             if (!this.checkIfImagesInBuffer(true)) {
                 alert("There is no image in the buffer.");
                 btn.prop("disabled", false);
                 return;
             }
-            var dbrObject = new dynamsoft.BarcodeReader();
-
-            var settings = dbrObject.getRuntimeSettings();
+            var settings = this.dbrObject.getRuntimeSettings();
             if (this.DWObject.GetImageBitDepth(this.DWObject.CurrentImageIndexInBuffer) === 1)
                 settings.scaleDownThreshold = 214748347;
             else
                 settings.scaleDownThreshold = 2300;
             settings.barcodeFormatIds = dynamsoft.BarcodeReader.EnumBarcodeFormat.All;
             settings.region.measuredByPercentage = 0;
-            if (this.isSelectedArea) {
-                settings.region.left = this._iLeft;
-                settings.region.top = this._iTop;
-                settings.region.right = this._iRight;
-                settings.region.bottom = this._iBottom;
+            if (this.state.zones.count > 0) {
+                if (this.state.zones.count === 1) {
+                    settings.region.left = this.state.zones.rects[0].left;
+                    settings.region.top = this.state.zones.rects[0].top;
+                    settings.region.right = this.state.zones.rects[0].left + this.state.zones.rects[0].width;
+                    settings.region.bottom = this.state.zones.rects[0].top + this.state.zones.rects[0].height;
+                } else {
+                    this.setState({
+                        exception: {
+                            code: -102,
+                            message: "Can't read multiple zones"
+                        }
+                    });
+                    return;
+                }
             }
             else {
                 settings.region.left = 0;
@@ -1135,42 +1152,60 @@ export default class DWT extends React.Component {
                 settings.region.right = 0;
                 settings.region.bottom = 0;
             }
-            dbrObject.updateRuntimeSettings(settings);
-
-            //dbrRead callback
-            var userData = this.dwt.curImageTimeStamp;
-            var onDbrReadSuccess = (results) => {
-                this.logResult(results, true);
-                if (results.length !== 0 && this.dwt.curImageTimeStamp === userData) {
-                    this.drawBarcodeRect(results);
-                }
-                readBarcodeFinally();
-            };
-            var onDbrReadFail = function () {
-                readBarcodeFinally();
-            };
-
-            // HTML5 browsers: use url
-            if (this.isHtml5) {
-                var dwtUrl = this.DWObject.GetImagePartURL(this.DWObject.CurrentImageIndexInBuffer);
-                dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
-            } else {
-                alert("Current browser is not supported!")
-            }
+            this.readBarode(settings);
         });
-        // finally after #btn-readBarcode click
-        var readBarcodeFinally = () => {
-            $("#btn-readBarcode").prop("disabled", false);
-            //enable change-page btns
-            this.updateBtnsState();
-        };
-
-        $("#btn-readBarcode").prop("disabled", false);
-        $("#btn-readBarcode").text('Read Barcode');
     }
 
+    doneReadingBarcode() {
+        $("#btn-readBarcode").prop("disabled", false);
+        $("#btn-readBarcode").text('Read Barcode');
+        //enable change-page btns
+        this.updateBtnsState();
+    }
 
+    readBarode(settings) {
+        if (this.dbrObject) {
+            this.dbrObject.updateRuntimeSettings(settings);
+            // Make sure the same image is on display
+            var userData = this._DWObject.curImageTimeStamp;
+            var onDbrReadSuccess = (results) => {
+                this.logResult(results, true);
+                if (results.length !== 0 && this._DWObject.curImageTimeStamp === userData) {
+                    this.drawBarcodeRect(results);
+                }
+                this.doneReadingBarcode();
+            };
+            var onDbrReadFail = (_code, _msg) => {
+                this.setState({
+                    exception: {
+                        code: _code,
+                        message: _msg
+                    }
+                });
+                this.doneReadingBarcode();
+            };
+            if (this.isHtml5) {
+                var dwtUrl = this.DWObject.GetImagePartURL(this.DWObject.CurrentImageIndexInBuffer);
+                this.dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
+            } else {
+                this.setState({
+                    exception: {
+                        code: -1,
+                        message: "Unsupported environment"
+                    }
+                });
+            }
+        } else {
+            this.setState({
+                exception: {
+                    code: -3,
+                    message: "Barcode reader object unavailable"
+                }
+            });
+        }
+    }
 
+    // OCR
     initOCR() {
         this.downloadOCRBasic(true);
     }
@@ -1307,12 +1342,12 @@ export default class DWT extends React.Component {
     drawBarcodeRect(results) {
         var zoom;
         var dwtDiv = $("#" + this.containerId);
-        if (this.dwt.showAbleWidth >= this.dwt.ImageWidth && this.dwt.showAbleHeight >= this.dwt.ImageHeight) {
+        if (this._DWObject.showAbleWidth >= this._DWObject.ImageWidth && this._DWObject.showAbleHeight >= this._DWObject.ImageHeight) {
             zoom = 1;
-        } else if (this.dwt.showAbleWidth / this.dwt.showAbleHeight >= this.dwt.ImageWidth / this.dwt.ImageHeight) {
-            zoom = this.dwt.showAbleHeight / this.dwt.ImageHeight;
+        } else if (this._DWObject.showAbleWidth / this._DWObject.showAbleHeight >= this._DWObject.ImageWidth / this._DWObject.ImageHeight) {
+            zoom = this._DWObject.showAbleHeight / this._DWObject.ImageHeight;
         } else {
-            zoom = this.dwt.showAbleWidth / this.dwt.ImageWidth;
+            zoom = this._DWObject.showAbleWidth / this._DWObject.ImageWidth;
         }
         for (let i = 0; i < results.length; ++i) {
             var result = results[i];
@@ -1323,8 +1358,8 @@ export default class DWT extends React.Component {
             loc.bottom = Math.max(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
             // HTML5 borwsers: show rectangles and numbers. We use div to manually draw the rectangles, you can use OverlayRectangle as well
             if (this.isHtml5) {
-                var leftBase = 1 + this.dwt.showAbleWidth / 2 - this.dwt.ImageWidth / 2 * zoom;
-                var topBase = 1 + this.dwt.showAbleHeight / 2 - this.dwt.ImageHeight / 2 * zoom;
+                var leftBase = 1 + this._DWObject.showAbleWidth / 2 - this._DWObject.ImageWidth / 2 * zoom;
+                var topBase = 1 + this._DWObject.showAbleHeight / 2 - this._DWObject.ImageHeight / 2 * zoom;
                 var left = dwtDiv[0].offsetLeft + leftBase + loc.left * zoom;
                 var top = dwtDiv[0].offsetTop + topBase + loc.top * zoom;
                 var width = (loc.right - loc.left) * zoom;
@@ -1442,7 +1477,7 @@ export default class DWT extends React.Component {
     }
 
     //--------------------------------------------------------------------------------------
-    //*********************************radio response***************************************
+    //*********************************UI response***************************************
     //--------------------------------------------------------------------------------------
     rdTIFF() {
         var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
@@ -1474,28 +1509,40 @@ export default class DWT extends React.Component {
         _chkMultiPagePDF.checked = false;
         _chkMultiPagePDF.disabled = true;
     }
+
+    updateBtnsState() {
+        if (this.checkIfImagesInBuffer(false)) {
+            this.dwtChangePageBtns.prop("disabled", false);
+            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
+                $("#DW_btnFirstImage").prop("disabled", true);
+                $("#DW_btnPreImage").prop("disabled", true);
+            }
+            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
+                $("#DW_btnNextImage").prop("disabled", true);
+                $("#DW_btnLastImage").prop("disabled", true);
+            }
+        }
+        else {
+            this.dwtChangePageBtns.prop("disabled", true);
+        }
+    }
     //--------------------------------------------------------------------------------------
     //*********************************    Webcam    ***************************************
     //--------------------------------------------------------------------------------------
 
     refershCameraList() {
-        var arySource = this.DWObject.Addon.Webcam.GetSourceList();
-        if (arySource.length === 0) {
-            alert("Seems there is no webcam connected to your device!");
-        } else {
-            document.getElementById("cameras").length = 1;
-            for (let i = 0; i < arySource.length; i++) {
-                document.getElementById("cameras").options.add(new Option(arySource[i], arySource[i]), i + 1);
-                // Get Webcam Source names and put them in a drop-down box
-            }
-        }
+        this.setState({ cameras: this.DWObject.Addon.Webcam.GetSourceList() });
     }
 
-    camera_onchange() {
+    camera_onchange(value) {
+        let oldDeviceSetup = this.state.deviceSetup;
+        oldDeviceSetup.currentCamera = value;
+        this.setState({
+            deviceSetup: oldDeviceSetup
+        });
         this.DWObject.Addon.Webcam.StopVideo();
-        let cameraName = document.getElementById("cameras").options[document.getElementById("cameras").selectedIndex].value;
-        if (cameraName === "NotACamera") return;
-        if (this.DWObject.Addon.Webcam.SelectSource(cameraName)) {
+        if (value === "nocamera") return;
+        if (this.DWObject.Addon.Webcam.SelectSource(value)) {
             var mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
                 _mediaTypes = {},
                 _currentmT = mediaTypes.GetCurrent();
@@ -1764,5 +1811,76 @@ export default class DWT extends React.Component {
             };
             this.DWObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
         }
+    }
+
+    onScannerSetupChange(option, type, value) {
+        let oldDeviceSetup = this.state.deviceSetup;
+        switch (option) {
+            case "bShowUI":
+                oldDeviceSetup.bShowUI = value;
+                break;
+            case "bADF":
+                oldDeviceSetup.bADF = value;
+                break;
+            case "bDuplex":
+                oldDeviceSetup.bDuplex = value;
+                break;
+            case "nPixelType":
+                oldDeviceSetup.nPixelType = value;
+                break;
+            case "nResolution":
+                oldDeviceSetup.nResolution = value;
+                break;
+            default: break;
+        }
+        this.setState({
+            deviceSetup: oldDeviceSetup
+        });
+    }
+
+    render() {
+        return (
+            <DWTUserInterface
+                dwt={this.state.dwt}
+                containerId={this.containerId}
+                scanners={this.state.scanners}
+                cameras={this.state.cameras}
+                deviceSetup={this.state.deviceSetup}
+
+                onScannerSetupChange={(option, type, value) => this.onScannerSetupChange(option, type, value)}
+                onSourceChange={(value) => this.source_onchange(value)}
+                onCameraChange={(value) => this.camera_onchange(value)}
+
+                btnRotateLeft={() => this.btnRotateLeft()}
+                btnRotateRight={() => this.btnRotateRight()}
+                btnRotate180={() => this.btnRotate180()}
+                btnMirror={() => this.btnMirror()}
+                btnFlip={() => this.btnFlip()}
+                btnCrop={() => this.btnCrop()}
+                btnChangeImageSize={() => this.btnChangeImageSize()}
+                btnCancelChange={() => this.btnCancelChange()}
+                btnChangeImageSizeOK={() => this.btnChangeImageSizeOK()}
+                saveUploadImage={(_type) => this.saveUploadImage(_type)}
+                btnFirstImage={() => this.btnFirstImage()}
+                btnPreImage_wheel={() => this.btnPreImage_wheel()}
+                btnNextImage_wheel={() => this.btnNextImage_wheel()}
+                btnPreImage={() => this.btnPreImage()}
+                btnNextImage={() => this.btnNextImage()}
+                btnLastImage={() => this.btnLastImage()}
+                btnRemoveCurrentImage={() => this.btnRemoveCurrentImage()}
+                btnRemoveAllImages={() => this.btnRemoveAllImages()}
+                setlPreviewMode={() => this.setlPreviewMode()}
+
+                cameraSettings={this.state.cameraSettings}
+                acquireImage={() => this.acquireImage()}
+                switchViews={() => this.switchViews()}
+                captureImage={() => this.captureImage()}
+                btnLoadImagesOrPDFs={() => this.btnLoadImagesOrPDFs()}
+                btnShowImageEditor={() => this.btnShowImageEditor()}
+                rdTIFF={() => this.rdTIFF()}
+                rdPDF={() => this.rdPDF()}
+                rd={() => this.rd()}
+            />
+        );
     }
 }

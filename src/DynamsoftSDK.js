@@ -112,7 +112,7 @@ class DWTController extends React.Component {
                                 <ul>
                                     <li>
                                         <p>Select Source:</p>
-                                        <select value={this.props.deviceSetup.currentScanner} style={{ width: "100%" }} onChange={this.handleSourceChange}>
+                                        <select value={this.props.deviceSetup.currentScanner} className="fullWidth" onChange={this.handleSourceChange}>
                                             {
                                                 this.props.scanners.length > 0 ?
                                                     this.props.scanners.map((_name, _index) =>
@@ -162,7 +162,7 @@ class DWTController extends React.Component {
                                         </ul>
                                     </li>
                                     <li className="tc">
-                                        <button className="majorButton" onClick={this.props.acquireImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "100%" }}>Scan</button>
+                                        <button className="majorButton fullWidth" onClick={this.props.acquireImage}>Scan</button>
                                     </li>
                                 </ul>
                             </div>
@@ -175,7 +175,7 @@ class DWTController extends React.Component {
                                 <ul>
                                     <li>
                                         <p>Select a Camera:</p>
-                                        <select value={this.props.currentCamera} style={{ width: "100%" }} onChange={this.handleCameraChange}>
+                                        <select value={this.props.currentCamera} className="fullWidth" onChange={this.handleCameraChange}>
                                             {
                                                 this.props.cameras.length > 0 ?
                                                     this.props.cameras.map((_name, _index) =>
@@ -186,14 +186,14 @@ class DWTController extends React.Component {
                                             }
                                         </select>
                                         <ul>{
-                                            Object.values(this.props.cameraSettings).map((topItem, key) =>
-                                                <li>{topItem.name}</li>
+                                            Object.values(this.props.cameraSettings).map((topItem, _key) =>
+                                                <li key={_key}>{topItem.name}</li>
                                             )
                                         }</ul>
                                     </li>
                                     <li className="tc">
-                                        <button className="majorButton" onClick={this.props.switchViews} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", cursor: "pointer", width: "48%" }}>Show Video</button>
-                                        <button className="majorButton" onClick={this.props.captureImage} style={{ color: "rgb(255, 255, 255)", backgroundColor: "rgb(80, 168, 225)", marginLeft: "2%", cursor: "pointer", width: "48%" }}>Capture</button>
+                                        <button className="majorButton width_48p" onClick={this.props.switchViews} >{this.props.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>
+                                        <button className="majorButton width_48p marginL_2p" onClick={this.props.captureImage} style={this.props.deviceSetup.isVideoOn ? { backgroundColor: "rgb(80, 168, 225)" } : { backgroundColor: "#aaa" }} disabled={this.props.deviceSetup.isVideoOn ? "" : "disabled"} > Capture</button>
                                     </li>
                                 </ul>
                             </div>
@@ -460,6 +460,7 @@ export default class DWT extends React.Component {
                 this.setState({ scanners: sourceNames });
                 this.source_onchange("firstScanner");
                 this.refershCameraList();
+                this.camera_onchange("firstCamera");
                 if (Dynamsoft.Lib.env.bWin)
                     this.DWObject.MouseShape = false;
                 var btnScan = document.getElementById("btnScan");
@@ -772,7 +773,7 @@ export default class DWT extends React.Component {
             });
             return;
         }
-        if (value == "firstScanner")
+        if (value === "firstScanner")
             this.DWObject.SelectSourceByIndex(0);
         else
             for (let i = 0; i < this.DWObject.SourceCount; i++) {
@@ -1542,6 +1543,8 @@ export default class DWT extends React.Component {
         });
         this.DWObject.Addon.Webcam.StopVideo();
         if (value === "nocamera") return;
+        if (value === "firstCamera")
+            value = this.state.cameras[0];
         if (this.DWObject.Addon.Webcam.SelectSource(value)) {
             var mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
                 _mediaTypes = {},
@@ -1663,10 +1666,13 @@ export default class DWT extends React.Component {
                                     title: _temp[2]
                                 });
                                 break;*/
-            this.SetIfWebcamPlayVideo(true);
         } else {
-            alert("Can't use the Webcam " + document.getElementById("cameras").options[document.getElementById("cameras")
-                .selectedIndex].text + ", please make sure it's not in use!");
+            this.setState({
+                exception: {
+                    code: -2,
+                    message: "Can't use the Webcam " + value + ", please make sure it's not in use!"
+                }
+            });
         }
     }
 
@@ -1785,17 +1791,19 @@ export default class DWT extends React.Component {
                 this.DWObject.Addon.Webcam.StopVideo();
                 setTimeout(() => {
                     this.playVideo();
-                    this.isVideoOn = true;
-                    document.getElementById("btn-grab").style.backgroundColor = "rgb(80, 168, 225)";
-                    document.getElementById("btn-grab").disabled = "";
-                    document.getElementById("btn-switch").innerHTML = "Hide Video";
+                    let oldDeviceSetup = this.state.deviceSetup;
+                    oldDeviceSetup.isVideoOn = true;
+                    this.setState({
+                        deviceSetup: oldDeviceSetup
+                    });
                 }, 30);
             } else {
                 this.DWObject.Addon.Webcam.StopVideo();
-                this.isVideoOn = false;
-                document.getElementById("btn-grab").style.backgroundColor = "#aaa";
-                document.getElementById("btn-grab").disabled = "disabled";
-                document.getElementById("btn-switch").innerHTML = "Show Video";
+                let oldDeviceSetup = this.state.deviceSetup;
+                oldDeviceSetup.isVideoOn = false;
+                this.setState({
+                    deviceSetup: oldDeviceSetup
+                });
             }
         } catch (ex) {
             console.log(ex);

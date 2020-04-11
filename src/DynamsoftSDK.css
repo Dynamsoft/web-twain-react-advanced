@@ -457,22 +457,23 @@ select#Resolution {
     width: 192px;
     height: 26px;
 }
+
 .majorButton {
     margin-top: 10px;
     margin-bottom: 5px;
-    width: 90px;
     height: 30px;
     line-height: 28px;
     border: none;
     border-radius: 3px;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
-    background: #ddd;
     font-size: 14px;
-    color: #444;
     font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
     cursor: default;
     outline: none;
+    color: rgb(255, 255, 255);
+    background-color: rgb(80, 168, 225);
+    cursor: pointer;
 }
 
 #div_LoadLocalImage input[type='button'] {
@@ -640,327 +641,16 @@ select#Resolution {
     font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
 }
 
-/*=============== dailog ===============*/
+/* General Purpose*/
 
-.ds-dialog-wrap, .ds-dialog-wrap div {
-    -webkit-box-sizing: content-box !important;
-    -moz-box-sizing: content-box !important;
-    box-sizing: content-box !important;
-}
-
-.ds-dialog-wrap:before, .ds-dialog-wrap div:before, .ds-dialog-wrap:after, .ds-dialog-wrap div:after {
-    -webkit-box-sizing: content-box !important;
-    -moz-box-sizing: content-box !important;
-    box-sizing: content-box !important;
-}
-
-.ks-overlay {
-    position: absolute;
-    left: -9999px;
-    top: -9999px;
-}
-
-.ks-ext-close {
-    padding: 0 20px;
-    position: absolute;
-    right: -5px;
-    top: 5px;
-}
-
-.ks-ext-close, .ks-ext-close:link {
-    color: #2222AA;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.ks-ext-mask {
-    background: #999;
-    filter: alpha(opacity=70);
-    /* IE */
-    -moz-opacity: 0.7;
-    /* Moz + FF */
-    opacity: 0.7;
-    /* CSS3 e.g. FF 1.5 */
-}
-
-.D-dailog .ks-ext-close .ks-ext-close-x {
-    height: 8px;
-}
-
-.D-dailog .ks-ext-close, .D-dailog .ks-ext-close:hover {
-    background: none;
-    border: none;
-}
-
-.D-dailog {
-    position: absolute;
-    left: -9999px;
-    top: -99999px;
-    margin: 100px auto;
-    padding: 0;
-    width: 392px;
-    height: 262px;
-    background-color: #F1F2F2;
-}
-
-.D-dailog .D-dailog-body {
-    width: 350px;
-    height: 200px;
-    position: relative;
-    top: 5px;
-    left: 5px;
-    margin: 0;
-    background-color: #ffffff;
-    border: 1px solid #E7E7E7;
-    padding: 15px;
-}
-
-.D-dailog .D-dailog-body-Mac {
-    width: 350px;
-    height: 235px;
-    position: relative;
-    top: 5px;
-    left: 5px;
-    margin: 0;
-    background-color: #ffffff;
-    border: 1px solid #E7E7E7;
-    padding: 15px;
-}
-
-.D-dailog .D-dailog-body-NotAllowed {
-    color: #444;
-    line-height: 1.8;
-    width: 350px;
-    height: 185px;
-    position: relative;
-    top: 5px;
-    left: 5px;
-    margin: 0;
-    background-color: #ffffff;
-    border: 1px solid #E7E7E7;
-    padding: 15px;
-}
-
-.D-dailog .D-dailog-body-Scan {
-    width: 380px;
-    height: 240px;
-    position: relative;
-    top: 5px;
-    left: 5px;
-    margin: 0;
-    background-color: #ffffff;
-    border: 1px solid #E7E7E7;
-    padding: 15px;
-}
-
-.D-dailog .D-dailog-body-Scan-sample {
-    width: 380px;
-    height: 200px;
-    position: relative;
-    top: 5px;
-    left: 5px;
-    margin: 0;
-    background-color: #ffffff;
-    border: 1px solid #E7E7E7;
-    padding: 15px;
-}
-
-.D-dailog a {
-    text-decoration: none;
-}
-
-.link {
-    text-decoration: underline;
-}
-
-.D-dailog ul {
-    margin: 10px 0 10px 20px;
-    list-style-type: disc;
-}
-
-.red {
-    color: red;
-    margin-left: 5px;
-}
-
-/*=============== Upgrade ===============*/
-
-#message {
-    font-family: Arial, sans-serif, Verdana, Helvetica;
-    position: fixed;
-    top: 0px;
-    left: 0px;
-    width: 100%;
-    z-index: 105;
-    text-align: center;
-    font-weight: bold;
-    font-size: 100%;
-    padding: 10px 0px 10px 0px;
-    color: #239210;
-    background-color: #E0F0D6;
-    border: 1px solid #54D33F;
-    box-shadow: 0 0 10px #3A3A3A;
-}
-
-#MessageBody a {
-    color: #6A9962;
-    font-size: 14px;
-}
-
-#message span {
-    text-align: center;
-    width: 95%;
-    float: left;
-}
-
-#MessageBoy a:hover {
-    text-decoration: underline;
-}
-
-.close-notify {
-    white-space: nowrap;
-    float: right;
-    margin-right: 10px;
-    color: #fff;
-    text-decoration: none;
-    border: 2px #fff solid;
-    padding-left: 3px;
-    padding-right: 3px;
-}
-
-.close-notify a {
-    color: #fff;
-}
-
-.DWTPage {
-    margin: 0 auto;
-}
-
-/*======================== online_demo_view.aspx ==========================*/
-
-#onlineDemoView #wrapper, #demoList #wrapper {
-    width: 980px;
-    margin: 0 auto;
-}
-
-#onlineDemoView #DWTcontainerTop {
-    float: none;
-    margin: 0 auto;
-    width: 640px;
-}
-
-#onlineDemoView #DWTcontainerTop #btnGroupBtm {
-    width: 100%;
-    left: 0;
-}
-
-#onlineDemoView #DWTemessage {
-    width: 640px;
-}
-
-#onlineDemoView #dwtcontrolContainer {
-    width: 100%;
-    height: 528px;
-}
-
-#onlineDemoView #DWTcontainerBtm {
-    float: none;
-    margin: 0 auto;
-    width: 640px;
-}
-
-.removeImage #DW_btnRemoveCurrentImage, .removeImage #DW_btnRemoveAllImages {
-    padding: 0 8px;
-    margin-left: 6px;
-    height: 18px;
-    line-height: 16px;
-    background: #fff;
-    border: solid 1px #ccc;
-    border-radius: 4px;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    outline: none;
-    cursor: pointer;
-}
-
-#onlineDemoView #DWTcontainerTop, #scanBarcode #DWTcontainerTop, #scanPdfRasterizer #DWTcontainerTop {
-    height: 615px;
-}
-
-#onlineDemoView #btnGroupBtm, #scanBarcode #btnGroupBtm, #scanPdfRasterizer #btnGroupBtm {
-    height: 85px;
-}
-
-#onlineDemoView .removeImage, #scanBarcode .removeImage, #scanPdfRasterizer .removeImage {
-    float: left;
-    padding: 10px 0 0 65px;
-}
-
-/* backToDemoList */
-
-.backToDemoList {
-    margin: 20px 0 0 0;
-    text-align: center;
-}
-
-/*======================== online_demo_list.aspx ==========================*/
-
-#demoList #wrapper {
-    border: 2px solid #ddd;
-    border-radius: 3px;
-}
-
-#demoList .container {
-    width: 870px;
-}
-
-#demoList .content table {
+.fullWidth {
     width: 100%;
 }
 
-#demoList .content th {
-    width: 50%;
-    text-align: center;
-    font-size: 18px;
-    color: #444;
-    background: #e7f2fc;
-    height: 45px;
-    font-weight: bold;
+.width_48p {
+    width: 48%;
 }
 
-#demoList .content td {
-    text-align: center;
-    height: 75px;
-    font-size: 16px;
-    border-top: solid 1px #ccc;
-}
-
-#demoList .content tr:last-child td {
-    height: auto;
-    text-align: center;
-    padding: 30px 0 40px 0;
-}
-
-#demoList .content tr td:nth-child(2) span {
-    display: inline-block;
-    width: 18px;
-    height: 17px;
-    color: #ccc;
-    overflow: hidden;
-}
-
-#dwtcontrolContainer .barcodeInfoRect {
-    position: absolute;
-    z-index: 10;
-    border: 1px solid red;
-}
-
-#dwtcontrolContainer .barcodeInfoRect .spanContainer {
-    position: absolute;
-    left: 0px;
-    top: -14px;
-    color: blue;
-    font-size: 12px;
-    font-weight: bold;
-    /*background-color:#fff;*/
+.marginL_2p {
+    margin-left: 2%;
 }

@@ -81,27 +81,481 @@ class DWTController extends React.Component {
         this.handleScannerSetupChange = this.handleScannerSetupChange.bind(this);
         this.handleSourceChange = this.handleSourceChange.bind(this);
         this.handleCameraChange = this.handleCameraChange.bind(this);
+        this.state = {
+            scanners: [],
+            deviceSetup: {
+                currentScanner: "Looking for devices..",
+                currentCamera: "Looking for devices..",
+                bShowUI: false,
+                bADF: false,
+                bDuplex: false,
+                nPixelType: "0",
+                nResolution: "100"
+            },
+            cameras: [],
+            cameraSettings: {},
+        };
+    }
+    DWObject = null;
+    componentDidUpdate(prevProps) {
+        if (this.props.dwt !== prevProps.dwt) {
+            this.DWObject = this.props.dwt;
+            let vCount = this.DWObject.SourceCount;
+            let sourceNames = [];
+            for (let i = 0; i < vCount; i++)
+                sourceNames.push(this.DWObject.GetSourceNameItems(i));
+            this.setState({ scanners: sourceNames });
+            this.onSourceChange("firstScanner");
+            this.setState({ cameras: this.DWObject.Addon.Webcam.GetSourceList() });
+            this.onCameraChange("firstCamera");
+        }
+    }
+    onSourceChange(value) {
+        if (value === "noscanner") {
+            let oldDeviceSetup = this.state.deviceSetup;
+            oldDeviceSetup.currentScanner = "noscanner";
+            this.setState({
+                deviceSetup: oldDeviceSetup
+            });
+            return;
+        }
+        if (value === "firstScanner")
+            this.DWObject.SelectSourceByIndex(0);
+        else {
+            for (let i = 0; i < this.DWObject.SourceCount; i++) {
+                if (this.DWObject.GetSourceNameItems(i) === value) {
+                    this.DWObject.SelectSourceByIndex(i);
+                    break;
+                }
+            }
+        }
+        let strSourceName = this.DWObject.CurrentSourceName;
+        let oldDeviceSetup = this.state.deviceSetup;
+        oldDeviceSetup.currentScanner = strSourceName;
+        this.setState({
+            deviceSetup: oldDeviceSetup
+        });
+        if (Dynamsoft.Lib.env.bMac) {
+            if (strSourceName.indexOf("ICA") === 0) {
+                let oldDeviceSetup = this.state.deviceSetup;
+                oldDeviceSetup.noUI = true;
+                this.setState({
+                    deviceSetup: oldDeviceSetup
+                });
+            } else {
+                let oldDeviceSetup = this.state.deviceSetup;
+                oldDeviceSetup.noUI = false;
+                this.setState({
+                    deviceSetup: oldDeviceSetup
+                });
+            }
+        }
+    }
+    onScannerSetupChange(option, value) {
+        let oldDeviceSetup = this.state.deviceSetup;
+        switch (option) {
+            case "bShowUI":
+                oldDeviceSetup.bShowUI = value;
+                break;
+            case "bADF":
+                oldDeviceSetup.bADF = value;
+                break;
+            case "bDuplex":
+                oldDeviceSetup.bDuplex = value;
+                break;
+            case "nPixelType":
+                oldDeviceSetup.nPixelType = value;
+                break;
+            case "nResolution":
+                oldDeviceSetup.nResolution = value;
+                break;
+            default: break;
+        }
+        this.setState({
+            deviceSetup: oldDeviceSetup
+        });
+    }
+    acquireImage() {
+        this.DWObject.CloseSource();
+        this.DWObject.OpenSource();
+        this.DWObject.AcquireImage({
+            IfShowUI: this.state.deviceSetup.bShowUI,
+            PixelType: this.state.deviceSetup.nPixelType,
+            Resolution: this.state.deviceSetup.nResolution,
+            IfFeederEnabled: this.state.deviceSetup.bADF,
+            IfDuplexEnabled: this.state.deviceSetup.bDuplex,
+            IfDisableSourceAfterAcquire: true,
+            IfGetImageInfo: true,
+            IfGetExtImageInfo: true,
+            extendedImageInfoQueryLevel: 0
+            /**
+             * NOTE: No errors are being logged!!
+             */
+        }, () => {
+            console.log("Acquire success!");
+        }, () => {
+            console.log("Acquire failure!");
+        });
+    }
+    onCameraChange(value) {
+        let oldDeviceSetup = this.state.deviceSetup;
+        oldDeviceSetup.currentCamera = value;
+        this.setState({
+            deviceSetup: oldDeviceSetup
+        });
+        this.DWObject.Addon.Webcam.StopVideo();
+        if (value === "nocamera") return;
+        if (value === "firstCamera")
+            value = this.state.cameras[0];
+        if (this.DWObject.Addon.Webcam.SelectSource(value)) {
+            var mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
+                _mediaTypes = {},
+                _currentmT = mediaTypes.GetCurrent();
+            var frameRates = this.DWObject.Addon.Webcam.GetFrameRate(),
+                _frameRates = {},
+                _currentfR = frameRates.GetCurrent();
+            var resolutions = this.DWObject.Addon.Webcam.GetResolution(),
+                _resolutions = {},
+                _currentRes = resolutions.GetCurrent();
+            var _advancedSettings = {},
+                _advancedCameraSettings = {};
+            mediaTypes = mediaTypes._resultlist;
+            frameRates = frameRates._resultlist;
+            resolutions = resolutions._resultlist;
+            for (let i = 0; i < mediaTypes.length - 1; i++) {
+                if (mediaTypes[i] !== _currentmT)
+                    _mediaTypes["mT-key" + i.toString()] = {
+                        "name": mediaTypes[i].toString()
+                    };
+                else {
+                    _mediaTypes["mT-key" + i.toString()] = {
+                        "name": mediaTypes[i].toString(),
+                        "icon": "checkmark"
+                    };
+                }
+            }
+            for (let i = 0; i < frameRates.length - 1; i++) {
+                if (frameRates[i] !== _currentfR)
+                    _frameRates["fR-key" + i.toString()] = {
+                        "name": frameRates[i].toString()
+                    };
+                else {
+                    _frameRates["fR-key" + i.toString()] = {
+                        "name": frameRates[i].toString(),
+                        "icon": "checkmark"
+                    };
+                }
+            }
+            for (let i = 0; i < resolutions.length - 1; i++) {
+                if (resolutions[i] !== _currentRes)
+                    _resolutions["res-key" + i.toString()] = {
+                        "name": resolutions[i].toString()
+                    };
+                else {
+                    _resolutions["res-key" + i.toString()] = {
+                        "name": resolutions[i].toString(),
+                        "icon": "checkmark"
+                    };
+                }
+            }
+            for (let item in window.EnumDWT_VideoProperty) {
+                _advancedSettings["adv-key" + window.EnumDWT_VideoProperty[item].toString() + "-" + item.substr(3)] = {
+                    "name": item.substr(3)
+                };
+            }
+            for (let item in window.EnumDWT_CameraControlProperty) {
+                _advancedCameraSettings["advc-key" + window.EnumDWT_CameraControlProperty[item].toString() + "-" + item.substr(4)] = {
+                    "name": item.substr(4)
+                };
+            }
+            this.setState({
+                cameraSettings: {
+                    "mT": {
+                        "name": "Media Type",
+                        "items": _mediaTypes
+                    },
+                    "fR": {
+                        "name": "Frame Rate",
+                        "items": _frameRates
+                    },
+                    "res": {
+                        "name": "Resolution",
+                        "items": _resolutions
+                    },
+                    "adv": {
+                        "name": "Advanced Video Setting",
+                        "items": _advancedSettings
+                    },
+                    "advc": {
+                        "name": "Advanced Camera Setting",
+                        "items": _advancedCameraSettings
+                    }
+                }
+            });
+
+            /*return {
+                callback: (key) => {
+                    if (-1 !== key.lastIndexOf("-")) {
+                        var _temp = key.split("-");
+                        var fold = _temp[0];
+                        var item = parseInt(_temp[1].substr(3));
+                        switch (fold) {
+                            default: break;
+                            case "mT":
+                                this.playVideo({
+                                    mT: mediaTypes[item]
+                                });
+                                break;
+                            case "fR":
+                                this.playVideo({
+                                    fR: frameRates[item]
+                                });
+                                break;
+                            case "res":
+                                this.playVideo({
+                                    res: resolutions[item]
+                                });
+                                break;
+                            case "adv":
+                                this.playVideo({
+                                    adv: item,
+                                    title: _temp[2]
+                                });
+                                break;
+                            case "advc":
+                                this.playVideo({
+                                    advc: item,
+                                    title: _temp[2]
+                                });
+                                break;*/
+        } else {
+            this.setState({
+                exception: {
+                    code: -2,
+                    message: "Can't use the Webcam " + value + ", please make sure it's not in use!"
+                }
+            });
+        }
+    }
+    loadImagesOfPDFs() {
+        var OnPDFSuccess = () => {
+            this.appendMessage("Loaded an image successfully.<br/>");
+            this.updatePageInfo();
+        };
+
+        var OnPDFFailure = (errorCode, errorString) => {
+            this.checkErrorStringWithErrorCode(errorCode, errorString);
+        };
+
+        this.DWObject.IfShowFileDialog = true;
+        this.DWObject.Addon.PDF.SetResolution(200);
+        this.DWObject.Addon.PDF.SetConvertMode(1/*EnumDWT_ConvertMode.CM_RENDERALL*/);
+        this.DWObject.LoadImageEx("", 5 /*EnumDWT_ImageType.IT_ALL*/, OnPDFSuccess, OnPDFFailure);
+    }
+    rdTIFF() {
+        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
+        _chkMultiPageTIFF.disabled = false;
+        _chkMultiPageTIFF.checked = false;
+
+        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
+        _chkMultiPagePDF.checked = false;
+        _chkMultiPagePDF.disabled = true;
+    }
+    rdPDF() {
+        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
+        _chkMultiPageTIFF.checked = false;
+        _chkMultiPageTIFF.disabled = true;
+
+        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
+        _chkMultiPagePDF.disabled = false;
+        _chkMultiPagePDF.checked = true;
+
+    }
+    rd() {
+        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
+        _chkMultiPageTIFF.checked = false;
+        _chkMultiPageTIFF.disabled = true;
+
+        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
+        _chkMultiPagePDF.checked = false;
+        _chkMultiPagePDF.disabled = true;
+    }
+    updateBtnsState() {
+        if (this.checkIfImagesInBuffer(false)) {
+            this.dwtChangePageBtns.prop("disabled", false);
+            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
+                $("#DW_btnFirstImage").prop("disabled", true);
+                $("#DW_btnPreImage").prop("disabled", true);
+            }
+            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
+                $("#DW_btnNextImage").prop("disabled", true);
+                $("#DW_btnLastImage").prop("disabled", true);
+            }
+        }
+        else {
+            this.dwtChangePageBtns.prop("disabled", true);
+        }
+    }
+    playVideo(config) {
+        setTimeout(() => {
+            var basicSetting, moreSetting;
+            if (config) {
+                if (isFinite(config.adv)) {
+                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(config.adv);
+                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(config.adv);
+                    this.showRangePicker({
+                        bCamera: false,
+                        id: config.adv,
+                        value: basicSetting.GetValue(),
+                        min: moreSetting.GetMinValue(),
+                        max: moreSetting.GetMaxValue(),
+                        defaultvalue: moreSetting.GetDefaultValue(),
+                        step: moreSetting.GetSteppingDelta(),
+                        title: config.title
+                    });
+                    return;
+                } else if (isFinite(config.advc)) {
+                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(config.advc);
+                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(config.advc);
+                    this.showRangePicker({
+                        bCamera: true,
+                        id: config.advc,
+                        value: basicSetting.GetValue(),
+                        min: moreSetting.GetMinValue(),
+                        max: moreSetting.GetMaxValue(),
+                        defaultvalue: moreSetting.GetDefaultValue(),
+                        step: moreSetting.GetSteppingDelta(),
+                        title: config.title
+                    });
+                    return;
+                } else {
+                    this.DWObject.Addon.Webcam.StopVideo();
+                    if (config.fR) {
+                        this.DWObject.Addon.Webcam.SetFrameRate(config.fR);
+                    } else if (config.mT) {
+                        this.DWObject.Addon.Webcam.SetMediaType(config.mT);
+                    } else if (config.res) {
+                        this.DWObject.Addon.Webcam.SetResolution(config.res);
+                    }
+                }
+            }
+            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, function () { });
+        }, 30);
+    }
+    showRangePicker(property) {
+        $("#ValueSelector").html("");
+        $("#ValueSelector").append(
+            ["<div style='text-align:center'>",
+                "<span class='rangeCurrent' id='currentValue_", property.title, "'>", property.value, "</span><br />",
+                "<span>", property.min, "</span>", "<input type = 'range' min = '",
+                property.min, "' max='", property.max, "' step='",
+                property.step, "' value='", property.value, "'/>",
+                "<span>", property.max, "</span><br /></div>"
+            ].join("")
+        );
+        let rangeCurrentValue = property.value;
+        $("#ValueSelector input").off('change').on('input', function (evt) {
+            rangeCurrentValue = evt.originalEvent.target.value;
+            $("#ValueSelector .rangeCurrent").html(evt.originalEvent.target.value);
+        });
+        let _btn = {
+            "OK": function () {
+                $("#ValueSelector").html("");
+                $(this).dialog("close");
+                setTimeout(function () {
+                    if (property.bCamera) {
+                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, rangeCurrentValue, false);
+                    } else
+                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, rangeCurrentValue, false);
+                }, 100);
+            },
+            "Reset": function () {
+                $("#ValueSelector").html("");
+                $(this).dialog("close");
+                setTimeout(function () {
+                    if (property.bCamera) {
+                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, property.defaultvalue, true);
+                    } else
+                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, property.defaultvalue, true);
+                }, 100);
+            },
+            "Cancle": function () {
+                $("#ValueSelector").html("");
+                $(this).dialog("close");
+            }
+        };
+        $("#ValueSelector").dialog({
+            title: property.title,
+            resizable: true,
+            width: 400,
+            height: "auto",
+            modal: true,
+            buttons: _btn
+        });
+    }
+    switchViews() {
+        if (this.isVideoOn === false) {
+            // continue the video
+            this.SetIfWebcamPlayVideo(true);
+        } else {
+            // stop the video
+            this.SetIfWebcamPlayVideo(false);
+        }
+    }
+    SetIfWebcamPlayVideo(bShow) {
+        try {
+            if (bShow) {
+                this.DWObject.Addon.Webcam.StopVideo();
+                setTimeout(() => {
+                    this.playVideo();
+                    let oldDeviceSetup = this.state.deviceSetup;
+                    oldDeviceSetup.isVideoOn = true;
+                    this.setState({
+                        deviceSetup: oldDeviceSetup
+                    });
+                }, 30);
+            } else {
+                this.DWObject.Addon.Webcam.StopVideo();
+                let oldDeviceSetup = this.state.deviceSetup;
+                oldDeviceSetup.isVideoOn = false;
+                this.setState({
+                    deviceSetup: oldDeviceSetup
+                });
+            }
+        } catch (ex) {
+            console.log(ex);
+        }
+    }
+    captureImage() {
+        if (this.DWObject) {
+            var funCaptureImage = () => {
+                setTimeout(() => {
+                    this.SetIfWebcamPlayVideo(false);
+                }, 50);
+            };
+            this.DWObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
+        }
     }
     handleScannerSetupChange(e, option) {
         switch (option.substr(0, 1)) {
             default: break;
             case "b":
-                this.props.onScannerSetupChange(option, "b", e.target.checked);
+                this.onScannerSetupChange(option, e.target.checked);
                 break;
             case "n":
-                this.props.onScannerSetupChange(option, "n", e.target.value);
+                this.onScannerSetupChange(option, e.target.value);
                 break;
         }
     }
     handleSourceChange(e) {
-        this.props.onSourceChange(e.target.value);
+        this.onSourceChange(e.target.value);
     }
     handleCameraChange(e) {
-        this.props.onCameraChange(e.target.value);
+        this.onCameraChange(e.target.value);
     }
     render() {
         return (
-            <div id="ScanWrapper">
+            <div className="DWTController">
                 <div id="divScanner" className="divinput">
                     <ul className="PCollapse">
                         <li>
@@ -112,10 +566,10 @@ class DWTController extends React.Component {
                                 <ul>
                                     <li>
                                         <p>Select Source:</p>
-                                        <select value={this.props.deviceSetup.currentScanner} className="fullWidth" onChange={this.handleSourceChange}>
+                                        <select value={this.state.deviceSetup.currentScanner} className="fullWidth" onChange={this.handleSourceChange}>
                                             {
-                                                this.props.scanners.length > 0 ?
-                                                    this.props.scanners.map((_name, _index) =>
+                                                this.state.scanners.length > 0 ?
+                                                    this.state.scanners.map((_name, _index) =>
                                                         <option value={_name} key={_index}>{_name}</option>
                                                     )
                                                     :
@@ -127,32 +581,32 @@ class DWTController extends React.Component {
                                         <ul>
                                             <li>
                                                 {
-                                                    this.props.deviceSetup.noUI ? "" : (
+                                                    this.state.deviceSetup.noUI ? "" : (
                                                         <span style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
-                                                            checked={this.props.deviceSetup.bShowUI}
+                                                            checked={this.state.deviceSetup.bShowUI}
                                                             onChange={(e) => this.handleScannerSetupChange(e, "bShowUI")}
                                                         />Show UI&nbsp;</span>
                                                     )
                                                 }
                                                 <span style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
-                                                    checked={this.props.deviceSetup.bADF}
+                                                    checked={this.state.deviceSetup.bADF}
                                                     onChange={(e) => this.handleScannerSetupChange(e, "bADF")}
                                                 />Page Feeder&nbsp;</span>
                                                 <span style={{ width: "32%" }}><input type="checkbox"
-                                                    checked={this.props.deviceSetup.bDuplex}
+                                                    checked={this.state.deviceSetup.bDuplex}
                                                     onChange={(e) => this.handleScannerSetupChange(e, "bDuplex")}
                                                 />Duplex</span>
                                             </li>
                                             <li>
                                                 <select style={{ width: "48%", marginRight: "4%" }}
-                                                    value={this.props.deviceSetup.nPixelType}
+                                                    value={this.state.deviceSetup.nPixelType}
                                                     onChange={(e) => this.handleScannerSetupChange(e, "nPixelType")}>
                                                     <option value="0">B&amp;W</option>
                                                     <option value="1">Gray</option>
                                                     <option value="2">Color</option>
                                                 </select>
                                                 <select style={{ width: "48%" }}
-                                                    value={this.props.deviceSetup.nResolution}
+                                                    value={this.state.deviceSetup.nResolution}
                                                     onChange={(e) => this.handleScannerSetupChange(e, "nResolution")}>
                                                     <option value="100">100 DPI</option>
                                                     <option value="200">200 DPI</option>
@@ -162,7 +616,7 @@ class DWTController extends React.Component {
                                         </ul>
                                     </li>
                                     <li className="tc">
-                                        <button className="majorButton fullWidth" onClick={this.props.acquireImage}>Scan</button>
+                                        <button className="majorButton fullWidth" onClick={this.acquireImage} style={this.state.scanners.length > 0 ? { backgroundColor: "rgb(80, 168, 225)" } : { backgroundColor: "#aaa" }} disabled={this.state.scanners.length > 0 ? "" : "disabled"}>Scan</button>
                                     </li>
                                 </ul>
                             </div>
@@ -175,10 +629,10 @@ class DWTController extends React.Component {
                                 <ul>
                                     <li>
                                         <p>Select a Camera:</p>
-                                        <select value={this.props.currentCamera} className="fullWidth" onChange={this.handleCameraChange}>
+                                        <select value={this.state.currentCamera} className="fullWidth" onChange={this.handleCameraChange}>
                                             {
-                                                this.props.cameras.length > 0 ?
-                                                    this.props.cameras.map((_name, _index) =>
+                                                this.state.cameras.length > 0 ?
+                                                    this.state.cameras.map((_name, _index) =>
                                                         <option value={_index} key={_index}>{_name}</option>
                                                     )
                                                     :
@@ -186,26 +640,26 @@ class DWTController extends React.Component {
                                             }
                                         </select>
                                         <ul>{
-                                            Object.values(this.props.cameraSettings).map((topItem, _key) =>
+                                            Object.values(this.state.cameraSettings).map((topItem, _key) =>
                                                 <li key={_key}>{topItem.name}</li>
                                             )
                                         }</ul>
                                     </li>
                                     <li className="tc">
-                                        <button className="majorButton width_48p" onClick={this.props.switchViews} >{this.props.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>
-                                        <button className="majorButton width_48p marginL_2p" onClick={this.props.captureImage} style={this.props.deviceSetup.isVideoOn ? { backgroundColor: "rgb(80, 168, 225)" } : { backgroundColor: "#aaa" }} disabled={this.props.deviceSetup.isVideoOn ? "" : "disabled"} > Capture</button>
+                                        <button className="majorButton width_48p" onClick={this.switchViews} >{this.state.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>
+                                        <button className="majorButton width_48p marginL_2p" onClick={this.captureImage} style={this.state.deviceSetup.isVideoOn ? { backgroundColor: "rgb(80, 168, 225)" } : { backgroundColor: "#aaa" }} disabled={this.state.deviceSetup.isVideoOn ? "" : "disabled"} > Capture</button>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        <li id="liLoadImage">
+                        <li>
                             <div className="divType" selfvalue="load">
                                 <div className="mark_arrow collapsed"></div>
                                     Load Images or PDFs</div>
                             <div id="div_LoadLocalImage" style={{ display: "none" }} className="divTableStyle">
                                 <ul>
                                     <li className="tc">
-                                        <button className="btnOrg" onClick={this.props.btnLoadImagesOrPDFs} style={{ width: "100%" }}>Load</button>
+                                        <button className="btnOrg" onClick={this.loadImagesOfPDFs} style={{ width: "100%" }}>Load</button>
                                     </li>
                                 </ul>
                             </div>
@@ -224,19 +678,19 @@ class DWTController extends React.Component {
                                     </li>
                                     <li style={{ paddingRight: "0" }}>
                                         <label htmlFor="imgTypebmp">
-                                            <input type="radio" value="bmp" name="ImageType" id="imgTypebmp" onClick={this.props.rd} />
+                                            <input type="radio" value="bmp" name="ImageType" id="imgTypebmp" onClick={this.rd} />
                                     BMP</label>
                                         <label htmlFor="imgTypejpeg">
-                                            <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" onClick={this.props.rd} />
+                                            <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" onClick={this.rd} />
                                     JPEG</label>
                                         <label htmlFor="imgTypetiff">
-                                            <input type="radio" value="tif" name="ImageType" id="imgTypetiff" onClick={this.props.rdTIFF} />
+                                            <input type="radio" value="tif" name="ImageType" id="imgTypetiff" onClick={this.rdTIFF} />
                                     TIFF</label>
                                         <label htmlFor="imgTypepng">
-                                            <input type="radio" value="png" name="ImageType" id="imgTypepng" onClick={this.props.rd} />
+                                            <input type="radio" value="png" name="ImageType" id="imgTypepng" onClick={this.rd} />
                                     PNG</label>
                                         <label htmlFor="imgTypepdf">
-                                            <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" onClick={this.props.rdPDF} />
+                                            <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" onClick={this.rdPDF} />
                                     PDF</label>
                                     </li>
                                     <li>
@@ -248,8 +702,8 @@ class DWTController extends React.Component {
                                     Multi-Page PDF</label>
                                     </li>
                                     <li>
-                                        <button id="btnSave" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('local') }} >Save to Local</button>
-                                        <button id="btnUpload" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.props.saveUploadImage('server') }} >Upload to Server</button>
+                                        <button id="btnSave" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.saveUploadImage('local') }} >Save to Local</button>
+                                        <button id="btnUpload" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.saveUploadImage('server') }} >Upload to Server</button>
                                     </li>
                                 </ul>
                             </div>
@@ -319,30 +773,14 @@ class DWTUserInterface extends React.Component {
                         setlPreviewMode={() => this.props.setlPreviewMode()}
                     />
                     <DWTController
-                        scanners={this.props.scanners}
-                        cameras={this.props.cameras}
-                        deviceSetup={this.props.deviceSetup}
-                        cameraSettings={this.props.cameraSettings}
-
-                        acquireImage={() => this.props.acquireImage()}
-                        onScannerSetupChange={(option, type, value) => this.props.onScannerSetupChange(option, type, value)}
-                        onSourceChange={(value) => this.props.onSourceChange(value)}
-                        onCameraChange={(value) => this.props.onCameraChange(value)}
-
-                        switchViews={() => this.props.switchViews()}
-                        captureImage={() => this.props.captureImage()}
-                        btnLoadImagesOrPDFs={() => this.props.btnLoadImagesOrPDFs()}
-                        btnShowImageEditor={() => this.props.btnShowImageEditor()}
-                        rdTIFF={() => this.props.rdTIFF()}
-                        rdPDF={() => this.props.rdPDF()}
-                        rd={() => this.props.rd()}
+                        dwt={this.props.dwt}
                     />
                 </div>
                 <div id="DWTcontainerBtm" style={{ textAlign: "left" }} className="clearfix">
                     <DWTOutPut />
                     <DynamsoftNotes />
                 </div>
-            </div>
+            </div >
         );
     }
 }
@@ -356,18 +794,6 @@ export default class DWT extends React.Component {
                 count: 0,
                 rects: [] //x,y,width,height
             },
-            scanners: [],
-            deviceSetup: {
-                currentScanner: "Looking for devices..",
-                currentCamera: "Looking for devices..",
-                bShowUI: false,
-                bADF: false,
-                bDuplex: false,
-                nPixelType: "0",
-                nResolution: "100"
-            },
-            cameras: [],
-            cameraSettings: {},
             exception: {}
         };
     }
@@ -452,28 +878,8 @@ export default class DWT extends React.Component {
                     this.DWObject.CurrentImageIndexInBuffer = index;
                     this.updatePageInfo();
                 });
-
-                let vCount = this.DWObject.SourceCount;
-                let sourceNames = [];
-                for (let i = 0; i < vCount; i++)
-                    sourceNames.push(this.DWObject.GetSourceNameItems(i));
-                this.setState({ scanners: sourceNames });
-                this.source_onchange("firstScanner");
-                this.refershCameraList();
-                this.camera_onchange("firstCamera");
                 if (Dynamsoft.Lib.env.bWin)
                     this.DWObject.MouseShape = false;
-                var btnScan = document.getElementById("btnScan");
-                if (btnScan) {
-                    if (vCount === 0)
-                        document.getElementById("btnScan").disabled = true;
-                    else {
-                        document.getElementById("btnScan").disabled = false;
-                        document.getElementById("btnScan").style.color = "#fff";
-                        document.getElementById("btnScan").style.backgroundColor = "#50a8e1";
-                        document.getElementById("btnScan").style.cursor = "pointer";
-                    }
-                }
                 this.updatePageInfo();
                 this.setDefaultValue();
                 this.setlPreviewMode();
@@ -483,7 +889,6 @@ export default class DWT extends React.Component {
             }
         });
         this.initiateInputs();
-        this.HideLoadImageForLinux();
         this.InitMessageBody();
         this.InitDWTdivMsg(false);
         this.loadDWT();
@@ -574,45 +979,6 @@ export default class DWT extends React.Component {
             this.appendMessage("<span style='color:#cE5E04'><b>" + errorString + "</b></span><br />");
             return false;
         }
-    }
-
-    acquireImage() {
-        this.DWObject.CloseSource();
-        this.DWObject.OpenSource();
-        this.DWObject.AcquireImage({
-            IfShowUI: this.state.deviceSetup.bShowUI,
-            PixelType: this.state.deviceSetup.nPixelType,
-            Resolution: this.state.deviceSetup.nResolution,
-            IfFeederEnabled: this.state.deviceSetup.bADF,
-            IfDuplexEnabled: this.state.deviceSetup.bDuplex,
-            IfDisableSourceAfterAcquire: true,
-            IfGetImageInfo: true,
-            IfGetExtImageInfo: true,
-            extendedImageInfoQueryLevel: 0
-            /**
-             * NOTE: No errors are being logged!!
-             */
-        }, () => {
-            console.log("Acquire success!");
-        }, () => {
-            console.log("Acquire failure!");
-        });
-    }
-
-    btnLoadImagesOrPDFs() {
-        var OnPDFSuccess = () => {
-            this.appendMessage("Loaded an image successfully.<br/>");
-            this.updatePageInfo();
-        };
-
-        var OnPDFFailure = (errorCode, errorString) => {
-            this.checkErrorStringWithErrorCode(errorCode, errorString);
-        };
-
-        this.DWObject.IfShowFileDialog = true;
-        this.DWObject.Addon.PDF.SetResolution(200);
-        this.DWObject.Addon.PDF.SetConvertMode(1/*EnumDWT_ConvertMode.CM_RENDERALL*/);
-        this.DWObject.LoadImageEx("", 5 /*EnumDWT_ImageType.IT_ALL*/, OnPDFSuccess, OnPDFFailure);
     }
 
     checkIfImagesInBuffer(bAppendMSG) {
@@ -761,60 +1127,6 @@ export default class DWT extends React.Component {
         if (this.checkErrorString()) {
             document.getElementById("ImgSizeEditor").style.visibility = "hidden";
             return;
-        }
-    }
-
-    source_onchange(value) {
-        if (value === "noscanner") {
-            let oldDeviceSetup = this.state.deviceSetup;
-            oldDeviceSetup.currentScanner = "noscanner";
-            this.setState({
-                deviceSetup: oldDeviceSetup
-            });
-            return;
-        }
-        if (value === "firstScanner")
-            this.DWObject.SelectSourceByIndex(0);
-        else
-            for (let i = 0; i < this.DWObject.SourceCount; i++) {
-                if (this.DWObject.GetSourceNameItems(i) === value) {
-                    this.DWObject.SelectSourceByIndex(i);
-                    break;
-                }
-            }
-        let strSourceName = this.DWObject.CurrentSourceName;
-        let oldDeviceSetup = this.state.deviceSetup;
-        oldDeviceSetup.currentScanner = strSourceName;
-        this.setState({
-            deviceSetup: oldDeviceSetup
-        });
-        if (Dynamsoft.Lib.env.bMac) {
-            if (strSourceName.indexOf("ICA") === 0) {
-                let oldDeviceSetup = this.state.deviceSetup;
-                oldDeviceSetup.noUI = true;
-                this.setState({
-                    deviceSetup: oldDeviceSetup
-                });
-            } else {
-                let oldDeviceSetup = this.state.deviceSetup;
-                oldDeviceSetup.noUI = false;
-                this.setState({
-                    deviceSetup: oldDeviceSetup
-                });
-            }
-        }
-    }
-
-    /**
-     * Supporting functions
-     */
-    HideLoadImageForLinux() {
-        var o = document.getElementById("liLoadImage");
-        if (o) {
-            if (Dynamsoft.Lib.env.bLinux)
-                o.style.display = "none";
-            else
-                o.style.display = "";
         }
     }
 
@@ -1477,388 +1789,12 @@ export default class DWT extends React.Component {
         }
     }
 
-    //--------------------------------------------------------------------------------------
-    //*********************************UI response***************************************
-    //--------------------------------------------------------------------------------------
-    rdTIFF() {
-        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
-        _chkMultiPageTIFF.disabled = false;
-        _chkMultiPageTIFF.checked = false;
-
-        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
-        _chkMultiPagePDF.checked = false;
-        _chkMultiPagePDF.disabled = true;
-    }
-
-    rdPDF() {
-        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
-        _chkMultiPageTIFF.checked = false;
-        _chkMultiPageTIFF.disabled = true;
-
-        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
-        _chkMultiPagePDF.disabled = false;
-        _chkMultiPagePDF.checked = true;
-
-    }
-
-    rd() {
-        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
-        _chkMultiPageTIFF.checked = false;
-        _chkMultiPageTIFF.disabled = true;
-
-        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
-        _chkMultiPagePDF.checked = false;
-        _chkMultiPagePDF.disabled = true;
-    }
-
-    updateBtnsState() {
-        if (this.checkIfImagesInBuffer(false)) {
-            this.dwtChangePageBtns.prop("disabled", false);
-            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
-                $("#DW_btnFirstImage").prop("disabled", true);
-                $("#DW_btnPreImage").prop("disabled", true);
-            }
-            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
-                $("#DW_btnNextImage").prop("disabled", true);
-                $("#DW_btnLastImage").prop("disabled", true);
-            }
-        }
-        else {
-            this.dwtChangePageBtns.prop("disabled", true);
-        }
-    }
-    //--------------------------------------------------------------------------------------
-    //*********************************    Webcam    ***************************************
-    //--------------------------------------------------------------------------------------
-
-    refershCameraList() {
-        this.setState({ cameras: this.DWObject.Addon.Webcam.GetSourceList() });
-    }
-
-    camera_onchange(value) {
-        let oldDeviceSetup = this.state.deviceSetup;
-        oldDeviceSetup.currentCamera = value;
-        this.setState({
-            deviceSetup: oldDeviceSetup
-        });
-        this.DWObject.Addon.Webcam.StopVideo();
-        if (value === "nocamera") return;
-        if (value === "firstCamera")
-            value = this.state.cameras[0];
-        if (this.DWObject.Addon.Webcam.SelectSource(value)) {
-            var mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
-                _mediaTypes = {},
-                _currentmT = mediaTypes.GetCurrent();
-            var frameRates = this.DWObject.Addon.Webcam.GetFrameRate(),
-                _frameRates = {},
-                _currentfR = frameRates.GetCurrent();
-            var resolutions = this.DWObject.Addon.Webcam.GetResolution(),
-                _resolutions = {},
-                _currentRes = resolutions.GetCurrent();
-            var _advancedSettings = {},
-                _advancedCameraSettings = {};
-            mediaTypes = mediaTypes._resultlist;
-            frameRates = frameRates._resultlist;
-            resolutions = resolutions._resultlist;
-            for (let i = 0; i < mediaTypes.length - 1; i++) {
-                if (mediaTypes[i] !== _currentmT)
-                    _mediaTypes["mT-key" + i.toString()] = {
-                        "name": mediaTypes[i].toString()
-                    };
-                else {
-                    _mediaTypes["mT-key" + i.toString()] = {
-                        "name": mediaTypes[i].toString(),
-                        "icon": "checkmark"
-                    };
-                }
-            }
-            for (let i = 0; i < frameRates.length - 1; i++) {
-                if (frameRates[i] !== _currentfR)
-                    _frameRates["fR-key" + i.toString()] = {
-                        "name": frameRates[i].toString()
-                    };
-                else {
-                    _frameRates["fR-key" + i.toString()] = {
-                        "name": frameRates[i].toString(),
-                        "icon": "checkmark"
-                    };
-                }
-            }
-            for (let i = 0; i < resolutions.length - 1; i++) {
-                if (resolutions[i] !== _currentRes)
-                    _resolutions["res-key" + i.toString()] = {
-                        "name": resolutions[i].toString()
-                    };
-                else {
-                    _resolutions["res-key" + i.toString()] = {
-                        "name": resolutions[i].toString(),
-                        "icon": "checkmark"
-                    };
-                }
-            }
-            for (let item in window.EnumDWT_VideoProperty) {
-                _advancedSettings["adv-key" + window.EnumDWT_VideoProperty[item].toString() + "-" + item.substr(3)] = {
-                    "name": item.substr(3)
-                };
-            }
-            for (let item in window.EnumDWT_CameraControlProperty) {
-                _advancedCameraSettings["advc-key" + window.EnumDWT_CameraControlProperty[item].toString() + "-" + item.substr(4)] = {
-                    "name": item.substr(4)
-                };
-            }
-            this.setState({
-                cameraSettings: {
-                    "mT": {
-                        "name": "Media Type",
-                        "items": _mediaTypes
-                    },
-                    "fR": {
-                        "name": "Frame Rate",
-                        "items": _frameRates
-                    },
-                    "res": {
-                        "name": "Resolution",
-                        "items": _resolutions
-                    },
-                    "adv": {
-                        "name": "Advanced Video Setting",
-                        "items": _advancedSettings
-                    },
-                    "advc": {
-                        "name": "Advanced Camera Setting",
-                        "items": _advancedCameraSettings
-                    }
-                }
-            });
-
-            /*return {
-                callback: (key) => {
-                    if (-1 !== key.lastIndexOf("-")) {
-                        var _temp = key.split("-");
-                        var fold = _temp[0];
-                        var item = parseInt(_temp[1].substr(3));
-                        switch (fold) {
-                            default: break;
-                            case "mT":
-                                this.playVideo({
-                                    mT: mediaTypes[item]
-                                });
-                                break;
-                            case "fR":
-                                this.playVideo({
-                                    fR: frameRates[item]
-                                });
-                                break;
-                            case "res":
-                                this.playVideo({
-                                    res: resolutions[item]
-                                });
-                                break;
-                            case "adv":
-                                this.playVideo({
-                                    adv: item,
-                                    title: _temp[2]
-                                });
-                                break;
-                            case "advc":
-                                this.playVideo({
-                                    advc: item,
-                                    title: _temp[2]
-                                });
-                                break;*/
-        } else {
-            this.setState({
-                exception: {
-                    code: -2,
-                    message: "Can't use the Webcam " + value + ", please make sure it's not in use!"
-                }
-            });
-        }
-    }
-
-    playVideo(config) {
-        setTimeout(() => {
-            var basicSetting, moreSetting;
-            if (config) {
-                if (isFinite(config.adv)) {
-                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(config.adv);
-                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(config.adv);
-                    this.showRangePicker({
-                        bCamera: false,
-                        id: config.adv,
-                        value: basicSetting.GetValue(),
-                        min: moreSetting.GetMinValue(),
-                        max: moreSetting.GetMaxValue(),
-                        defaultvalue: moreSetting.GetDefaultValue(),
-                        step: moreSetting.GetSteppingDelta(),
-                        title: config.title
-                    });
-                    return;
-                } else if (isFinite(config.advc)) {
-                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(config.advc);
-                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(config.advc);
-                    this.showRangePicker({
-                        bCamera: true,
-                        id: config.advc,
-                        value: basicSetting.GetValue(),
-                        min: moreSetting.GetMinValue(),
-                        max: moreSetting.GetMaxValue(),
-                        defaultvalue: moreSetting.GetDefaultValue(),
-                        step: moreSetting.GetSteppingDelta(),
-                        title: config.title
-                    });
-                    return;
-                } else {
-                    this.DWObject.Addon.Webcam.StopVideo();
-                    if (config.fR) {
-                        this.DWObject.Addon.Webcam.SetFrameRate(config.fR);
-                    } else if (config.mT) {
-                        this.DWObject.Addon.Webcam.SetMediaType(config.mT);
-                    } else if (config.res) {
-                        this.DWObject.Addon.Webcam.SetResolution(config.res);
-                    }
-                }
-            }
-            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, function () { });
-        }, 30);
-    }
-
-    showRangePicker(property) {
-        $("#ValueSelector").html("");
-        $("#ValueSelector").append(
-            ["<div style='text-align:center'>",
-                "<span class='rangeCurrent' id='currentValue_", property.title, "'>", property.value, "</span><br />",
-                "<span>", property.min, "</span>", "<input type = 'range' min = '",
-                property.min, "' max='", property.max, "' step='",
-                property.step, "' value='", property.value, "'/>",
-                "<span>", property.max, "</span><br /></div>"
-            ].join("")
-        );
-        let rangeCurrentValue = property.value;
-        $("#ValueSelector input").off('change').on('input', function (evt) {
-            rangeCurrentValue = evt.originalEvent.target.value;
-            $("#ValueSelector .rangeCurrent").html(evt.originalEvent.target.value);
-        });
-        let _btn = {
-            "OK": function () {
-                $("#ValueSelector").html("");
-                $(this).dialog("close");
-                setTimeout(function () {
-                    if (property.bCamera) {
-                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, rangeCurrentValue, false);
-                    } else
-                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, rangeCurrentValue, false);
-                }, 100);
-            },
-            "Reset": function () {
-                $("#ValueSelector").html("");
-                $(this).dialog("close");
-                setTimeout(function () {
-                    if (property.bCamera) {
-                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, property.defaultvalue, true);
-                    } else
-                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, property.defaultvalue, true);
-                }, 100);
-            },
-            "Cancle": function () {
-                $("#ValueSelector").html("");
-                $(this).dialog("close");
-            }
-        };
-        $("#ValueSelector").dialog({
-            title: property.title,
-            resizable: true,
-            width: 400,
-            height: "auto",
-            modal: true,
-            buttons: _btn
-        });
-    }
-
-    switchViews() {
-        if (this.isVideoOn === false) {
-            // continue the video
-            this.SetIfWebcamPlayVideo(true);
-        } else {
-            // stop the video
-            this.SetIfWebcamPlayVideo(false);
-        }
-    }
-
-    SetIfWebcamPlayVideo(bShow) {
-        try {
-            if (bShow) {
-                this.DWObject.Addon.Webcam.StopVideo();
-                setTimeout(() => {
-                    this.playVideo();
-                    let oldDeviceSetup = this.state.deviceSetup;
-                    oldDeviceSetup.isVideoOn = true;
-                    this.setState({
-                        deviceSetup: oldDeviceSetup
-                    });
-                }, 30);
-            } else {
-                this.DWObject.Addon.Webcam.StopVideo();
-                let oldDeviceSetup = this.state.deviceSetup;
-                oldDeviceSetup.isVideoOn = false;
-                this.setState({
-                    deviceSetup: oldDeviceSetup
-                });
-            }
-        } catch (ex) {
-            console.log(ex);
-        }
-    }
-
-    captureImage() {
-        if (this.DWObject) {
-            var funCaptureImage = () => {
-                setTimeout(() => {
-                    this.SetIfWebcamPlayVideo(false);
-                }, 50);
-            };
-            this.DWObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
-        }
-    }
-
-    onScannerSetupChange(option, type, value) {
-        let oldDeviceSetup = this.state.deviceSetup;
-        switch (option) {
-            case "bShowUI":
-                oldDeviceSetup.bShowUI = value;
-                break;
-            case "bADF":
-                oldDeviceSetup.bADF = value;
-                break;
-            case "bDuplex":
-                oldDeviceSetup.bDuplex = value;
-                break;
-            case "nPixelType":
-                oldDeviceSetup.nPixelType = value;
-                break;
-            case "nResolution":
-                oldDeviceSetup.nResolution = value;
-                break;
-            default: break;
-        }
-        this.setState({
-            deviceSetup: oldDeviceSetup
-        });
-    }
 
     render() {
         return (
             <DWTUserInterface
                 dwt={this.state.dwt}
                 containerId={this.containerId}
-                scanners={this.state.scanners}
-                cameras={this.state.cameras}
-                deviceSetup={this.state.deviceSetup}
-
-                onScannerSetupChange={(option, type, value) => this.onScannerSetupChange(option, type, value)}
-                onSourceChange={(value) => this.source_onchange(value)}
-                onCameraChange={(value) => this.camera_onchange(value)}
-
                 btnRotateLeft={() => this.btnRotateLeft()}
                 btnRotateRight={() => this.btnRotateRight()}
                 btnRotate180={() => this.btnRotate180()}
@@ -1883,7 +1819,7 @@ export default class DWT extends React.Component {
                 acquireImage={() => this.acquireImage()}
                 switchViews={() => this.switchViews()}
                 captureImage={() => this.captureImage()}
-                btnLoadImagesOrPDFs={() => this.btnLoadImagesOrPDFs()}
+                loadImagesOfPDFs={() => this.loadImagesOfPDFs()}
                 btnShowImageEditor={() => this.btnShowImageEditor()}
                 rdTIFF={() => this.rdTIFF()}
                 rdPDF={() => this.rdPDF()}

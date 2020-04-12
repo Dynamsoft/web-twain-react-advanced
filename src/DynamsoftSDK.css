@@ -358,9 +358,9 @@ ul {
     cursor: pointer;
 }
 
-/*=============== ScanWrapper ===============*/
+/*=============== DWTController ===============*/
 
-#ScanWrapper {
+.DWTController {
     float: right;
     width: 315px;
     height: 570px;
@@ -376,7 +376,7 @@ div.divinput {
     background: #fff;
 }
 
-.divType, #ScanWrapper .toggle {
+.divType, .DWTController .toggle {
     padding-left: 20px;
     height: 38px;
     line-height: 36px;
@@ -388,7 +388,7 @@ div.divinput {
     cursor: pointer;
 }
 
-#ScanWrapper .toggle {
+.DWTController .toggle {
     cursor: default;
 }
 
@@ -413,7 +413,7 @@ div.divinput {
     border-bottom: solid 1px #ccc;
 }
 
-#ScanWrapper select, #div_SaveImages input[type='text'] {
+.DWTController select, #div_SaveImages input[type='text'] {
     margin-top: 3px;
     margin-bottom: 6px;
     height: 26px;
@@ -424,7 +424,7 @@ div.divinput {
     outline: none;
 }
 
-#ScanWrapper input[type='checkbox'], #ScanWrapper input[type='radio'] {
+.DWTController input[type='checkbox'], .DWTController input[type='radio'] {
     margin: 0 3px 0 0;
 }
 

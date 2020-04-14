@@ -18,6 +18,9 @@ class DWTView extends React.Component {
     DWObject = null;
     componentDidUpdate(prevProps) {
         if (this.props.dwt !== prevProps.dwt) this.DWObject = this.props.dwt;
+        if (this.props.barcodeRects.length !== 0 && this.props.barcodeRects.length !== prevProps.barcodeRects.length) {
+            if (this.DWObject) this.DWObject.SetViewMode(1, 1);
+        }
         if (this.props.runtimeInfo.ImageHeight !== prevProps.runtimeInfo.ImageHeight) this.setState({ newHeight: this.props.runtimeInfo.ImageHeight })
         if (this.props.runtimeInfo.ImageWidth !== prevProps.runtimeInfo.ImageWidth) this.setState({ newWidth: this.props.runtimeInfo.ImageWidth })
     }
@@ -151,33 +154,6 @@ class DWTView extends React.Component {
         }
     }
     drawBarcodeRect() {
-        this.DWObject.SetViewMode(1, 1);
-        let zoom;
-        let results = this.props.barcodeResults;
-        let dwtDiv = $("#" + this.props.containerId);
-        if (this.props.runtimeInfo.showAbleWidth >= this.props.runtimeInfo.ImageWidth && this.props.runtimeInfo.showAbleHeight >= this.props.runtimeInfo.ImageHeight) {
-            zoom = 1;
-        } else if (this.props.runtimeInfo.showAbleWidth / this.props.runtimeInfo.showAbleHeight >= this.props.runtimeInfo.ImageWidth / this.props.runtimeInfo.ImageHeight) {
-            zoom = this.props.runtimeInfo.showAbleHeight / this.props.runtimeInfo.ImageHeight;
-        } else {
-            zoom = this.props.runtimeInfo.showAbleWidth / this.props.runtimeInfo.ImageWidth;
-        }
-        for (let i = 0; i < results.length; ++i) {
-            let result = results[i];
-            let loc = result.LocalizationResult;
-            loc.left = Math.min(loc.X1, loc.X2, loc.X3, loc.X4);
-            loc.top = Math.min(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
-            loc.right = Math.max(loc.X1, loc.X2, loc.X3, loc.X4);
-            loc.bottom = Math.max(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
-            let leftBase = 1 + this.props.runtimeInfo.showAbleWidth / 2 - this.props.runtimeInfo.ImageWidth / 2 * zoom;
-            let topBase = 1 + this.props.runtimeInfo.showAbleHeight / 2 - this.props.runtimeInfo.ImageHeight / 2 * zoom;
-            let left = dwtDiv[0].offsetLeft + leftBase + loc.left * zoom;
-            let top = dwtDiv[0].offsetTop + topBase + loc.top * zoom;
-            let width = (loc.right - loc.left) * zoom;
-            let height = (loc.bottom - loc.top) * zoom;
-            dwtDiv.append(['<div class="barcodeInfoRect" style="left:', left, 'px;top:', top, 'px;width:', width, 'px;height:', height, 'px;">',
-                '<div class="spanContainer">', '<span>[', i + 1, ']</span></div></div>'].join(''));
-        }
     }
     render() {
         return (
@@ -214,7 +190,14 @@ class DWTView extends React.Component {
                         </ul>
                     </div>
                 </div>
-                <div id={this.props.containerId}></div>
+                <div id={this.props.containerId}>
+                    {this.props.barcodeRects.map((_rect, _index) => (
+                        <div key={_index} className="barcodeInfoRect" style={{ left: _rect.x + "px", top: _rect.y + "px", width: _rect.w + "px", height: _rect.h + "px" }} >
+                            <div className="spanContainer"><span>[{_index + 1}]</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
                 <div id="btnGroupBtm" className="clearfix">
                     <div className="ct-lt">Page:
                         <button name="control-changePage" id="DW_btnFirstImage" onClick={this.props.btnFirstImage}> |&lt; </button>
@@ -272,6 +255,7 @@ class DWTController extends React.Component {
     }
     DWObject = null;
     dbrObject = null;
+    dbrResults = [];
     componentDidMount() {
         $("ul.PCollapse li>div").click(function (event) {
             let _this = $(event.target);
@@ -408,9 +392,9 @@ class DWTController extends React.Component {
              * NOTE: No errors are being logged!!
              */
         }, () => {
-            console.log("Acquire success!");
+            this.props.handleOutPutMessage("Acquire success!", "important");
         }, () => {
-            console.log("Acquire failure!");
+            this.props.handleOutPutMessage("Acquire failure!", "error");
         });
     }
     // Tab 2: Camera    
@@ -793,11 +777,8 @@ class DWTController extends React.Component {
             else if (this.state.ocrReady)
                 this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
         }, (ex) => {
-            this.props.handleException({ code: -6, message: 'Initializing Barcode REader failed: ' + (ex.message || ex) });
+            this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) });
         });
-    }
-    clearBarcodeRect() {
-        $(".barcodeInfoRect").remove();
     }
     readBarcode() {
         this.setState({ readingBarcode: true });
@@ -814,63 +795,76 @@ class DWTController extends React.Component {
             let i = 0;
             let readBarcodeFromRect = () => {
                 i++;
-                if (i == this.props.zones.length)
-                    this.doneReadingBarcode();
                 settings.region.left = this.props.zones[i].x;
                 settings.region.top = this.props.zones[i].y;
                 settings.region.right = this.props.zones[i].x + this.props.zones[i].width;
                 settings.region.bottom = this.props.zones[i].y + this.props.zones[i].height;
-                this.doReadBarode(settings, false, readBarcodeFromRect);
+                if (i === this.props.zones.length - 1)
+                    this.doReadBarode(settings);
+                else
+                    this.doReadBarode(settings, readBarcodeFromRect);
             }
             settings.region.left = this.props.zones[0].x;
             settings.region.top = this.props.zones[0].y;
             settings.region.right = this.props.zones[0].x + this.props.zones[0].width;
             settings.region.bottom = this.props.zones[0].y + this.props.zones[0].height;
-            this.doReadBarode(settings, true, readBarcodeFromRect);
+            if (this.props.zones.length === 1)
+                this.doReadBarode(settings);
+            else
+                this.doReadBarode(settings, readBarcodeFromRect);
         }
         else {
             settings.region.left = 0;
             settings.region.top = 0;
             settings.region.right = 0;
             settings.region.bottom = 0;
-            this.doReadBarode(settings, true);
+            this.doReadBarode(settings);
         }
     }
-    doReadBarode(settings, bClearOld, callback) {
+    doReadBarode(settings, callback) {
+        let bHasCallback = Dynamsoft.Lib.isFunction(callback);
         this.dbrObject.updateRuntimeSettings(settings);
         // Make sure the same image is on display
         let userData = this.props.runtimeInfo.curImageTimeStamp;
-        let onDbrReadSuccess = (results) => {
-            if (results.length === 0) {
-                this.props.handleOutPutMessage("Nothing found on the image!", "important");
+        let outputResults = () => {
+            if (this.dbrResults.length === 0) {
+                this.props.handleOutPutMessage("--------------------------", "seperator");
+                this.props.handleOutPutMessage("Nothing found on the image!", "important", false, false);
+                this.doneReadingBarcode();
             } else {
-                this.props.handleOutPutMessage("Total barcode(s) found: " + results.length, "important");
-                for (let i = 0; i < results.length; ++i) {
-                    let result = results[i];
+                this.props.handleOutPutMessage("--------------------------", "seperator");
+                this.props.handleOutPutMessage("Total barcode(s) found: " + this.dbrResults.length, "important");
+                for (let i = 0; i < this.dbrResults.length; ++i) {
+                    let result = this.dbrResults[i];
+                    this.props.handleOutPutMessage("------------------", "seperator");
                     this.props.handleOutPutMessage("Barcode " + (i + 1).toString());
                     this.props.handleOutPutMessage("Type: " + result.BarcodeFormatString);
                     this.props.handleOutPutMessage("Value: " + result.BarcodeText, "important");
                 }
+                if (this.props.runtimeInfo.curImageTimeStamp === userData) {
+                    this.props.handleBarcodeResults("clear");
+                    this.props.handleBarcodeResults(this.dbrResults);
+                }
+                this.doneReadingBarcode();
             }
-            if (results.length !== 0 && this.props.runtimeInfo.curImageTimeStamp === userData) {
-                bClearOld && this.props.handleBarcodeResults("clear");
-                this.props.handleBarcodeResults(results);
-            }
-            Dynamsoft.Lib.isFunction(callback) ? callback() : this.doneReadingBarcode();
+        };
+        let onDbrReadSuccess = (results) => {
+            this.dbrResults = this.dbrResults.concat(results);
+            bHasCallback ? callback() : outputResults();
         };
         let onDbrReadFail = (_code, _msg) => {
             this.props.handleException({
                 code: _code,
                 message: _msg
             });
-            Dynamsoft.Lib.isFunction(callback) ? callback() : this.doneReadingBarcode();
+            bHasCallback ? callback() : outputResults();
         };
         let dwtUrl = this.DWObject.GetImagePartURL(this.props.buffer.current);
         this.dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
     }
     doneReadingBarcode() {
         this.setState({ readingBarcode: false });
-        //this.updateBtnsState();
+        this.dbrResults = [];
     }
     // OCR
     initOCR(_features) {
@@ -919,11 +913,11 @@ class DWTController extends React.Component {
                 this.props.buffer.current,
                 (imageId, result) => {
                     if (result === null) {
-                        this.props.handleOutPutMessage("Nothing found on image " + this.DWObject.ImageIDToIndex(imageId), "important");
+                        this.props.handleOutPutMessage("Nothing found!", "important");
                         return;
                     }
                     this.props.handleOutPutMessage("", "", true);
-                    this.props.handleOutPutMessage("OCR result of image " + this.DWObject.ImageIDToIndex(imageId), "important");
+                    this.props.handleOutPutMessage("OCR result:", "important");
                     this.props.handleOutPutMessage(Dynamsoft.Lib.base64.decode(result.Get()), "info", false, true);
                 },
                 (errorCode, errorString) => {
@@ -1114,6 +1108,9 @@ class DWTController extends React.Component {
                                             <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 || this.state.readingBarcode ? "disabled" : ""} onClick={() => { this.readBarcode(); }} >{this.state.readingBarcode ? "Reading..." : "Read Barcode"}</button>
                                             <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 || this.state.ocring ? "disabled" : ""} onClick={() => { this.ocr(); }}>{this.state.ocring ? "Ocring..." : "OCR (English)"}</button>
                                         </li>
+                                        {this.props.barcodeRects.length > 0 &&
+                                            <li><button className="majorButton enabled fullWidth" onClick={() => { this.props.handleBarcodeResults("clear"); }}>Clear Barcode Rects</button></li>
+                                        }
                                     </ul>
                                 </div>
                             </li>
@@ -1127,12 +1124,10 @@ class DWTController extends React.Component {
 
 class DWTOutPut extends React.Component {
     componentDidUpdate(prevProps) {
-        if (prevProps.bNoScroll !== this.props.bNoScroll) {
-            if (this.props.bNoScroll)
-                this.refs.DWTOutPut_message.scrollTop = 0;
-            else
-                this.refs.DWTOutPut_message.scrollTop = this.refs.DWTOutPut_message.scrollHeight;
-        }
+        if (this.props.bNoScroll)
+            this.refs.DWTOutPut_message.scrollTop = 0;
+        else
+            this.refs.DWTOutPut_message.scrollTop = this.refs.DWTOutPut_message.scrollHeight;
     }
     render() {
         return (
@@ -1159,7 +1154,7 @@ class DWTUserInterface extends React.Component {
             messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }],
             bNoScroll: false,
             bNoNavigating: false,
-            barcodeResults: []
+            barcodeRects: []
         };
     }
     componentDidUpdate(prevProps) {
@@ -1167,12 +1162,36 @@ class DWTUserInterface extends React.Component {
             this.setState({ messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }] });
     }
     handleBarcodeResults(results) {
-        if (results == "clear")
-            this.setState({ barcodeResults: [] });
+        if (results === "clear")
+            this.setState({ barcodeRects: [] });
         else {
-            let _oldBR = this.state.barcodeResults;
-            _oldBR.concat(results);
-            this.setState({ barcodeResults: _oldBR });
+            let _oldBR = this.state.barcodeRects;
+            if (results.length > 0) {
+                let zoom;
+                if (this.props.runtimeInfo.showAbleWidth >= this.props.runtimeInfo.ImageWidth && this.props.runtimeInfo.showAbleHeight >= this.props.runtimeInfo.ImageHeight) {
+                    zoom = 1;
+                } else if (this.props.runtimeInfo.showAbleWidth / this.props.runtimeInfo.showAbleHeight >= this.props.runtimeInfo.ImageWidth / this.props.runtimeInfo.ImageHeight) {
+                    zoom = this.props.runtimeInfo.showAbleHeight / this.props.runtimeInfo.ImageHeight;
+                } else {
+                    zoom = this.props.runtimeInfo.showAbleWidth / this.props.runtimeInfo.ImageWidth;
+                }
+                for (let i = 0; i < results.length; ++i) {
+                    let result = results[i];
+                    let loc = result.LocalizationResult;
+                    loc.left = Math.min(loc.X1, loc.X2, loc.X3, loc.X4);
+                    loc.top = Math.min(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
+                    loc.right = Math.max(loc.X1, loc.X2, loc.X3, loc.X4);
+                    loc.bottom = Math.max(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
+                    let leftBase = 1 + this.props.runtimeInfo.showAbleWidth / 2 - this.props.runtimeInfo.ImageWidth / 2 * zoom;
+                    let topBase = 1 + this.props.runtimeInfo.showAbleHeight / 2 - this.props.runtimeInfo.ImageHeight / 2 * zoom;
+                    let left = leftBase + loc.left * zoom;
+                    let top = topBase + loc.top * zoom;
+                    let width = (loc.right - loc.left) * zoom;
+                    let height = (loc.bottom - loc.top) * zoom;
+                    _oldBR.push({ x: left, y: top, w: width, h: height });
+                }
+                this.setState({ barcodeRects: _oldBR });
+            }
         }
     }
     handleOutPutMessage(message, type, bReset, bNoScroll) {
@@ -1220,7 +1239,7 @@ class DWTUserInterface extends React.Component {
                         containerId={this.props.containerId}
                         runtimeInfo={this.props.runtimeInfo}
                         bNoNavigating={this.state.bNoNavigating}
-                        barcodeResults={this.state.barcodeResults}
+                        barcodeRects={this.state.barcodeRects}
 
                         handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
                     />
@@ -1231,6 +1250,7 @@ class DWTUserInterface extends React.Component {
                         buffer={this.props.buffer}
                         zones={this.props.zones}
                         runtimeInfo={this.props.runtimeInfo}
+                        barcodeRects={this.state.barcodeRects}
 
                         handleBarcodeResults={(results) => this.handleBarcodeResults(results)}
                         handleNavigating={(bAllow) => this.handleNavigating(bAllow)}
@@ -1247,9 +1267,10 @@ class DWTUserInterface extends React.Component {
                     />
                     <div className="DWT_Notice">
                         <p><strong>Platform &amp;Browser Support:</strong></p>Chrome|Firefox|Edge on Windows
-                            <p><strong>OCR:</strong> </p> Only English with OCR Basic is demonstrated, check
+                            <p><strong>OCR:</strong> </p> Only English with OCR Basic is demonstrated.<br />
+                            Click &nbsp;
                             <u><a href='https://www.dynamsoft.com/Products/ocr-basic-languages.aspx'>here</a></u>
-                            for other supported languages and
+                            &nbsp;for other supported languages and&nbsp;
                             <u><a href='https://www.dynamsoft.com/Products/cpp-ocr-library.aspx'>here</a></u> for the differences betwen two available OCR engines.
                     </div>
                 </div>

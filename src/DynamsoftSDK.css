@@ -241,6 +241,7 @@ ul {
 /*#dwtcontrolContainer*/
 
 #dwtcontrolContainer {
+    position: relative;
     float: left;
     width: 585px;
     height: 515px;
@@ -250,10 +251,23 @@ ul {
     border: none !important;
 }
 
-#dwt-NonInstallContainerID {
-    float: left;
-    width: 560px;
-    height: 590px;
+.barcodeInfoRect {
+    position: absolute;
+    z-index: 10;
+    border: 1px solid red;
+}
+
+.image-container * {
+    box-sizing: content-box;
+}
+
+.spanContainer {
+    position: absolute;
+    left: 0px;
+    top: -14px;
+    color: blue;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 .DWTcontainerTop #btnGroupBtm {
@@ -446,7 +460,7 @@ select#Resolution {
 }
 
 .disabled {
-    background:#aaa;
+    background: #aaa;
 }
 
 .enabled {
@@ -522,11 +536,16 @@ select#Resolution {
     padding: 5px 0 0;
     font-size: 14px;
     color: #444;
-    user-select: none; /* standard syntax */
-    -webkit-user-select: none; /* webkit (safari, chrome) browsers */
-    -moz-user-select: none; /* mozilla browsers */
-    -khtml-user-select: none; /* webkit (konqueror) browsers */
-    -ms-user-select: none; /* IE10+ */
+    user-select: none;
+    /* standard syntax */
+    -webkit-user-select: none;
+    /* webkit (safari, chrome) browsers */
+    -moz-user-select: none;
+    /* mozilla browsers */
+    -khtml-user-select: none;
+    /* webkit (konqueror) browsers */
+    -ms-user-select: none;
+    /* IE10+ */
 }
 
 .DWTOutPut .message {
@@ -545,15 +564,15 @@ select#Resolution {
 }
 
 .DWTOutPut .message .info {
-    color:black;
+    color: black;
 }
 
 .DWTOutPut .message .error {
-    color:red;
+    color: red;
 }
 
 .DWTOutPut .message .important {
-    color:#cE5E04;
+    color: #cE5E04;
 }
 
 .DWT_Notice {
@@ -590,9 +609,9 @@ select#Resolution {
 }
 
 .floatR {
-    float:right;
+    float: right;
 }
 
 .floatL {
-    float:left;
+    float: left;
 }

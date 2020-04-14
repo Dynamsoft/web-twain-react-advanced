@@ -5,42 +5,211 @@ import dynamsoft from 'dynamsoft-sdk';
 import $ from 'jquery';
 
 class DWTView extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            bShowChangeSizeUI: false,
+            newHeight: this.props.runtimeInfo.ImageHeight,
+            newWidth: this.props.runtimeInfo.ImageWidth,
+            InterpolationMethod: "1" // 1> NearestNeighbor, 2> Bilinear, 3> Bicubic
+        };
+    }
+    re = /^\d+$/;
+    DWObject = null;
+    componentDidUpdate(prevProps) {
+        if (this.props.dwt !== prevProps.dwt) this.DWObject = this.props.dwt;
+        if (this.props.runtimeInfo.ImageHeight !== prevProps.runtimeInfo.ImageHeight) this.setState({ newHeight: this.props.runtimeInfo.ImageHeight })
+        if (this.props.runtimeInfo.ImageWidth !== prevProps.runtimeInfo.ImageWidth) this.setState({ newWidth: this.props.runtimeInfo.ImageWidth })
+    }
+    // Quick Edit
+    handleQuickEdit(event) {
+        if (this.props.buffer.count === 0) {
+            this.props.handleOutPutMessage("There is no image in Buffer!", "error");
+            return;
+        }
+        switch (event.target.getAttribute("value")) {
+            case "editor": this.DWObject.ShowImageEditor(); break;
+            case "rotateL": this.DWObject.RotateLeft(this.props.buffer.current); break;
+            case "rotateR": this.DWObject.RotateRight(this.props.buffer.current); break;
+            case "rotate180": this.DWObject.Rotate(this.props.buffer.current, 180, true); break;
+            case "mirror": this.DWObject.Mirror(this.props.buffer.current); break;
+            case "flip": this.DWObject.Flip(this.props.buffer.current); break;
+            case "removeS": this.DWObject.RemoveAllSelectedImages(); break;
+            case "removeA": this.DWObject.RemoveAllImages(); break;
+            case "changeSize": this.setState({ bShowChangeSizeUI: !this.state.bShowChangeSizeUI }); break;
+            case "crop": this.crop(); break;
+            case "changeImageSizeOK": this.changeImageSizeOK(); break;
+            default: break;
+        }
+    }
+    handleNewSize(event, bHeight) {
+        if (!this.re.test(event.target.value)) {
+            return;
+        } else {
+            if (bHeight)
+                this.setState({ newHeight: event.target.value });
+            else
+                this.setState({ newWidth: event.target.value });
+        }
+    }
+    handleInterpolationMethodChange(event) {
+        this.setState({
+            InterpolationMethod: event.target.value
+        })
+    }
+    changeImageSizeOK() {
+        this.DWObject.ChangeImageSize(this.props.buffer.current, this.state.newWidth, this.state.newHeight, this.state.InterpolationMethod);
+        this.setState({ bShowChangeSizeUI: !this.state.bShowChangeSizeUI });
+    }
+    crop() {
+        if (this.props.zones.length === 0) {
+            this.props.handleOutPutMessage("Please select where you want to crop first!", "error");
+        } else if (this.props.zones.length > 1) {
+            this.props.handleOutPutMessage("Please select only one rectangle to crop!", "error");
+        } else {
+            let _zone = this.props.zones[0];
+            this.DWObject.Crop(
+                this.props.buffer.current,
+                _zone.x, _zone.y, _zone.x + _zone.width, _zone.y + _zone.height
+            );
+        }
+    }
+    // Navigate
+    btnFirstImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
+            return;
+        }
+        this.props.buffer.current = 0;
+        this.updatePageInfo();
+    }
+
+    btnPreImage_wheel() {
+        if (this.DWObject.HowManyImagesInBuffer !== 0)
+            this.btnPreImage()
+    }
+
+    btnNextImage_wheel() {
+        if (this.DWObject.HowManyImagesInBuffer !== 0)
+            this.btnNextImage()
+    }
+
+    btnPreImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
+            return;
+        }
+        else if (this.props.buffer.current === 0) {
+            return;
+        }
+        this.props.buffer.current = this.props.buffer.current - 1;
+        this.updatePageInfo();
+    }
+
+    btnNextImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
+            return;
+        }
+        else if (this.props.buffer.current === this.DWObject.HowManyImagesInBuffer - 1) {
+            return;
+        }
+        this.props.buffer.current = this.props.buffer.current + 1;
+        this.updatePageInfo();
+    }
+
+    btnLastImage() {
+        if (!this.checkIfImagesInBuffer(true)) {
+            return;
+        }
+        this.props.buffer.current = this.DWObject.HowManyImagesInBuffer - 1;
+        this.updatePageInfo();
+    }
+    setlPreviewMode() {
+        let varNum = parseInt(document.getElementById("DW_PreviewMode").selectedIndex + 1);
+        let btnCrop = document.getElementById("btnCrop");
+        if (btnCrop) {
+            let tmpstr = btnCrop.src;
+            if (varNum > 1) {
+                tmpstr = tmpstr.replace('Crop.', 'Crop_gray.');
+                btnCrop.src = tmpstr;
+                btnCrop.onclick = function () { };
+            }
+            else {
+                tmpstr = tmpstr.replace('Crop_gray.', 'Crop.');
+                btnCrop.src = tmpstr;
+                btnCrop.onclick = () => { this.btnCrop(); };
+            }
+        }
+
+        this.DWObject.SetViewMode(varNum, varNum);
+        if (Dynamsoft.Lib.env.bMac || Dynamsoft.Lib.env.bLinux) {
+            return;
+        }
+        else if (document.getElementById("DW_PreviewMode").selectedIndex !== 0) {
+            this.DWObject.MouseShape = true;
+        }
+        else {
+            this.DWObject.MouseShape = false;
+        }
+    }
+    drawBarcodeRect() {
+        this.DWObject.SetViewMode(1, 1);
+        let zoom;
+        let results = this.props.barcodeResults;
+        let dwtDiv = $("#" + this.props.containerId);
+        if (this.props.runtimeInfo.showAbleWidth >= this.props.runtimeInfo.ImageWidth && this.props.runtimeInfo.showAbleHeight >= this.props.runtimeInfo.ImageHeight) {
+            zoom = 1;
+        } else if (this.props.runtimeInfo.showAbleWidth / this.props.runtimeInfo.showAbleHeight >= this.props.runtimeInfo.ImageWidth / this.props.runtimeInfo.ImageHeight) {
+            zoom = this.props.runtimeInfo.showAbleHeight / this.props.runtimeInfo.ImageHeight;
+        } else {
+            zoom = this.props.runtimeInfo.showAbleWidth / this.props.runtimeInfo.ImageWidth;
+        }
+        for (let i = 0; i < results.length; ++i) {
+            let result = results[i];
+            let loc = result.LocalizationResult;
+            loc.left = Math.min(loc.X1, loc.X2, loc.X3, loc.X4);
+            loc.top = Math.min(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
+            loc.right = Math.max(loc.X1, loc.X2, loc.X3, loc.X4);
+            loc.bottom = Math.max(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
+            let leftBase = 1 + this.props.runtimeInfo.showAbleWidth / 2 - this.props.runtimeInfo.ImageWidth / 2 * zoom;
+            let topBase = 1 + this.props.runtimeInfo.showAbleHeight / 2 - this.props.runtimeInfo.ImageHeight / 2 * zoom;
+            let left = dwtDiv[0].offsetLeft + leftBase + loc.left * zoom;
+            let top = dwtDiv[0].offsetTop + topBase + loc.top * zoom;
+            let width = (loc.right - loc.left) * zoom;
+            let height = (loc.bottom - loc.top) * zoom;
+            dwtDiv.append(['<div class="barcodeInfoRect" style="left:', left, 'px;top:', top, 'px;width:', width, 'px;height:', height, 'px;">',
+                '<div class="spanContainer">', '<span>[', i + 1, ']</span></div></div>'].join(''));
+        }
+    }
     render() {
         return (
-            <div id="DWTcontainerTop">
-                <div id="divEdit">
-                    <ul className="operateGrp">
-                        <li><img src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" id="btnEditor" onClick={this.props.btnShowImageEditor} /> </li>
-                        <li><img src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" id="btnRotateL" onClick={this.props.btnRotateLeft} /> </li>
-                        <li><img src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" id="btnRotateR" onClick={this.props.btnRotateRight} /> </li>
-                        <li><img src="Images/Rotate180.png" alt="Rotate 180" title="Rotate 180" onClick={this.props.btnRotate180} /> </li>
-                        <li><img src="Images/Mirror.png" title="Mirror" alt="Mirror" id="btnMirror" onClick={this.props.btnMirror} /> </li>
-                        <li><img src="Images/Flip.png" title="Flip" alt="Flip" id="btnFlip" onClick={this.props.btnFlip} /> </li>
-                        <li><img src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" id="DW_btnRemoveCurrentImage" onClick={this.props.btnRemoveCurrentImage} /></li>
-                        <li><img src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" id="DW_btnRemoveAllImages" onClick={this.props.btnRemoveAllImages} /></li>
-                        <li><img src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" id="btnChangeImageSize" onClick={this.props.btnChangeImageSize} /> </li>
-                        <li><img src="Images/Crop.png" title="Crop" alt="Crop" id="btnCrop" /></li>
+            <div className="DWTcontainerTop">
+                <div className="divEdit">
+                    <ul className="operateGrp" onClick={(event) => { this.handleQuickEdit(event) }}>
+                        <li><img value="editor" src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" /> </li>
+                        <li><img value="rotateL" src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" /> </li>
+                        <li><img value="rotateR" src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" /> </li>
+                        <li><img value="rotate180" src="Images/Rotate180.png" title="Rotate 180" alt="Rotate 180" /> </li>
+                        <li><img value="mirror" src="Images/Mirror.png" title="Mirror" alt="Mirror" /> </li>
+                        <li><img value="flip" src="Images/Flip.png" title="Flip" alt="Flip" /> </li>
+                        <li><img value="removeS" src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" /></li>
+                        <li><img value="removeA" src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" /></li>
+                        <li><img value="changeSize" src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" /> </li>
+                        <li><img value="crop" src="Images/Crop.png" title="Crop" alt="Crop" /></li>
                     </ul>
-                    <div id="ImgSizeEditor" style={{ visibility: "hidden" }}>
+                    <div className="ImgSizeEditor" style={this.state.bShowChangeSizeUI ? { visisbility: "show" } : { visibility: "hidden" }}>
                         <ul>
                             <li>
-                                <label htmlFor="img_height">New Height :
-                                <input type="text" id="img_height" style={{ width: "50%" }} size="10" />
-                                pixel</label>
+                                <label>New Height (pixel): <input type="text" value={this.state.newHeight} className="width_48p floatR" onChange={(event) => { this.handleNewSize(event, true) }} /></label>
                             </li>
                             <li>
-                                <label htmlFor="img_width">New Width :&nbsp;
-                                <input type="text" id="img_width" style={{ width: "50%" }} size="10" />
-                                pixel</label>
+                                <label>New Width (pixel): <input type="text" value={this.state.newWidth} className="width_48p floatR" onChange={(event) => { this.handleNewSize(event) }} /></label>
                             </li>
                             <li>Interpolation method:
-                            <select size="1" id="InterpolationMethod">
-
+                            <select value={this.state.InterpolationMethod} className="width_48p floatR" onChange={(event) => this.handleInterpolationMethodChange(event)}>
                                     <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
                             </li>
                             <li style={{ textAlign: "center" }}>
-                                <input type="button" value="   OK   " id="btnChangeImageSizeOK" onClick={this.props.btnChangeImageSizeOK} />
-                                <input type="button" value=" Cancel " id="btnCancelChange" onClick={this.props.btnCancelChange} />
+                                <button className="width_48p floatL" value="changeImageSizeOK" onClick={(event) => { this.handleQuickEdit(event) }} >OK</button>
+                                <button className="width_48p floatR" value="changeSize" onClick={(event) => { this.handleQuickEdit(event) }} >Cancel</button>
                             </li>
                         </ul>
                     </div>
@@ -78,9 +247,6 @@ class DWTView extends React.Component {
 class DWTController extends React.Component {
     constructor(props) {
         super(props);
-        this.handleScannerSetupChange = this.handleScannerSetupChange.bind(this);
-        this.handleSourceChange = this.handleSourceChange.bind(this);
-        this.handleCameraChange = this.handleCameraChange.bind(this);
         this.state = {
             scanners: [],
             deviceSetup: {
@@ -90,53 +256,86 @@ class DWTController extends React.Component {
                 bADF: false,
                 bDuplex: false,
                 nPixelType: "0",
-                nResolution: "100"
+                nResolution: "100",
+                isVideoOn: false
             },
             cameras: [],
             cameraSettings: {},
+            saveFileName: (new Date()).getTime().toString(),
+            saveFileFormat: "jpg",
+            bMulti: false,
+            barcodeReady: false,
+            readingBarcode: false,
+            ocrReady: false,
+            ocring: false
         };
     }
     DWObject = null;
+    dbrObject = null;
+    componentDidMount() {
+        $("ul.PCollapse li>div").click(function (event) {
+            let _this = $(event.target);
+            switch (_this.attr("selfvalue")) {
+                case "capture":
+                    break;
+                case "scan":
+                case "load":
+                case "save":
+                    if (this.DWObject)
+                        this.DWObject.Addon.Webcam.StopVideo();
+                    break;
+                default: break;
+            }
+            if (_this.next().css("display") === "none") {
+                $(".divType").next().hide("normal");
+                $(".divType").children(".mark_arrow").removeClass("expanded");
+                $(".divType").children(".mark_arrow").addClass("collapsed");
+                _this.next().show("normal");
+                _this.children(".mark_arrow").removeClass("collapsed");
+                _this.children(".mark_arrow").addClass("expanded");
+            }
+        }.bind(this));
+    }
     componentDidUpdate(prevProps) {
         if (this.props.dwt !== prevProps.dwt) {
             this.DWObject = this.props.dwt;
-            let vCount = this.DWObject.SourceCount;
-            let sourceNames = [];
-            for (let i = 0; i < vCount; i++)
-                sourceNames.push(this.DWObject.GetSourceNameItems(i));
-            this.setState({ scanners: sourceNames });
-            this.onSourceChange("firstScanner");
-            this.setState({ cameras: this.DWObject.Addon.Webcam.GetSourceList() });
-            this.onCameraChange("firstCamera");
-        }
-    }
-    onSourceChange(value) {
-        if (value === "noscanner") {
-            let oldDeviceSetup = this.state.deviceSetup;
-            oldDeviceSetup.currentScanner = "noscanner";
-            this.setState({
-                deviceSetup: oldDeviceSetup
-            });
-            return;
-        }
-        if (value === "firstScanner")
-            this.DWObject.SelectSourceByIndex(0);
-        else {
-            for (let i = 0; i < this.DWObject.SourceCount; i++) {
-                if (this.DWObject.GetSourceNameItems(i) === value) {
-                    this.DWObject.SelectSourceByIndex(i);
-                    break;
+            if (this.DWObject) {
+                if (this.props.features & 0b1) {
+                    let vCount = this.DWObject.SourceCount;
+                    let sourceNames = [];
+                    for (let i = 0; i < vCount; i++)
+                        sourceNames.push(this.DWObject.GetSourceNameItems(i));
+                    this.setState({ scanners: sourceNames });
+                    if (sourceNames.length > 0)
+                        this.onSourceChange(sourceNames[0]);
                 }
+                if (this.props.features & 0b10) {
+                    let cameraNames = this.DWObject.Addon.Webcam.GetSourceList();
+                    this.setState({ cameras: cameraNames });
+                    if (cameraNames.length > 0)
+                        this.onCameraChange(cameraNames[0]);
+                }
+                if (this.props.features & 0b100000) {
+                    this.initBarcodeReader(this.props.features);
+                }
+                if (this.props.features & 0b1000000) {
+                    this.initOCR(this.props.features);
+                }
+                if (this.props.features < 0b100000)
+                    this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
             }
         }
-        let strSourceName = this.DWObject.CurrentSourceName;
+    }
+    // Tab 1: Scanner
+    onSourceChange(value) {
         let oldDeviceSetup = this.state.deviceSetup;
-        oldDeviceSetup.currentScanner = strSourceName;
+        oldDeviceSetup.currentScanner = value;
         this.setState({
             deviceSetup: oldDeviceSetup
         });
+        if (value === "noscanner") return;
         if (Dynamsoft.Lib.env.bMac) {
-            if (strSourceName.indexOf("ICA") === 0) {
+            if (value.indexOf("ICA") === 0) {
                 let oldDeviceSetup = this.state.deviceSetup;
                 oldDeviceSetup.noUI = true;
                 this.setState({
@@ -149,6 +348,17 @@ class DWTController extends React.Component {
                     deviceSetup: oldDeviceSetup
                 });
             }
+        }
+    }
+    handleScannerSetupChange(e, option) {
+        switch (option.substr(0, 1)) {
+            default: break;
+            case "b":
+                this.onScannerSetupChange(option, e.target.checked);
+                break;
+            case "n":
+                this.onScannerSetupChange(option, e.target.value);
+                break;
         }
     }
     onScannerSetupChange(option, value) {
@@ -177,6 +387,12 @@ class DWTController extends React.Component {
     }
     acquireImage() {
         this.DWObject.CloseSource();
+        for (let i = 0; i < this.DWObject.SourceCount; i++) {
+            if (this.DWObject.GetSourceNameItems(i) === this.state.deviceSetup.currentScanner) {
+                this.DWObject.SelectSourceByIndex(i);
+                break;
+            }
+        }
         this.DWObject.OpenSource();
         this.DWObject.AcquireImage({
             IfShowUI: this.state.deviceSetup.bShowUI,
@@ -197,27 +413,26 @@ class DWTController extends React.Component {
             console.log("Acquire failure!");
         });
     }
+    // Tab 2: Camera    
     onCameraChange(value) {
         let oldDeviceSetup = this.state.deviceSetup;
         oldDeviceSetup.currentCamera = value;
         this.setState({
             deviceSetup: oldDeviceSetup
         });
-        this.DWObject.Addon.Webcam.StopVideo();
         if (value === "nocamera") return;
-        if (value === "firstCamera")
-            value = this.state.cameras[0];
+        this.DWObject.Addon.Webcam.StopVideo();
         if (this.DWObject.Addon.Webcam.SelectSource(value)) {
-            var mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
+            let mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
                 _mediaTypes = {},
                 _currentmT = mediaTypes.GetCurrent();
-            var frameRates = this.DWObject.Addon.Webcam.GetFrameRate(),
+            let frameRates = this.DWObject.Addon.Webcam.GetFrameRate(),
                 _frameRates = {},
                 _currentfR = frameRates.GetCurrent();
-            var resolutions = this.DWObject.Addon.Webcam.GetResolution(),
+            let resolutions = this.DWObject.Addon.Webcam.GetResolution(),
                 _resolutions = {},
                 _currentRes = resolutions.GetCurrent();
-            var _advancedSettings = {},
+            let _advancedSettings = {},
                 _advancedCameraSettings = {};
             mediaTypes = mediaTypes._resultlist;
             frameRates = frameRates._resultlist;
@@ -296,9 +511,9 @@ class DWTController extends React.Component {
             /*return {
                 callback: (key) => {
                     if (-1 !== key.lastIndexOf("-")) {
-                        var _temp = key.split("-");
-                        var fold = _temp[0];
-                        var item = parseInt(_temp[1].substr(3));
+                        let _temp = key.split("-");
+                        let fold = _temp[0];
+                        let item = parseInt(_temp[1].substr(3));
                         switch (fold) {
                             default: break;
                             case "mT":
@@ -329,118 +544,11 @@ class DWTController extends React.Component {
                                 });
                                 break;*/
         } else {
-            this.setState({
-                exception: {
-                    code: -2,
-                    message: "Can't use the Webcam " + value + ", please make sure it's not in use!"
-                }
+            this.props.handleException({
+                code: -2,
+                message: "Can't use the Webcam " + value + ", please make sure it's not in use!"
             });
         }
-    }
-    loadImagesOfPDFs() {
-        var OnPDFSuccess = () => {
-            this.appendMessage("Loaded an image successfully.<br/>");
-            this.updatePageInfo();
-        };
-
-        var OnPDFFailure = (errorCode, errorString) => {
-            this.checkErrorStringWithErrorCode(errorCode, errorString);
-        };
-
-        this.DWObject.IfShowFileDialog = true;
-        this.DWObject.Addon.PDF.SetResolution(200);
-        this.DWObject.Addon.PDF.SetConvertMode(1/*EnumDWT_ConvertMode.CM_RENDERALL*/);
-        this.DWObject.LoadImageEx("", 5 /*EnumDWT_ImageType.IT_ALL*/, OnPDFSuccess, OnPDFFailure);
-    }
-    rdTIFF() {
-        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
-        _chkMultiPageTIFF.disabled = false;
-        _chkMultiPageTIFF.checked = false;
-
-        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
-        _chkMultiPagePDF.checked = false;
-        _chkMultiPagePDF.disabled = true;
-    }
-    rdPDF() {
-        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
-        _chkMultiPageTIFF.checked = false;
-        _chkMultiPageTIFF.disabled = true;
-
-        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
-        _chkMultiPagePDF.disabled = false;
-        _chkMultiPagePDF.checked = true;
-
-    }
-    rd() {
-        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
-        _chkMultiPageTIFF.checked = false;
-        _chkMultiPageTIFF.disabled = true;
-
-        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
-        _chkMultiPagePDF.checked = false;
-        _chkMultiPagePDF.disabled = true;
-    }
-    updateBtnsState() {
-        if (this.checkIfImagesInBuffer(false)) {
-            this.dwtChangePageBtns.prop("disabled", false);
-            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
-                $("#DW_btnFirstImage").prop("disabled", true);
-                $("#DW_btnPreImage").prop("disabled", true);
-            }
-            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
-                $("#DW_btnNextImage").prop("disabled", true);
-                $("#DW_btnLastImage").prop("disabled", true);
-            }
-        }
-        else {
-            this.dwtChangePageBtns.prop("disabled", true);
-        }
-    }
-    playVideo(config) {
-        setTimeout(() => {
-            var basicSetting, moreSetting;
-            if (config) {
-                if (isFinite(config.adv)) {
-                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(config.adv);
-                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(config.adv);
-                    this.showRangePicker({
-                        bCamera: false,
-                        id: config.adv,
-                        value: basicSetting.GetValue(),
-                        min: moreSetting.GetMinValue(),
-                        max: moreSetting.GetMaxValue(),
-                        defaultvalue: moreSetting.GetDefaultValue(),
-                        step: moreSetting.GetSteppingDelta(),
-                        title: config.title
-                    });
-                    return;
-                } else if (isFinite(config.advc)) {
-                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(config.advc);
-                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(config.advc);
-                    this.showRangePicker({
-                        bCamera: true,
-                        id: config.advc,
-                        value: basicSetting.GetValue(),
-                        min: moreSetting.GetMinValue(),
-                        max: moreSetting.GetMaxValue(),
-                        defaultvalue: moreSetting.GetDefaultValue(),
-                        step: moreSetting.GetSteppingDelta(),
-                        title: config.title
-                    });
-                    return;
-                } else {
-                    this.DWObject.Addon.Webcam.StopVideo();
-                    if (config.fR) {
-                        this.DWObject.Addon.Webcam.SetFrameRate(config.fR);
-                    } else if (config.mT) {
-                        this.DWObject.Addon.Webcam.SetMediaType(config.mT);
-                    } else if (config.res) {
-                        this.DWObject.Addon.Webcam.SetResolution(config.res);
-                    }
-                }
-            }
-            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, function () { });
-        }, 30);
     }
     showRangePicker(property) {
         $("#ValueSelector").html("");
@@ -493,234 +601,523 @@ class DWTController extends React.Component {
             buttons: _btn
         });
     }
-    switchViews() {
-        if (this.isVideoOn === false) {
-            // continue the video
-            this.SetIfWebcamPlayVideo(true);
+    toggleShowVideo() {
+        if (this.state.deviceSetup.isVideoOn === false) {
+            this.toggleCameraVideo(true);
         } else {
-            // stop the video
-            this.SetIfWebcamPlayVideo(false);
+            this.toggleCameraVideo(false);
         }
     }
-    SetIfWebcamPlayVideo(bShow) {
-        try {
-            if (bShow) {
-                this.DWObject.Addon.Webcam.StopVideo();
-                setTimeout(() => {
-                    this.playVideo();
-                    let oldDeviceSetup = this.state.deviceSetup;
-                    oldDeviceSetup.isVideoOn = true;
-                    this.setState({
-                        deviceSetup: oldDeviceSetup
-                    });
-                }, 30);
+    toggleCameraVideo(bShow) {
+        if (bShow) {
+            this.DWObject.Addon.Webcam.StopVideo();
+            this.playVideo();
+            let oldDeviceSetup = this.state.deviceSetup;
+            oldDeviceSetup.isVideoOn = true;
+            this.setState({
+                deviceSetup: oldDeviceSetup
+            });
+        } else {
+            this.DWObject.Addon.Webcam.StopVideo();
+            let oldDeviceSetup = this.state.deviceSetup;
+            oldDeviceSetup.isVideoOn = false;
+            this.setState({
+                deviceSetup: oldDeviceSetup
+            });
+        }
+    }
+    playVideo(config) {
+        let basicSetting, moreSetting;
+        if (config) {
+            if (isFinite(config.adv)) {
+                basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(config.adv);
+                moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(config.adv);
+                this.showRangePicker({
+                    bCamera: false,
+                    id: config.adv,
+                    value: basicSetting.GetValue(),
+                    min: moreSetting.GetMinValue(),
+                    max: moreSetting.GetMaxValue(),
+                    defaultvalue: moreSetting.GetDefaultValue(),
+                    step: moreSetting.GetSteppingDelta(),
+                    title: config.title
+                });
+                return;
+            } else if (isFinite(config.advc)) {
+                basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(config.advc);
+                moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(config.advc);
+                this.showRangePicker({
+                    bCamera: true,
+                    id: config.advc,
+                    value: basicSetting.GetValue(),
+                    min: moreSetting.GetMinValue(),
+                    max: moreSetting.GetMaxValue(),
+                    defaultvalue: moreSetting.GetDefaultValue(),
+                    step: moreSetting.GetSteppingDelta(),
+                    title: config.title
+                });
+                return;
             } else {
                 this.DWObject.Addon.Webcam.StopVideo();
-                let oldDeviceSetup = this.state.deviceSetup;
-                oldDeviceSetup.isVideoOn = false;
-                this.setState({
-                    deviceSetup: oldDeviceSetup
-                });
+                if (config.fR) {
+                    this.DWObject.Addon.Webcam.SetFrameRate(config.fR);
+                } else if (config.mT) {
+                    this.DWObject.Addon.Webcam.SetMediaType(config.mT);
+                } else if (config.res) {
+                    this.DWObject.Addon.Webcam.SetResolution(config.res);
+                }
             }
-        } catch (ex) {
-            console.log(ex);
         }
+        /**
+         * NOTE: The video playing is not smooth, there is a zoom-out effect (unwanted)
+         */
+        this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, function () { });
     }
     captureImage() {
         if (this.DWObject) {
-            var funCaptureImage = () => {
+            let funCaptureImage = () => {
                 setTimeout(() => {
-                    this.SetIfWebcamPlayVideo(false);
+                    this.toggleCameraVideo(false);
                 }, 50);
             };
             this.DWObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
         }
     }
-    handleScannerSetupChange(e, option) {
-        switch (option.substr(0, 1)) {
+    // Tab 3: Load
+    loadImagesOfPDFs() {
+        this.DWObject.IfShowFileDialog = true;
+        this.DWObject.Addon.PDF.SetResolution(200);
+        this.DWObject.Addon.PDF.SetConvertMode(1/*EnumDWT_ConvertMode.CM_RENDERALL*/);
+        this.DWObject.LoadImageEx("", 5 /*EnumDWT_ImageType.IT_ALL*/, () => {
+            this.props.handleOutPutMessage("Loaded an image successfully.");
+        }, (errorCode, errorString) => {
+            this.props.handleException({ code: errorCode, message: errorString });
+        });
+    }
+    // Tab 4: Save & Upload
+    handleFileNameChange(event) {
+        this.setState({ saveFileName: event.target.value });
+    }
+    handleSaveConfigChange(event) {
+        let format = event.target.value;
+        switch (format) {
             default: break;
-            case "b":
-                this.onScannerSetupChange(option, e.target.checked);
-                break;
-            case "n":
-                this.onScannerSetupChange(option, e.target.value);
-                break;
+            case "multiTIF":
+            case "multiPDF":
+                this.setState({ bMulti: event.target.checked }); break;
+            case "tif":
+            case "pdf":
+                this.setState({ saveFileFormat: event.target.value, bMulti: true }); break;
+            case "bmp":
+            case "jpg":
+            case "png":
+                this.setState({ saveFileFormat: event.target.value, bMulti: false }); break;
         }
     }
-    handleSourceChange(e) {
-        this.onSourceChange(e.target.value);
+    saveOrUploadImage(_type) {
+        if (_type !== "local" && _type !== "server") return;
+        let fileName = this.state.saveFileName + "." + this.state.saveFileFormat;
+        let imagesToUpload = [];
+        let fileType = 0;
+        let onSuccess = () => {
+            this.setState({
+                saveFileName: (new Date()).getTime().toString()
+            });
+            _type === "local" ? this.props.handleOutPutMessage(fileName + " saved successfully!", "important") : this.props.handleOutPutMessage(fileName + " uploaded successfully!", "important");
+        };
+        let onFailure = (errorCode, errorString, httpResponse) => {
+            httpResponse && httpResponse !== "" ? this.props.handleOutPutMessage(httpResponse, "httpResponse") : this.props.handleException({ code: errorCode, message: errorString });
+        };
+        if (this.state.bMulti) {
+            if (this.props.buffer.selected.length === 1 || this.props.buffer.selected.length === this.props.buffer.count) {
+                if (_type === "local") {
+                    switch (this.state.saveFileFormat) {
+                        default: break;
+                        case "tif": this.DWObject.SaveAllAsMultiPageTIFF(fileName, onSuccess, onFailure); break;
+                        case "pdf": this.DWObject.SaveAllAsPDF(fileName, onSuccess, onFailure); break;
+                    }
+                }
+                else {
+                    for (let i = 0; i < this.props.buffer.count; i++)
+                        imagesToUpload.push(i);
+                }
+            } else {
+                if (_type === "local") {
+                    switch (this.state.saveFileFormat) {
+                        default: break;
+                        case "tif": this.DWObject.SaveSelectedImagesAsMultiPageTIFF(fileName, onSuccess, onFailure); break;
+                        case "pdf": this.DWObject.SaveSelectedImagesAsMultiPagePDF(fileName, onSuccess, onFailure); break;
+                    }
+                }
+                else {
+                    imagesToUpload = this.props.buffer.selected;
+                }
+            }
+        } else {
+            if (_type === "local") {
+                switch (this.state.saveFileFormat) {
+                    default: break;
+                    case "bmp": this.DWObject.SaveAsBMP(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "jpg": this.DWObject.SaveAsJPEG(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "tif": this.DWObject.SaveAsTIFF(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "png": this.DWObject.SaveAsPNG(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "pdf": this.DWObject.SaveAsPDF(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                }
+            }
+            else {
+                imagesToUpload.push(this.props.buffer.current);
+            }
+        }
+        for (let o in window.EnumDWT_ImageType) {
+            if (o.toLowerCase().indexOf(this.state.saveFileFormat) !== -1 && window.EnumDWT_ImageType[o] < 7) {
+                fileType = window.EnumDWT_ImageType[o];
+                break;
+            }
+        }
+        if (_type === "server") {
+            let protocol = Dynamsoft.Lib.detect.ssl ? "https://" : "http://"
+            let _strPort = window.location.port === "" ? 80 : window.location.port;
+            if (Dynamsoft.Lib.detect.ssl === true)
+                _strPort = window.location.port === "" ? 443 : window.location.port;
+            let strActionPage = "/upload";
+            this.DWObject.HTTPUpload(protocol + window.location.hostname + ":" + _strPort + strActionPage, imagesToUpload, fileType, window.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
+        }
     }
-    handleCameraChange(e) {
-        this.onCameraChange(e.target.value);
+    // Tab 5: read Barcode & OCR
+    initBarcodeReader(_features) {
+        dynamsoft.BarcodeReader.initServiceConnection().then(() => {
+            this.dbrObject = new dynamsoft.BarcodeReader();
+            this.setState({ barcodeReady: true });
+            if (_features < 0b1000000) // no OCR
+                this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
+            else if (this.state.ocrReady)
+                this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
+        }, (ex) => {
+            this.props.handleException({ code: -6, message: 'Initializing Barcode REader failed: ' + (ex.message || ex) });
+        });
+    }
+    clearBarcodeRect() {
+        $(".barcodeInfoRect").remove();
+    }
+    readBarcode() {
+        this.setState({ readingBarcode: true });
+        this.props.handleNavigating(false);
+        this.props.handleBarcodeRects(null);
+        let settings = this.dbrObject.getRuntimeSettings();
+        if (this.DWObject.GetImageBitDepth(this.props.buffer.current) === 1)
+            settings.scaleDownThreshold = 214748347;
+        else
+            settings.scaleDownThreshold = 2300;
+        settings.barcodeFormatIds = dynamsoft.BarcodeReader.EnumBarcodeFormat.All;
+        settings.region.measuredByPercentage = 0;
+        if (this.props.zones.length > 0) {
+            let i = 0;
+            let readBarcodeFromRect = () => {
+                i++;
+                if (i == this.props.zones.length)
+                    this.doneReadingBarcode();
+                settings.region.left = this.props.zones[i].x;
+                settings.region.top = this.props.zones[i].y;
+                settings.region.right = this.props.zones[i].x + this.props.zones[i].width;
+                settings.region.bottom = this.props.zones[i].y + this.props.zones[i].height;
+                this.doReadBarode(settings, false, readBarcodeFromRect);
+            }
+            settings.region.left = this.props.zones[0].x;
+            settings.region.top = this.props.zones[0].y;
+            settings.region.right = this.props.zones[0].x + this.props.zones[0].width;
+            settings.region.bottom = this.props.zones[0].y + this.props.zones[0].height;
+            this.doReadBarode(settings, true, readBarcodeFromRect);
+        }
+        else {
+            settings.region.left = 0;
+            settings.region.top = 0;
+            settings.region.right = 0;
+            settings.region.bottom = 0;
+            this.doReadBarode(settings, true);
+        }
+    }
+    doReadBarode(settings, bClearOld, callback) {
+        this.dbrObject.updateRuntimeSettings(settings);
+        // Make sure the same image is on display
+        let userData = this.props.runtimeInfo.curImageTimeStamp;
+        let onDbrReadSuccess = (results) => {
+            if (results.length === 0) {
+                this.props.handleOutPutMessage("Nothing found on the image!", "important");
+            } else {
+                this.props.handleOutPutMessage("Total barcode(s) found: " + results.length, "important");
+                for (let i = 0; i < results.length; ++i) {
+                    let result = results[i];
+                    this.props.handleOutPutMessage("Barcode " + (i + 1).toString());
+                    this.props.handleOutPutMessage("Type: " + result.BarcodeFormatString);
+                    this.props.handleOutPutMessage("Value: " + result.BarcodeText, "important");
+                }
+            }
+            if (results.length !== 0 && this.props.runtimeInfo.curImageTimeStamp === userData) {
+                bClearOld && this.props.handleBarcodeResults("clear");
+                this.props.handleBarcodeResults(results);
+            }
+            Dynamsoft.Lib.isFunction(callback) ? callback() : this.doneReadingBarcode();
+        };
+        let onDbrReadFail = (_code, _msg) => {
+            this.props.handleException({
+                code: _code,
+                message: _msg
+            });
+            Dynamsoft.Lib.isFunction(callback) ? callback() : this.doneReadingBarcode();
+        };
+        let dwtUrl = this.DWObject.GetImagePartURL(this.props.buffer.current);
+        this.dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
+    }
+    doneReadingBarcode() {
+        this.setState({ readingBarcode: false });
+        //this.updateBtnsState();
+    }
+    // OCR
+    initOCR(_features) {
+        this.downloadOCRBasic(true, _features);
+    }
+    downloadOCRBasic(bDownloadDLL, _features) {
+        let strOCRPath = Dynamsoft.WebTwainEnv.ResourcesPath + "/OCRResources/OCR.zip",
+            strOCRLangPath = Dynamsoft.WebTwainEnv.ResourcesPath + '/OCRResources/OCRBasicLanguages/English.zip';
+        if (bDownloadDLL) {
+            if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
+                this.downloadOCRBasic(false);
+            } else {
+                this.DWObject.Addon.OCR.Download(
+                    strOCRPath,
+                    () => { /*console.log('OCR dll is installed');*/
+                        this.downloadOCRBasic(false);
+                    },
+                    (errorCode, errorString) => {
+                        this.props.handleException({ code: errorCode, message: errorString });
+                    }
+                );
+            }
+        } else {
+            this.DWObject.Addon.OCR.DownloadLangData(
+                strOCRLangPath,
+                () => {
+                    this.setState({ ocrReady: true });
+                    if (_features & 0b100000 && this.state.ocrReady) //barcode too
+                        this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
+                    else
+                        this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
+                },
+                function (errorCode, errorString) {
+                    this.props.handleException({ code: errorCode, message: errorString });
+                });
+        }
+    }
+    ocr() {
+        this.DWObject.Addon.OCR.SetLanguage('eng');
+        this.DWObject.Addon.OCR.SetOutputFormat(window.EnumDWT_OCROutputFormat.OCROF_TEXT);
+        if (this.props.zones.length > 0) {
+            this.ocrRect(this.props.zones);
+        }
+        else {
+            this.DWObject.Addon.OCR.Recognize(
+                this.props.buffer.current,
+                (imageId, result) => {
+                    if (result === null) {
+                        this.props.handleOutPutMessage("Nothing found on image " + this.DWObject.ImageIDToIndex(imageId), "important");
+                        return;
+                    }
+                    this.props.handleOutPutMessage("", "", true);
+                    this.props.handleOutPutMessage("OCR result of image " + this.DWObject.ImageIDToIndex(imageId), "important");
+                    this.props.handleOutPutMessage(Dynamsoft.Lib.base64.decode(result.Get()), "info", false, true);
+                },
+                (errorCode, errorString) => {
+                    this.props.handleException({ code: errorCode, message: errorString });
+                }
+            );
+        }
+    }
+    ocrRect(_zones) {
+        let doRectOCR = (_zone, _zoneId) => {
+            this.DWObject.Addon.OCR.RecognizeRect(
+                this.props.buffer.current,
+                _zone.x, _zone.y, _zone.x + _zone.width, _zone.y + _zone.height,
+                (imageId, left, top, right, bottom, result) => {
+                    if (result === null) {
+                        this.props.handleOutPutMessage("Nothing found in the rect [" + left + ", " + top + ", " + right + ", " + bottom + "]", "important");
+                        return;
+                    }
+                    if (_zoneId === 0)
+                        this.props.handleOutPutMessage("", "", true);
+                    this.props.handleOutPutMessage("OCR result in the rect [" + left + ", " + top + ", " + right + ", " + bottom + "]", "important");
+                    this.props.handleOutPutMessage(Dynamsoft.Lib.base64.decode(result.Get()), "info", false, true);
+                    ++_zoneId < _zones.length && doRectOCR(_zones[_zoneId], _zoneId);
+                },
+                (errorCode, errorString) => {
+                    this.props.handleException({ code: errorCode, message: errorString });
+                    ++_zoneId < _zones.length && doRectOCR(_zones[_zoneId], _zoneId);
+                }
+            );
+        }
+        doRectOCR(_zones[0], 0);
     }
     render() {
         return (
             <div className="DWTController">
                 <div id="divScanner" className="divinput">
                     <ul className="PCollapse">
-                        <li>
-                            <div className="divType" selfvalue="scan">
-                                <div className="mark_arrow expanded"></div>
+                        {this.props.features & 0b1 ? (
+                            <li>
+                                <div className="divType" selfvalue="scan">
+                                    <div className="mark_arrow expanded"></div>
                                     Custom Scan</div>
-                            <div className="divTableStyle">
-                                <ul>
-                                    <li>
-                                        <p>Select Source:</p>
-                                        <select value={this.state.deviceSetup.currentScanner} className="fullWidth" onChange={this.handleSourceChange}>
-                                            {
-                                                this.state.scanners.length > 0 ?
-                                                    this.state.scanners.map((_name, _index) =>
-                                                        <option value={_name} key={_index}>{_name}</option>
-                                                    )
-                                                    :
-                                                    <option value="noscanner">Looking for devices..</option>
-                                            }
-                                        </select>
-                                    </li>
-                                    <li>
-                                        <ul>
-                                            <li>
+                                <div className="divTableStyle">
+                                    <ul>
+                                        <li>
+                                            <p>Select Source:</p>
+                                            <select value={this.state.deviceSetup.currentScanner} className="fullWidth" onChange={(e) => { this.onSourceChange(e.target.value); }}>
                                                 {
-                                                    this.state.deviceSetup.noUI ? "" : (
-                                                        <span style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
-                                                            checked={this.state.deviceSetup.bShowUI}
-                                                            onChange={(e) => this.handleScannerSetupChange(e, "bShowUI")}
-                                                        />Show UI&nbsp;</span>
-                                                    )
+                                                    this.state.scanners.length > 0 ?
+                                                        this.state.scanners.map((_name, _index) =>
+                                                            <option value={_name} key={_index}>{_name}</option>
+                                                        )
+                                                        :
+                                                        <option value="noscanner">Looking for devices..</option>
                                                 }
-                                                <span style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
-                                                    checked={this.state.deviceSetup.bADF}
-                                                    onChange={(e) => this.handleScannerSetupChange(e, "bADF")}
-                                                />Page Feeder&nbsp;</span>
-                                                <span style={{ width: "32%" }}><input type="checkbox"
-                                                    checked={this.state.deviceSetup.bDuplex}
-                                                    onChange={(e) => this.handleScannerSetupChange(e, "bDuplex")}
-                                                />Duplex</span>
-                                            </li>
-                                            <li>
-                                                <select style={{ width: "48%", marginRight: "4%" }}
-                                                    value={this.state.deviceSetup.nPixelType}
-                                                    onChange={(e) => this.handleScannerSetupChange(e, "nPixelType")}>
-                                                    <option value="0">B&amp;W</option>
-                                                    <option value="1">Gray</option>
-                                                    <option value="2">Color</option>
-                                                </select>
-                                                <select style={{ width: "48%" }}
-                                                    value={this.state.deviceSetup.nResolution}
-                                                    onChange={(e) => this.handleScannerSetupChange(e, "nResolution")}>
-                                                    <option value="100">100 DPI</option>
-                                                    <option value="200">200 DPI</option>
-                                                    <option value="300">300 DPI</option>
-                                                </select>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                    <li className="tc">
-                                        <button className="majorButton fullWidth" onClick={this.acquireImage} style={this.state.scanners.length > 0 ? { backgroundColor: "rgb(80, 168, 225)" } : { backgroundColor: "#aaa" }} disabled={this.state.scanners.length > 0 ? "" : "disabled"}>Scan</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div className="divType" selfvalue="capture">
-                                <div className="mark_arrow collapsed"></div>
+                                            </select>
+                                        </li>
+                                        <li>
+                                            <ul>
+                                                <li>
+                                                    {
+                                                        this.state.deviceSetup.noUI ? "" : (
+                                                            <label style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
+                                                                checked={this.state.deviceSetup.bShowUI}
+                                                                onChange={(e) => this.handleScannerSetupChange(e, "bShowUI")}
+                                                            />Show UI&nbsp;</label>
+                                                        )
+                                                    }
+                                                    <label style={{ width: "32%", marginRight: "2%" }} ><input type="checkbox"
+                                                        checked={this.state.deviceSetup.bADF}
+                                                        onChange={(e) => this.handleScannerSetupChange(e, "bADF")}
+                                                    />Page Feeder&nbsp;</label>
+                                                    <label style={{ width: "32%" }}><input type="checkbox"
+                                                        checked={this.state.deviceSetup.bDuplex}
+                                                        onChange={(e) => this.handleScannerSetupChange(e, "bDuplex")}
+                                                    />Duplex</label>
+                                                </li>
+                                                <li>
+                                                    <select style={{ width: "48%", marginRight: "4%" }}
+                                                        value={this.state.deviceSetup.nPixelType}
+                                                        onChange={(e) => this.handleScannerSetupChange(e, "nPixelType")}>
+                                                        <option value="0">B&amp;W</option>
+                                                        <option value="1">Gray</option>
+                                                        <option value="2">Color</option>
+                                                    </select>
+                                                    <select style={{ width: "48%" }}
+                                                        value={this.state.deviceSetup.nResolution}
+                                                        onChange={(e) => this.handleScannerSetupChange(e, "nResolution")}>
+                                                        <option value="100">100 DPI</option>
+                                                        <option value="200">200 DPI</option>
+                                                        <option value="300">300 DPI</option>
+                                                    </select>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                        <li className="tc">
+                                            <button className={this.state.scanners.length > 0 ? "majorButton enabled fullWidth" : "majorButton disabled fullWidth"} onClick={() => { this.acquireImage(); }} disabled={this.state.scanners.length > 0 ? "" : "disabled"}>Scan</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        ) : ""}
+                        {this.props.features & 0b10 ? (
+                            <li>
+                                <div className="divType" selfvalue="capture">
+                                    <div className="mark_arrow collapsed"></div>
                                     Use Webcams</div>
-                            <div style={{ display: "none" }} className="divTableStyle">
-                                <ul>
-                                    <li>
-                                        <p>Select a Camera:</p>
-                                        <select value={this.state.currentCamera} className="fullWidth" onChange={this.handleCameraChange}>
-                                            {
-                                                this.state.cameras.length > 0 ?
-                                                    this.state.cameras.map((_name, _index) =>
-                                                        <option value={_index} key={_index}>{_name}</option>
-                                                    )
-                                                    :
-                                                    <option value="nocamera">Looking for devices..</option>
-                                            }
-                                        </select>
-                                        <ul>{
-                                            Object.values(this.state.cameraSettings).map((topItem, _key) =>
-                                                <li key={_key}>{topItem.name}</li>
-                                            )
-                                        }</ul>
-                                    </li>
-                                    <li className="tc">
-                                        <button className="majorButton width_48p" onClick={this.switchViews} >{this.state.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>
-                                        <button className="majorButton width_48p marginL_2p" onClick={this.captureImage} style={this.state.deviceSetup.isVideoOn ? { backgroundColor: "rgb(80, 168, 225)" } : { backgroundColor: "#aaa" }} disabled={this.state.deviceSetup.isVideoOn ? "" : "disabled"} > Capture</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div className="divType" selfvalue="load">
-                                <div className="mark_arrow collapsed"></div>
+                                <div style={{ display: "none" }} className="divTableStyle">
+                                    <ul>
+                                        <li>
+                                            <p>Select a Camera:</p>
+                                            <select value={this.state.currentCamera} className="fullWidth" onChange={(e) => { this.onCameraChange(e.target.value); }}>
+                                                {
+                                                    this.state.cameras.length > 0 ?
+                                                        this.state.cameras.map((_name, _index) =>
+                                                            <option value={_index} key={_index}>{_name}</option>
+                                                        )
+                                                        :
+                                                        <option value="nocamera">Looking for devices..</option>
+                                                }
+                                            </select>
+                                            <ul>{
+                                                Object.values(this.state.cameraSettings).map((topItem, _key) =>
+                                                    <li key={_key}>{topItem.name}</li>
+                                                )
+                                            }</ul>
+                                        </li>
+                                        <li className="tc">
+                                            <button className="majorButton enabled width_48p" onClick={() => { this.toggleShowVideo(); }}>{this.state.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>
+                                            <button className={this.state.deviceSetup.isVideoOn ? "majorButton enabled width_48p marginL_2p" : "majorButton disabled width_48p marginL_2p"} onClick={() => { this.captureImage(); }} disabled={this.state.deviceSetup.isVideoOn ? "" : "disabled"} > Capture</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        ) : ""}
+                        {this.props.features & 0b100 ? (
+                            <li>
+                                <div className="divType" selfvalue="load">
+                                    <div className="mark_arrow collapsed"></div>
                                     Load Images or PDFs</div>
-                            <div id="div_LoadLocalImage" style={{ display: "none" }} className="divTableStyle">
-                                <ul>
-                                    <li className="tc">
-                                        <button className="btnOrg" onClick={this.loadImagesOfPDFs} style={{ width: "100%" }}>Load</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div className="divType" selfvalue="save">
-                                <div className="mark_arrow collapsed"></div>
+                                <div style={{ display: "none" }} className="divTableStyle">
+                                    <ul>
+                                        <li className="tc">
+                                            <button className="majorButton enabled" onClick={() => { this.loadImagesOfPDFs(); }} style={{ width: "100%" }}>Load</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        ) : ""}
+                        {this.props.features & 0b1000 && this.props.features & 0b10000 ? (
+                            <li>
+                                <div className="divType" selfvalue="save">
+                                    <div className="mark_arrow collapsed"></div>
                                     Save Documents</div>
-                            <div id="div_SaveImages" style={{ display: "none" }} className="divTableStyle">
-                                <ul>
-                                    <li>
-                                        <label htmlFor="txt_fileName" style={{ width: "100%" }}>
-                                            <span style={{ width: "25%" }}>File Name:</span>
-                                            <input style={{ width: "70%", marginLeft: "2%" }} type="text" size="20" id="txt_fileName" />
-                                        </label>
-                                    </li>
-                                    <li style={{ paddingRight: "0" }}>
-                                        <label htmlFor="imgTypebmp">
-                                            <input type="radio" value="bmp" name="ImageType" id="imgTypebmp" onClick={this.rd} />
-                                    BMP</label>
-                                        <label htmlFor="imgTypejpeg">
-                                            <input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" onClick={this.rd} />
-                                    JPEG</label>
-                                        <label htmlFor="imgTypetiff">
-                                            <input type="radio" value="tif" name="ImageType" id="imgTypetiff" onClick={this.rdTIFF} />
-                                    TIFF</label>
-                                        <label htmlFor="imgTypepng">
-                                            <input type="radio" value="png" name="ImageType" id="imgTypepng" onClick={this.rd} />
-                                    PNG</label>
-                                        <label htmlFor="imgTypepdf">
-                                            <input type="radio" value="pdf" name="ImageType" id="imgTypepdf" onClick={this.rdPDF} />
-                                    PDF</label>
-                                    </li>
-                                    <li>
-                                        <label htmlFor="MultiPageTIFF">
-                                            <input type="checkbox" id="MultiPageTIFF" disabled="" />
-                                    Multi-Page TIFF</label>
-                                        <label htmlFor="MultiPagePDF">
-                                            <input type="checkbox" id="MultiPagePDF" disabled="" />
-                                    Multi-Page PDF</label>
-                                    </li>
-                                    <li>
-                                        <button id="btnSave" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.saveUploadImage('local') }} >Save to Local</button>
-                                        <button id="btnUpload" className="btnOrg" style={{ width: "47%" }} onClick={() => { this.saveUploadImage('server') }} >Upload to Server</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div className="divType" selfvalue="recognize">
-                                <div className="mark_arrow collapsed"></div>
+                                <div style={{ display: "none" }} className="divTableStyle div_SaveImages">
+                                    <ul>
+                                        <li>
+                                            <label className="fullWidth"><span style={{ width: "25%" }}>File Name:</span>
+                                                <input style={{ width: "73%", marginLeft: "2%" }} type="text" size="20" value={this.state.saveFileName} onChange={(e) => { this.handleFileNameChange(e) }} /></label>
+                                        </li>
+                                        <li>
+                                            <label><input type="radio" value="bmp" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />BMP</label>
+                                            <label><input type="radio" value="jpg" name="ImageType" defaultChecked onClick={(e) => { this.handleSaveConfigChange(e) }} />JPEG</label>
+                                            <label><input type="radio" value="tif" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />TIFF</label>
+                                            <label><input type="radio" value="png" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />PNG</label>
+                                            <label><input type="radio" value="pdf" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />PDF</label>
+                                        </li>
+                                        <li>
+                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "tif" && this.state.bMulti ? "checked" : ""} value="multiTIF" disabled={this.state.saveFileFormat === "tif" ? "" : "disabled"} onChange={(e) => { this.handleSaveConfigChange(e) }} />Multi-Page TIFF</label>
+                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "pdf" && this.state.bMulti ? "checked" : ""} value="multiPDF" disabled={this.state.saveFileFormat === "pdf" ? "" : "disabled"} onChange={(e) => { this.handleSaveConfigChange(e) }} />Multi-Page PDF</label>
+                                        </li>
+                                        <li>
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => { this.saveOrUploadImage('local') }} >Save to Local</button>
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => { this.saveOrUploadImage('server') }} >Upload to Server</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        ) : ""}
+                        {this.props.features & 0b10000 && this.props.features & 0b100000 ? (
+                            <li>
+                                <div className="divType" selfvalue="recognize">
+                                    <div className="mark_arrow collapsed"></div>
                                     Recognize</div>
-                            <div id="div_Recognize" style={{ display: "none" }} className="divTableStyle">
-                                <ul>
-                                    <li className="tc">
-                                        <button className="btnOrg" id="btn-readBarcode" style={{ width: "47%" }} >Read Barcode</button>
-                                        <button className="btnOrg" id="btn-OCR" style={{ marginLeft: "2%", width: "47%" }}>OCR (English)</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
+                                <div id="div_Recognize" style={{ display: "none" }} className="divTableStyle">
+                                    <ul>
+                                        <li className="tc">
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 || this.state.readingBarcode ? "disabled" : ""} onClick={() => { this.readBarcode(); }} >{this.state.readingBarcode ? "Reading..." : "Read Barcode"}</button>
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 || this.state.ocring ? "disabled" : ""} onClick={() => { this.ocr(); }}>{this.state.ocring ? "Ocring..." : "OCR (English)"}</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        ) : ""}
                     </ul>
                 </div>
             </div>
@@ -729,56 +1126,132 @@ class DWTController extends React.Component {
 }
 
 class DWTOutPut extends React.Component {
-    render() {
-        return (
-            <div id="DWTemessageContainer"></div>
-        );
+    componentDidUpdate(prevProps) {
+        if (prevProps.bNoScroll !== this.props.bNoScroll) {
+            if (this.props.bNoScroll)
+                this.refs.DWTOutPut_message.scrollTop = 0;
+            else
+                this.refs.DWTOutPut_message.scrollTop = this.refs.DWTOutPut_message.scrollHeight;
+        }
     }
-}
-
-class DynamsoftNotes extends React.Component {
     render() {
         return (
-            <div id="divNoteMessage"> </div>
+            <div className="DWTOutPut">Message: (Double Click to Clear!)<br />
+                <div ref="DWTOutPut_message" className="message" onDoubleClick={() => this.props.handleClearOutPut()}>
+                    <ul>
+                        {
+                            this.props.messages.map((oneMsg) =>
+                                <li key={oneMsg.time + "_" + Math.floor(Math.random(1) * 1000)} className={oneMsg.type}>{oneMsg.text}</li>
+                            )
+                        }
+                    </ul>
+                </div>
+            </div>
         );
     }
 }
 
 class DWTUserInterface extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            startTime: this.props.startTime,
+            messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }],
+            bNoScroll: false,
+            bNoNavigating: false,
+            barcodeResults: []
+        };
+    }
+    componentDidUpdate(prevProps) {
+        if (prevProps.status !== this.props.status)
+            this.setState({ messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }] });
+    }
+    handleBarcodeResults(results) {
+        if (results == "clear")
+            this.setState({ barcodeResults: [] });
+        else {
+            let _oldBR = this.state.barcodeResults;
+            _oldBR.concat(results);
+            this.setState({ barcodeResults: _oldBR });
+        }
+    }
+    handleOutPutMessage(message, type, bReset, bNoScroll) {
+        let _noScroll = false, _type = "info";
+        if (type)
+            _type = type;
+        if (_type === "httpResponse") {
+            let msgWindow = window.open("", "Response from server", "height=500,width=750,top=0,left=0,toolbar=no,menubar=no,scrollbars=no, resizable=no,location=no, status=no");
+            msgWindow.document.writeln(message);
+        } else {
+            if (bNoScroll)
+                _noScroll = true;
+            if (bReset)
+                this.setState({
+                    messages: [{ time: (new Date()).getTime(), text: "Ready...", type: "info" }],
+                    bNoScroll: false
+                });
+            else {
+                let oldMessages = this.state.messages;
+                oldMessages.push({ time: (new Date()).getTime(), text: message, type: _type });
+                this.setState({
+                    messages: oldMessages,
+                    bNoScroll: _noScroll
+                });
+            }
+        }
+    }
+    handleException(ex) {
+        this.handleOutPutMessage(ex.message, "error");
+    }
+    handleNavigating(bAllow) {
+        this.setState({ bNoNavigating: !bAllow });
+    }
+    handleBarcodeRects(_rects) {
+        console.log(_rects);
+    }
     render() {
         return (
             <div id="DWTcontainer" className="container">
                 <div id="DWTcontainerBody" style={{ textAlign: "left" }} className="clearfix">
                     <DWTView
+                        dwt={this.props.dwt}
+                        buffer={this.props.buffer}
+                        zones={this.props.zones}
                         containerId={this.props.containerId}
-                        btnShowImageEditor={() => this.btnShowImageEditor()}
-                        btnRotateLeft={() => this.props.btnRotateLeft()}
-                        btnRotateRight={() => this.props.btnRotateRight()}
-                        btnRotate180={() => this.props.btnRotate180()}
-                        btnMirror={() => this.props.btnMirror()}
-                        btnFlip={() => this.props.btnFlip()}
-                        //btnCrop={() => this.props.btnCrop()}
-                        btnRemoveCurrentImage={() => this.props.btnRemoveCurrentImage()}
-                        btnRemoveAllImages={() => this.props.btnRemoveAllImages()}
-                        btnChangeImageSize={() => this.props.btnChangeImageSize()}
-                        btnChangeImageSizeOK={() => this.props.btnChangeImageSizeOK()}
-                        btnCancelChange={() => this.props.btnCancelChange()}
+                        runtimeInfo={this.props.runtimeInfo}
+                        bNoNavigating={this.state.bNoNavigating}
+                        barcodeResults={this.state.barcodeResults}
 
-                        btnFirstImage={() => this.props.btnFirstImage()}
-                        //btnPreImage_wheel={() => this.props.btnPreImage_wheel()}
-                        //btnNextImage_wheel={() => this.props.btnNextImage_wheel()}
-                        btnPreImage={() => this.props.btnPreImage()}
-                        btnNextImage={() => this.props.btnNextImage()}
-                        btnLastImage={() => this.props.btnLastImage()}
-                        setlPreviewMode={() => this.props.setlPreviewMode()}
+                        handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
                     />
                     <DWTController
+                        startTime={this.props.startTime}
+                        features={this.props.features}
                         dwt={this.props.dwt}
+                        buffer={this.props.buffer}
+                        zones={this.props.zones}
+                        runtimeInfo={this.props.runtimeInfo}
+
+                        handleBarcodeResults={(results) => this.handleBarcodeResults(results)}
+                        handleNavigating={(bAllow) => this.handleNavigating(bAllow)}
+                        handleBarcodeRects={(_rects) => this.handleBarcodeRects(_rects)}
+                        handleException={(ex) => { this.handleException(ex) }}
+                        handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
                     />
                 </div>
                 <div id="DWTcontainerBtm" style={{ textAlign: "left" }} className="clearfix">
-                    <DWTOutPut />
-                    <DynamsoftNotes />
+                    <DWTOutPut
+                        handleClearOutPut={() => { this.handleOutPutMessage("", "", true) }}
+                        messages={this.state.messages}
+                        bNoScroll={this.state.bNoScroll}
+                    />
+                    <div className="DWT_Notice">
+                        <p><strong>Platform &amp;Browser Support:</strong></p>Chrome|Firefox|Edge on Windows
+                            <p><strong>OCR:</strong> </p> Only English with OCR Basic is demonstrated, check
+                            <u><a href='https://www.dynamsoft.com/Products/ocr-basic-languages.aspx'>here</a></u>
+                            for other supported languages and
+                            <u><a href='https://www.dynamsoft.com/Products/cpp-ocr-library.aspx'>here</a></u> for the differences betwen two available OCR engines.
+                    </div>
                 </div>
             </div >
         );
@@ -789,37 +1262,27 @@ export default class DWT extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            startTime: (new Date()).getTime(),
             dwt: null,
-            zones: {
+            status: "Initializing...",
+            buffer: {
+                selected: [],
                 count: 0,
-                rects: [] //x,y,width,height
+                current: -1
             },
+            zones: [],
+            runtimeInfo: {},
             exception: {}
         };
     }
-    isHtml5 = !!(Dynamsoft.Lib.env.bWin && Dynamsoft.Lib.product.bChromeEdition);
-    isVideoOn = false;
-    isSelectedArea = false;
     DWObject = null;
-    dbrObject = null;
     containerId = 'dwtcontrolContainer';
     productKey = 't0140cQMAAGnOvWTyoOR4HEFckJJmzMWpZcPSHyXGAvYGxgEkg5fBnRoFPslaAayuNOe5B/gp7plUCIUAtf6Ttb98d7Ifv/3A6Mxsu7CZLJhKHUuMorfuu/E/ZrOfuSyoMz7zjXKjgvHcMO1HiGbvyHv+GBWM54ZpP4Wej2RorGBUMJ4b4tx40yqnXlIiqvs=';
-    _strTempStr = '';
-    re = /^\d+$/;
-    strre = /^[\s\w]+$/;
-    refloat = /^\d+\.*\d*$/i;
     showAbleWidthOri = 0;
     showAbleHeightOri = 0;
-    _iLeft = 0;
-    _iTop = 0;
-    _iRight = 0;
-    _iBottom = 0;
-    _DWObject = {};
-
-    dwtChangePageBtns = null;
     componentDidMount() {
         if (Dynamsoft && (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition)) {
-            var ObjString = [];
+            let ObjString = [];
             ObjString.push('<div style="padding:0 20px;">');
             ObjString.push(
                 "Please note that your current browser can't run this sample, please use modern browsers like Chrome, Firefox, Edge or IE 11."
@@ -835,10 +1298,46 @@ export default class DWT extends React.Component {
             this.showAbleHeightOri = $("#" + this.containerId).height() - 4;//4 for border
             this.dwtChangePageBtns = $("button[name='control-changePage']");
             this.setState({
-                dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId)
+                dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId),
+                status: "Ready..."
             })
             this.DWObject = this.state.dwt;
             if (this.DWObject) {
+                /**
+                 * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
+                 */
+                this.DWObject.RegisterEvent("OnBitmapChanged", () => {
+                    let selection = [];
+                    let count = this.DWObject.SelectedImagesCount;
+                    for (let i = 0; i < count; i++) {
+                        selection.push(this.DWObject.GetSelectedImageIndex(i));
+                    }
+                    this.setState({
+                        buffer: {
+                            selected: selection,
+                            count: this.DWObject.HowManyImagesInBuffer,
+                            current: this.DWObject.CurrentImageIndexInBuffer
+                        }
+                    });
+                });
+                this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => {
+                    this.DWObject.CurrentImageIndexInBuffer = index;
+                    this.setState({
+                        zones: []
+                    });
+                    let selection = [];
+                    let count = this.DWObject.SelectedImagesCount;
+                    for (let i = 0; i < count; i++) {
+                        selection.push(this.DWObject.GetSelectedImageIndex(i));
+                    }
+                    this.setState({
+                        buffer: {
+                            selected: selection,
+                            count: this.DWObject.HowManyImagesInBuffer,
+                            current: this.DWObject.CurrentImageIndexInBuffer
+                        }
+                    });
+                });
                 this.DWObject.RegisterEvent("OnPostTransfer", () => {
                     this.updatePageInfo();
                 });
@@ -848,94 +1347,34 @@ export default class DWT extends React.Component {
                 this.DWObject.RegisterEvent("OnPostAllTransfers", () => {
                     this.DWObject.CloseSource();
                     this.updatePageInfo();
-                    this.checkErrorString();
+                    //this.checkErrorString();
                 });
                 this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
-                    let oldReacts = this.state.zones.rects;
-                    oldReacts.push({ x: left, y: top, width: right - left, height: bottom - top });
+                    let oldZones = this.state.zones;
+                    oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
                     this.setState({
-                        zones: {
-                            count: sAreaIndex,
-                            rects: oldReacts
-                        }
+                        zones: oldZones
                     });
                 });
                 this.DWObject.RegisterEvent('OnImageAreaDeSelected', (nImageIndex) => {
                     this.setState({
-                        zones: {
-                            count: 0,
-                            rects: []
-                        }
+                        zones: []
                     });
-                });
-                this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => {
-                    this.setState({
-                        zones: {
-                            count: 0,
-                            rects: []
-                        }
-                    });
-                    this.DWObject.CurrentImageIndexInBuffer = index;
-                    this.updatePageInfo();
                 });
                 if (Dynamsoft.Lib.env.bWin)
                     this.DWObject.MouseShape = false;
                 this.updatePageInfo();
-                this.setDefaultValue();
                 this.setlPreviewMode();
-                $("#btn-OCR").hide();
-                this.initDbr();
-                this.initOCR();
             }
         });
-        this.initiateInputs();
-        this.InitMessageBody();
-        this.InitDWTdivMsg(false);
         this.loadDWT();
-
-        $("ul.PCollapse li>div").click(function (event) {
-            let _this = $(event.target);
-            switch (_this.attr("selfvalue")) {
-                case "capture":
-                    break;
-                case "scan":
-                case "load":
-                case "save":
-                    this.DWObject.Addon.Webcam.StopVideo(); break;
-                default: break;
-            }
-            if (_this.next().css("display") === "none") {
-                $(".divType").next().hide("normal");
-                $(".divType").children(".mark_arrow").removeClass("expanded");
-                $(".divType").children(".mark_arrow").addClass("collapsed");
-                _this.next().show("normal");
-                _this.children(".mark_arrow").removeClass("collapsed");
-                _this.children(".mark_arrow").addClass("expanded");
-            }
-        }.bind(this));
-
     }
-
     loadDWT() {
         Dynamsoft.WebTwainEnv.ProductKey = this.productKey;
+        dynamsoft.dbrEnv.productKey = this.productKey;
         Dynamsoft.WebTwainEnv.Containers = [{ ContainerId: this.containerId, Width: '583px', Height: '513px' }];
         Dynamsoft.WebTwainEnv.Load();
     }
-
-    appendMessage(strMessage, bClearOld, bNoScroll) {
-        if (bClearOld)
-            this._strTempStr = "";
-        this._strTempStr += strMessage;
-        var _divMessageContainer = document.getElementById("DWTemessage");
-        if (_divMessageContainer) {
-            _divMessageContainer.innerHTML = this._strTempStr;
-            if (bNoScroll)
-                _divMessageContainer.scrollTop = 0;
-            else
-                _divMessageContainer.scrollTop = _divMessageContainer.scrollHeight;
-        }
-    }
-
     updatePageInfo() {
         if (document.getElementById("DW_TotalImage") && document.getElementById("DW_CurrentImage")) {
             if (document.getElementById("DW_CurrentImage").value === this.DWObject.CurrentImageIndexInBuffer + 1 &&
@@ -949,38 +1388,38 @@ export default class DWT extends React.Component {
         document.getElementById("DW_CurrentImage").value = this.DWObject.CurrentImageIndexInBuffer + 1;
         this.isSelectedArea = false;
         this.updateBtnsState();
-        this.clearBarcodeRect();
+        //this.clearBarcodeRect();
         if (this.checkIfImagesInBuffer(false)) {
-            this._DWObject.curImageTimeStamp = (new Date()).getTime();
-            this._DWObject.showAbleWidth = this.DWObject.HowManyImagesInBuffer > 1 ? this.showAbleWidthOri - 16 : this.showAbleWidthOri;
-            this._DWObject.showAbleHeight = this.showAbleHeightOri;
-            this._DWObject.ImageWidth = this.DWObject.GetImageWidth(this.DWObject.CurrentImageIndexInBuffer);
-            this._DWObject.ImageHeight = this.DWObject.GetImageHeight(this.DWObject.CurrentImageIndexInBuffer);
+            this.setState({
+                runtimeInfo: {
+                    curImageTimeStamp: (new Date()).getTime(),
+                    showAbleWidth: this.DWObject.HowManyImagesInBuffer > 1 ? this.showAbleWidthOri - 16 : this.showAbleWidthOri,
+                    showAbleHeight: this.showAbleHeightOri,
+                    ImageWidth: this.DWObject.GetImageWidth(this.DWObject.CurrentImageIndexInBuffer),
+                    ImageHeight: this.DWObject.GetImageHeight(this.DWObject.CurrentImageIndexInBuffer),
+                }
+            })
         }
     }
-
     checkErrorString() {
         return this.checkErrorStringWithErrorCode(this.DWObject.ErrorCode, this.DWObject.ErrorString);
     }
-
-    checkErrorStringWithErrorCode(errorCode, errorString, responseString) {
-        if (errorCode === 0) {
-            this.appendMessage("<span style='color:#cE5E04'><b>" + errorString + "</b></span><br />");
-
-            return true;
-        }
-        if (errorCode === -2115) //Cancel file dialog
-            return true;
-        else {
-            if (errorCode === -2003) {
-                var ErrorMessageWin = window.open("", "ErrorMessage", "height=500,width=750,top=0,left=0,toolbar=no,menubar=no,scrollbars=no, resizable=no,location=no, status=no");
-                ErrorMessageWin.document.writeln(responseString); //DWObject.HTTPPostResponseString);
+    updateBtnsState() {
+        if (this.checkIfImagesInBuffer(false)) {
+            this.dwtChangePageBtns.prop("disabled", false);
+            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
+                $("#DW_btnFirstImage").prop("disabled", true);
+                $("#DW_btnPreImage").prop("disabled", true);
             }
-            this.appendMessage("<span style='color:#cE5E04'><b>" + errorString + "</b></span><br />");
-            return false;
+            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
+                $("#DW_btnNextImage").prop("disabled", true);
+                $("#DW_btnLastImage").prop("disabled", true);
+            }
+        }
+        else {
+            this.dwtChangePageBtns.prop("disabled", true);
         }
     }
-
     checkIfImagesInBuffer(bAppendMSG) {
         if (this.DWObject.HowManyImagesInBuffer === 0) {
             if (bAppendMSG)
@@ -990,840 +1429,17 @@ export default class DWT extends React.Component {
         else
             return true;
     }
-
-    btnShowImageEditor() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.ShowImageEditor();
-    }
-
-    btnRotateRight() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.RotateRight(this.DWObject.CurrentImageIndexInBuffer);
-        this.appendMessage('<b>Rotate right: </b>');
-        if (this.checkErrorString()) {
-            return;
-        }
-    }
-
-    btnRotateLeft() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.RotateLeft(this.DWObject.CurrentImageIndexInBuffer);
-        this.appendMessage('<b>Rotate left: </b>');
-        if (this.checkErrorString()) {
-            return;
-        }
-    }
-
-    btnRotate180() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.Rotate(this.DWObject.CurrentImageIndexInBuffer, 180, true);
-        this.appendMessage('<b>Rotate 180: </b>');
-        if (this.checkErrorString()) {
-            return;
-        }
-    }
-
-    btnMirror() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.Mirror(this.DWObject.CurrentImageIndexInBuffer);
-        this.appendMessage('<b>Mirror: </b>');
-        if (this.checkErrorString()) {
-            return;
-        }
-    }
-
-    btnFlip() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.Flip(this.DWObject.CurrentImageIndexInBuffer);
-        this.appendMessage('<b>Flip: </b>');
-        if (this.checkErrorString()) {
-            return;
-        }
-    }
-
-    /*----------------------Crop Method---------------------*/
-    btnCrop() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        if (this._iLeft !== 0 || this._iTop !== 0 || this._iRight !== 0 || this._iBottom !== 0) {
-            this.DWObject.Crop(
-                this.DWObject.CurrentImageIndexInBuffer,
-                this._iLeft, this._iTop, this._iRight, this._iBottom
-            );
-            this._iLeft = 0;
-            this._iTop = 0;
-            this._iRight = 0;
-            this._iBottom = 0;
-            this.appendMessage('<b>Crop: </b>');
-            if (this.checkErrorString()) {
-                return;
-            }
-            return;
-        } else {
-            this.appendMessage("<b>Crop: </b>failed. Please first select the area you'd like to crop.<br />");
-        }
-    }
-
-    /*----------------Change Image Size--------------------*/
-    btnChangeImageSize() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        switch (document.getElementById("ImgSizeEditor").style.visibility) {
-            case "visible": document.getElementById("ImgSizeEditor").style.visibility = "hidden"; break;
-            case "hidden": document.getElementById("ImgSizeEditor").style.visibility = "visible"; break;
-            default: break;
-        }
-        //document.getElementById("ImgSizeEditor").style.top = ds_gettop(document.getElementById("btnChangeImageSize")) + document.getElementById("btnChangeImageSize").offsetHeight + 15 + "px";
-        //document.getElementById("ImgSizeEditor").style.left = ds_getleft(document.getElementById("btnChangeImageSize")) - 14 + "px";
-
-        var iWidth = this.DWObject.GetImageWidth(this.DWObject.CurrentImageIndexInBuffer);
-        if (iWidth !== -1)
-            document.getElementById("img_width").value = iWidth;
-        var iHeight = this.DWObject.GetImageHeight(this.DWObject.CurrentImageIndexInBuffer);
-        if (iHeight !== -1)
-            document.getElementById("img_height").value = iHeight;
-    }
-
-    btnCancelChange() {
-        document.getElementById("ImgSizeEditor").style.visibility = "hidden";
-    }
-
-    btnChangeImageSizeOK() {
-        document.getElementById("img_height").className = "";
-        document.getElementById("img_width").className = "";
-        if (!this.re.test(document.getElementById("img_height").value)) {
-            document.getElementById("img_height").className += " invalid";
-            document.getElementById("img_height").focus();
-            this.appendMessage("Please input a valid <b>height</b>.<br />");
-            return;
-        }
-        if (!this.re.test(document.getElementById("img_width").value)) {
-            document.getElementById("img_width").className += " invalid";
-            document.getElementById("img_width").focus();
-            this.appendMessage("Please input a valid <b>width</b>.<br />");
-            return;
-        }
-        this.DWObject.ChangeImageSize(
-            this.DWObject.CurrentImageIndexInBuffer,
-            document.getElementById("img_width").value,
-            document.getElementById("img_height").value,
-            document.getElementById("InterpolationMethod").selectedIndex + 1
-        );
-        this.appendMessage('<b>Change Image Size: </b>');
-        if (this.checkErrorString()) {
-            document.getElementById("ImgSizeEditor").style.visibility = "hidden";
-            return;
-        }
-    }
-
-    InitMessageBody() {
-        var MessageBody = document.getElementById("divNoteMessage");
-        if (MessageBody) {
-            var ObjString = "<div><p><strong>Platform & Browser Support:</strong> </p> Chrome|Firefox|Edge on Windows   ";
-            ObjString += "<p><strong>OCR:</strong> </p> Only English with OCR Basic is demonstrated, check <u><a href='https://www.dynamsoft.com/Products/ocr-basic-languages.aspx'>here</a></u> for other supported languages and <u><a href='https://www.dynamsoft.com/Products/cpp-ocr-library.aspx'>here</a></u> for the differences betwen two available OCR engines. <br />"
-            ObjString += ".</div>";
-
-            MessageBody.style.display = "";
-            MessageBody.innerHTML = ObjString;
-        }
-    }
-
-    InitDWTdivMsg(bNeebBack) {
-        var DWTemessageContainer = document.getElementById("DWTemessageContainer");
-        if (DWTemessageContainer) {
-            var objString = "";
-            // The container for the error message
-            if (bNeebBack) {
-                objString += "<p className='backToDemoList'><a className='d-btn bgOrange' href =\"online_demo_list.aspx\">Back</a></p>";
-            }
-            objString += "<div id='DWTdivMsg' className='clearfix'>";
-            objString += "Message:<br/>"
-            objString += "<div id='DWTemessage'>";
-            objString += "</div></div>";
-
-            DWTemessageContainer.innerHTML = objString;
-
-            var _divMessageContainer = document.getElementById("DWTemessage");
-            _divMessageContainer.ondblclick = this.clearMessages;
-        }
-    }
-
-    clearMessages() {
-        document.getElementById("DWTemessage").innerHTML = "";
-        this._strTempStr = "";
-    }
-
-    initiateInputs() {
-        var allinputs = document.getElementsByTagName("input");
-        for (let i = 0; i < allinputs.length; i++) {
-            if (allinputs[i].type === "checkbox") {
-                allinputs[i].checked = false;
-            }
-            else if (allinputs[i].type === "text") {
-                allinputs[i].value = "";
-            }
-        }
-        if (Dynamsoft.Lib.env.bIE === true && Dynamsoft.Lib.env.bWin64 === true) {
-            var o = document.getElementById("samplesource64bit");
-            if (o)
-                o.style.display = "inline";
-
-            o = document.getElementById("samplesource32bit");
-            if (o)
-                o.style.display = "none";
-        }
-    }
-
-    setDefaultValue() {
-        var vGray = document.getElementById("Gray");
-        if (vGray)
-            vGray.checked = true;
-
-        var varImgTypepng2 = document.getElementById("imgTypepng2");
-        if (varImgTypepng2)
-            varImgTypepng2.checked = true;
-        var varImgTypepng = document.getElementById("imgTypepng");
-        if (varImgTypepng)
-            varImgTypepng.checked = true;
-
-        var _strDefaultSaveImageName = "WebTWAINImage";
-        var _txtFileNameforSave = document.getElementById("txt_fileNameforSave");
-        if (_txtFileNameforSave)
-            _txtFileNameforSave.value = _strDefaultSaveImageName;
-
-        var _txtFileName = document.getElementById("txt_fileName");
-        if (_txtFileName)
-            _txtFileName.value = _strDefaultSaveImageName;
-
-        var _chkMultiPageTIFF_save = document.getElementById("MultiPageTIFF_save");
-        if (_chkMultiPageTIFF_save)
-            _chkMultiPageTIFF_save.disabled = true;
-        var _chkMultiPagePDF_save = document.getElementById("MultiPagePDF_save");
-        if (_chkMultiPagePDF_save)
-            _chkMultiPagePDF_save.disabled = true;
-        var _chkMultiPageTIFF = document.getElementById("MultiPageTIFF");
-        if (_chkMultiPageTIFF)
-            _chkMultiPageTIFF.disabled = true;
-        var _chkMultiPagePDF = document.getElementById("MultiPagePDF");
-        if (_chkMultiPagePDF)
-            _chkMultiPagePDF.disabled = true;
-    }
-
-    //--------------------------------------------------------------------------------------
-    //************************** Save Image***********************************
-    //--------------------------------------------------------------------------------------
-    saveUploadImage(type) {
-        if (type === 'local') {
-            this.btnSave();
-        } else if (type === 'server') {
-            this.btnUpload()
-        }
-    }
-
-    btnSave() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        let i, strimgType_save;
-        var NM_imgType_save = document.getElementsByName("ImageType");
-        for (i = 0; i < 5; i++) {
-            if (NM_imgType_save.item(i).checked === true) {
-                strimgType_save = NM_imgType_save.item(i).value;
-                break;
-            }
-        }
-        this.DWObject.IfShowFileDialog = true;
-        var _txtFileNameforSave = document.getElementById("txt_fileName");
-        if (_txtFileNameforSave)
-            _txtFileNameforSave.className = "";
-        var bSave = false;
-
-        var strFilePath = _txtFileNameforSave.value + "." + strimgType_save;
-
-        var OnSuccess = () => {
-            this.appendMessage('<b>Save Image: </b>');
-            this.checkErrorStringWithErrorCode(0, "Successful.");
-        };
-
-        var OnFailure = (errorCode, errorString) => {
-            this.checkErrorStringWithErrorCode(errorCode, errorString);
-        };
-
-        var _chkMultiPageTIFF_save = document.getElementById("MultiPageTIFF");
-        var vAsyn = false;
-        if (strimgType_save === "tif" && _chkMultiPageTIFF_save && _chkMultiPageTIFF_save.checked) {
-            vAsyn = true;
-            if ((this.DWObject.SelectedImagesCount === 1) || (this.DWObject.SelectedImagesCount === this.DWObject.HowManyImagesInBuffer)) {
-                bSave = this.DWObject.SaveAllAsMultiPageTIFF(strFilePath, OnSuccess, OnFailure);
-            }
-            else {
-                bSave = this.DWObject.SaveSelectedImagesAsMultiPageTIFF(strFilePath, OnSuccess, OnFailure);
-            }
-        }
-        else if (strimgType_save === "pdf" && document.getElementById("MultiPagePDF").checked) {
-            vAsyn = true;
-            if ((this.DWObject.SelectedImagesCount === 1) || (this.DWObject.SelectedImagesCount === this.DWObject.HowManyImagesInBuffer)) {
-                bSave = this.DWObject.SaveAllAsPDF(strFilePath, OnSuccess, OnFailure);
-            }
-            else {
-                bSave = this.DWObject.SaveSelectedImagesAsMultiPagePDF(strFilePath, OnSuccess, OnFailure);
-            }
-        }
-        else {
-            switch (i) {
-                case 0: bSave = this.DWObject.SaveAsBMP(strFilePath, this.DWObject.CurrentImageIndexInBuffer); break;
-                case 1: bSave = this.DWObject.SaveAsJPEG(strFilePath, this.DWObject.CurrentImageIndexInBuffer); break;
-                case 2: bSave = this.DWObject.SaveAsTIFF(strFilePath, this.DWObject.CurrentImageIndexInBuffer); break;
-                case 3: bSave = this.DWObject.SaveAsPNG(strFilePath, this.DWObject.CurrentImageIndexInBuffer); break;
-                case 4: bSave = this.DWObject.SaveAsPDF(strFilePath, this.DWObject.CurrentImageIndexInBuffer); break;
-                default: break;
-            }
-        }
-
-        if (vAsyn === false) {
-            if (bSave)
-                this.appendMessage('<b>Save Image: </b>');
-            if (this.checkErrorString()) {
-                return;
-            }
-        }
-    }
-
-    //--------------------------------------------------------------------------------------
-    //************************** Upload Image***********************************
-    //--------------------------------------------------------------------------------------
-    btnUpload() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        let i, strHTTPServer, strActionPage, strImageType;
-
-        var _txtFileName = document.getElementById("txt_fileName");
-        if (_txtFileName)
-            _txtFileName.className = "";
-
-        strHTTPServer = "localhost";//window.location.hostname;
-        this.DWObject.IfSSL = false;//Dynamsoft.Lib.detect.ssl;
-        /*
-        var _strPort = window.location.port === "" ? 80 : window.location.port;
-        if (Dynamsoft.Lib.detect.ssl === true)
-            _strPort = window.location.port === "" ? 443 : window.location.port;
-        */
-        this.DWObject.HTTPPort = 2016;// _strPort;
-
-
-        //var CurrentPathName = unescape(window.location.pathname); // get current PathName in plain ASCII	
-        //var CurrentPath =  CurrentPathName.substring(0, CurrentPathName.lastIndexOf("/") + 1);
-        strActionPage = "/upload";// CurrentPath + "SaveToDB.aspx";  /* Online Demo*/
-        //strActionPage = CurrentPath + "SaveToFile.aspx"; /* Downloaded Sample */
-        //var redirectURLifOK = CurrentPath + "online_demo_list.aspx";
-        for (i = 0; i < 5; i++) {
-            if (document.getElementsByName("ImageType").item(i).checked === true) {
-                strImageType = i;
-                break;
-            }
-        }
-
-        var fileName = _txtFileName.value;
-        var replaceStr = "<";
-        fileName = fileName.replace(new RegExp(replaceStr, 'gm'), '&lt;');
-        var uploadfilename = fileName + "." + document.getElementsByName("ImageType").item(i).value;
-
-        var OnSuccess = (httpResponse) => {
-            this.appendMessage('<b>Upload: </b>');
-            this.checkErrorStringWithErrorCode(0, "Successful.");
-            /*if (strActionPage.indexOf("SaveToFile") !== -1) {
-                alert("Successful")//if save to file.
-            } else {
-                window.location.href = redirectURLifOK;
-            }*/
-        };
-
-        var OnFailure = (errorCode, errorString, httpResponse) => {
-            this.checkErrorStringWithErrorCode(errorCode, errorString, httpResponse);
-        };
-
-        if (strImageType === 2 && document.getElementById("MultiPageTIFF").checked) {
-            if ((this.DWObject.SelectedImagesCount === 1) || (this.DWObject.SelectedImagesCount === this.DWObject.HowManyImagesInBuffer)) {
-                this.DWObject.HTTPUploadAllThroughPostAsMultiPageTIFF(
-                    strHTTPServer,
-                    strActionPage,
-                    uploadfilename,
-                    OnSuccess, OnFailure
-                );
-            }
-            else {
-                this.DWObject.HTTPUploadThroughPostAsMultiPageTIFF(
-                    strHTTPServer,
-                    strActionPage,
-                    uploadfilename,
-                    OnSuccess, OnFailure
-                );
-            }
-        }
-        else if (strImageType === 4 && document.getElementById("MultiPagePDF").checked) {
-            if ((this.DWObject.SelectedImagesCount === 1) || (this.DWObject.SelectedImagesCount === this.DWObject.HowManyImagesInBuffer)) {
-                this.DWObject.HTTPUploadAllThroughPostAsPDF(
-                    strHTTPServer,
-                    strActionPage,
-                    uploadfilename,
-                    OnSuccess, OnFailure
-                );
-            }
-            else {
-                this.DWObject.HTTPUploadThroughPostAsMultiPagePDF(
-                    strHTTPServer,
-                    strActionPage,
-                    uploadfilename,
-                    OnSuccess, OnFailure
-                );
-            }
-        }
-        else {
-            this.DWObject.HTTPUploadThroughPostEx(
-                strHTTPServer,
-                this.DWObject.CurrentImageIndexInBuffer,
-                strActionPage,
-                uploadfilename,
-                strImageType,
-                OnSuccess, OnFailure
-            );
-        }
-    }
-
-    //--------------------------------------------------------------------------------------
-    //************************** Recognize ***********************************
-    //--------------------------------------------------------------------------------------
-
-    initDbr() {
-        dynamsoft.dbrEnv.productKey = this.productKey;
-        dynamsoft.BarcodeReader.initServiceConnection().then(() => {
-            this.dbrObject = new dynamsoft.BarcodeReader();
-            this.initReadBtn();
-        }, (ex) => {
-            alert('Init DBR failed' + (ex.message || ex));
-        });
-    }
-
-    clearBarcodeRect() {
-        if (this.isHtml5) {
-            $(".barcodeInfoRect").remove();
-        }
-    }
-
-    initReadBtn() {
-        $("#btn-readBarcode").click(() => {
-            var btn = $(this);
-            btn.prop("disabled", true);
-            this.dwtChangePageBtns.prop("disabled", true);
-            this.clearBarcodeRect();
-            if (!this.checkIfImagesInBuffer(true)) {
-                alert("There is no image in the buffer.");
-                btn.prop("disabled", false);
-                return;
-            }
-            var settings = this.dbrObject.getRuntimeSettings();
-            if (this.DWObject.GetImageBitDepth(this.DWObject.CurrentImageIndexInBuffer) === 1)
-                settings.scaleDownThreshold = 214748347;
-            else
-                settings.scaleDownThreshold = 2300;
-            settings.barcodeFormatIds = dynamsoft.BarcodeReader.EnumBarcodeFormat.All;
-            settings.region.measuredByPercentage = 0;
-            if (this.state.zones.count > 0) {
-                if (this.state.zones.count === 1) {
-                    settings.region.left = this.state.zones.rects[0].left;
-                    settings.region.top = this.state.zones.rects[0].top;
-                    settings.region.right = this.state.zones.rects[0].left + this.state.zones.rects[0].width;
-                    settings.region.bottom = this.state.zones.rects[0].top + this.state.zones.rects[0].height;
-                } else {
-                    this.setState({
-                        exception: {
-                            code: -102,
-                            message: "Can't read multiple zones"
-                        }
-                    });
-                    return;
-                }
-            }
-            else {
-                settings.region.left = 0;
-                settings.region.top = 0;
-                settings.region.right = 0;
-                settings.region.bottom = 0;
-            }
-            this.readBarode(settings);
-        });
-    }
-
-    doneReadingBarcode() {
-        $("#btn-readBarcode").prop("disabled", false);
-        $("#btn-readBarcode").text('Read Barcode');
-        //enable change-page btns
-        this.updateBtnsState();
-    }
-
-    readBarode(settings) {
-        if (this.dbrObject) {
-            this.dbrObject.updateRuntimeSettings(settings);
-            // Make sure the same image is on display
-            var userData = this._DWObject.curImageTimeStamp;
-            var onDbrReadSuccess = (results) => {
-                this.logResult(results, true);
-                if (results.length !== 0 && this._DWObject.curImageTimeStamp === userData) {
-                    this.drawBarcodeRect(results);
-                }
-                this.doneReadingBarcode();
-            };
-            var onDbrReadFail = (_code, _msg) => {
-                this.setState({
-                    exception: {
-                        code: _code,
-                        message: _msg
-                    }
-                });
-                this.doneReadingBarcode();
-            };
-            if (this.isHtml5) {
-                var dwtUrl = this.DWObject.GetImagePartURL(this.DWObject.CurrentImageIndexInBuffer);
-                this.dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
-            } else {
-                this.setState({
-                    exception: {
-                        code: -1,
-                        message: "Unsupported environment"
-                    }
-                });
-            }
-        } else {
-            this.setState({
-                exception: {
-                    code: -3,
-                    message: "Barcode reader object unavailable"
-                }
-            });
-        }
-    }
-
-    // OCR
-    initOCR() {
-        this.downloadOCRBasic(true);
-    }
-
-    downloadOCRBasic(bDownloadDLL) {
-        var strOCRPath = Dynamsoft.WebTwainEnv.ResourcesPath + "/OCRResources/OCR.zip",
-            strOCRLangPath = Dynamsoft.WebTwainEnv.ResourcesPath + '/OCRResources/OCRBasicLanguages/English.zip';
-
-        if (bDownloadDLL) {
-            if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
-                this.downloadOCRBasic(false);
-            } else {
-                this.DWObject.Addon.OCR.Download(
-                    strOCRPath,
-                    () => { /*console.log('OCR dll is installed');*/
-                        this.downloadOCRBasic(false);
-                    },
-                    (errorCode, errorString) => {
-                        console.log(errorString);
-                    }
-                );
-            }
-        } else {
-            this.DWObject.Addon.OCR.DownloadLangData(
-                strOCRLangPath,
-                () => {
-                    $("#btn-OCR").show();
-                    $("#btn-OCR").click(() => {
-                        this.DoOCR();
-                    });
-                },
-                function (errorCode, errorString) {
-                    console.log(errorString);
-                });
-        }
-    }
-
-    DoOCR() {
-        if (this.DWObject) {
-            if (!this.checkIfImagesInBuffer()) {
-                alert("Please scan or load an image first.");
-                return;
-            }
-            this.DWObject.Addon.OCR.SetLanguage('eng');
-            this.DWObject.Addon.OCR.SetOutputFormat(window.EnumDWT_OCROutputFormat.OCROF_TEXT);
-            if (this.isSelectedArea) {
-                this.DWObject.Addon.OCR.RecognizeRect(
-                    this.DWObject.CurrentImageIndexInBuffer,
-                    this._iLeft, this._iTop, this._iRight, this._iBottom,
-                    (index, left, top, right, bottom, result) => {
-                        if (result === null)
-                            return null;
-                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
-                            _resultToShow = [];
-                        for (let i = 0; i < _textResult.length; i++) {
-                            if (i === 0 && _textResult[i].trim() === "")
-                                continue;
-                            _resultToShow.push(_textResult[i] + '<br />');
-                        }
-                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
-                        _resultToShow.push('</p>');
-                        this.appendMessage(_resultToShow.join(''), true, true);
-                    },
-                    function (errorcode, errorstring, result) {
-                        alert(errorstring);
-                    }
-                );
-            }
-            else {
-                this.DWObject.Addon.OCR.Recognize(
-                    this.DWObject.CurrentImageIndexInBuffer,
-                    (index, result) => {
-                        if (result === null)
-                            return null;
-                        var _textResult = (Dynamsoft.Lib.base64.decode(result.Get())).split(/\r?\n/g),
-                            _resultToShow = [];
-                        for (let i = 0; i < _textResult.length; i++) {
-                            if (i === 0 && _textResult[i].trim() === "")
-                                continue;
-                            _resultToShow.push(_textResult[i] + '<br />');
-                        }
-                        _resultToShow.splice(0, 0, '<p style="padding:5px; margin:0;"><strong>OCR result:</strong><br />');
-                        _resultToShow.push('</p>');
-                        this.appendMessage(_resultToShow.join(''), true, true);
-                    },
-                    function (errorcode, errorstring, result) {
-                        alert(errorstring);
-                    }
-                );
-            }
-        }
-    }
-
-    logResult(results, bBarcode) {
-        var strMsg = [];
-        if (bBarcode) {
-            if (results.length === 0) {
-                strMsg.push("No barcode found for the selected format(s).<br /><br />");
-            } else {
-                strMsg.push("<div style='width:100%; text-align:center;'><a href='#'  class='clearRects'> ~~~~~~~~~~~~ Clear ~~~~~~~~~~~~ </a></div>");
-                strMsg.push("<b>Total barcode(s) found: ", results.length, "</b><br /><br /> ");
-
-                for (let i = 0; i < results.length; ++i) {
-                    var result = results[i];
-                    var arr = ["<b>Barcode ", (i + 1), "</b><br />",
-                        "<b>Type: <span style='color:#fe8e14'>", result.BarcodeFormatString, "</span></b><br />",
-                        "<b>Value: <span style='color:#fe8e14'>", this.convertTextForHTML(result.BarcodeText), "</span></b>",
-                        "<b>Data: ", dynamsoft.lib.stringify(result.BarcodeBytes), "</b><br />",
-                        "<b>Angle: ", result.LocalizationResult.Angle, "</b><br />"
-                    ];
-                    strMsg = strMsg.concat(arr);
-                }
-                strMsg.push("<div style='width:100%; text-align:center;'><a href='#'  class='clearRects'> ~~~~~~~~~~~~ Clear ~~~~~~~~~~~~ </a></div>");
-            }
-        }
-        this.appendMessage(strMsg.join(""), true);
-
-        $(".clearRects").on('click', () => {
-            this.clearBarcodeRect();
-            this.clearMessages();
-        });
-    }
-
-    convertTextForHTML(str) {
-        str = str.replace(/</g, '&lt;');
-        str = str.replace(/>/g, '&gt;');
-        str = ['<pre class="resultPre">', str, '</pre>'].join('');
-        if ((str.indexOf('\n') & str.indexOf('\r')) !== -1) {
-            str = '<br />' + str;
-        }
-        return str;
-    }
-
-    drawBarcodeRect(results) {
-        var zoom;
-        var dwtDiv = $("#" + this.containerId);
-        if (this._DWObject.showAbleWidth >= this._DWObject.ImageWidth && this._DWObject.showAbleHeight >= this._DWObject.ImageHeight) {
-            zoom = 1;
-        } else if (this._DWObject.showAbleWidth / this._DWObject.showAbleHeight >= this._DWObject.ImageWidth / this._DWObject.ImageHeight) {
-            zoom = this._DWObject.showAbleHeight / this._DWObject.ImageHeight;
-        } else {
-            zoom = this._DWObject.showAbleWidth / this._DWObject.ImageWidth;
-        }
-        for (let i = 0; i < results.length; ++i) {
-            var result = results[i];
-            var loc = result.LocalizationResult;
-            loc.left = Math.min(loc.X1, loc.X2, loc.X3, loc.X4);
-            loc.top = Math.min(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
-            loc.right = Math.max(loc.X1, loc.X2, loc.X3, loc.X4);
-            loc.bottom = Math.max(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
-            // HTML5 borwsers: show rectangles and numbers. We use div to manually draw the rectangles, you can use OverlayRectangle as well
-            if (this.isHtml5) {
-                var leftBase = 1 + this._DWObject.showAbleWidth / 2 - this._DWObject.ImageWidth / 2 * zoom;
-                var topBase = 1 + this._DWObject.showAbleHeight / 2 - this._DWObject.ImageHeight / 2 * zoom;
-                var left = dwtDiv[0].offsetLeft + leftBase + loc.left * zoom;
-                var top = dwtDiv[0].offsetTop + topBase + loc.top * zoom;
-                var width = (loc.right - loc.left) * zoom;
-                var height = (loc.bottom - loc.top) * zoom;
-                dwtDiv.append(['<div class="barcodeInfoRect" style="left:', left, 'px;top:', top, 'px;width:', width, 'px;height:', height, 'px;">',
-                    '<div class="spanContainer">', '<span>[', i + 1, ']</span></div></div>'].join(''));
-            } else {
-                alert('The broowser is not supported!');
-            }
-        }
-    }
-    //--------------------------------------------------------------------------------------
-    //************************** Navigator functions***********************************
-    //--------------------------------------------------------------------------------------
-
-    btnFirstImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.CurrentImageIndexInBuffer = 0;
-        this.updatePageInfo();
-    }
-
-    btnPreImage_wheel() {
-        if (this.DWObject.HowManyImagesInBuffer !== 0)
-            this.btnPreImage()
-    }
-
-    btnNextImage_wheel() {
-        if (this.DWObject.HowManyImagesInBuffer !== 0)
-            this.btnNextImage()
-    }
-
-    btnPreImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        else if (this.DWObject.CurrentImageIndexInBuffer === 0) {
-            return;
-        }
-        this.DWObject.CurrentImageIndexInBuffer = this.DWObject.CurrentImageIndexInBuffer - 1;
-        this.updatePageInfo();
-    }
-
-    btnNextImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        else if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
-            return;
-        }
-        this.DWObject.CurrentImageIndexInBuffer = this.DWObject.CurrentImageIndexInBuffer + 1;
-        this.updatePageInfo();
-    }
-
-    btnLastImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.CurrentImageIndexInBuffer = this.DWObject.HowManyImagesInBuffer - 1;
-        this.updatePageInfo();
-    }
-
-    btnRemoveCurrentImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.RemoveAllSelectedImages();
-        if (this.DWObject.HowManyImagesInBuffer === 0) {
-            document.getElementById("DW_TotalImage").value = this.DWObject.HowManyImagesInBuffer;
-            document.getElementById("DW_CurrentImage").value = "";
-            return;
-        }
-        else {
-            this.updatePageInfo();
-        }
-    }
-
-    btnRemoveAllImages() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.DWObject.RemoveAllImages();
-        document.getElementById("DW_TotalImage").value = "0";
-        document.getElementById("DW_CurrentImage").value = "";
-    }
-
-    setlPreviewMode() {
-        var varNum = parseInt(document.getElementById("DW_PreviewMode").selectedIndex + 1);
-        var btnCrop = document.getElementById("btnCrop");
-        if (btnCrop) {
-            var tmpstr = btnCrop.src;
-            if (varNum > 1) {
-                tmpstr = tmpstr.replace('Crop.', 'Crop_gray.');
-                btnCrop.src = tmpstr;
-                btnCrop.onclick = function () { };
-            }
-            else {
-                tmpstr = tmpstr.replace('Crop_gray.', 'Crop.');
-                btnCrop.src = tmpstr;
-                btnCrop.onclick = () => { this.btnCrop(); };
-            }
-        }
-
-        this.DWObject.SetViewMode(varNum, varNum);
-        if (Dynamsoft.Lib.env.bMac || Dynamsoft.Lib.env.bLinux) {
-            return;
-        }
-        else if (document.getElementById("DW_PreviewMode").selectedIndex !== 0) {
-            this.DWObject.MouseShape = true;
-        }
-        else {
-            this.DWObject.MouseShape = false;
-        }
-    }
-
-
     render() {
         return (
             <DWTUserInterface
-                dwt={this.state.dwt}
+                startTime={this.state.startTime}
+                features={0b1111101}/** 0b1: scan, 0b10: camera, 0b100: load, 0b1000: save, 0b10000: upload, 0b100000:baroce, 0b1000000: ocr */
                 containerId={this.containerId}
-                btnRotateLeft={() => this.btnRotateLeft()}
-                btnRotateRight={() => this.btnRotateRight()}
-                btnRotate180={() => this.btnRotate180()}
-                btnMirror={() => this.btnMirror()}
-                btnFlip={() => this.btnFlip()}
-                btnCrop={() => this.btnCrop()}
-                btnChangeImageSize={() => this.btnChangeImageSize()}
-                btnCancelChange={() => this.btnCancelChange()}
-                btnChangeImageSizeOK={() => this.btnChangeImageSizeOK()}
-                saveUploadImage={(_type) => this.saveUploadImage(_type)}
-                btnFirstImage={() => this.btnFirstImage()}
-                btnPreImage_wheel={() => this.btnPreImage_wheel()}
-                btnNextImage_wheel={() => this.btnNextImage_wheel()}
-                btnPreImage={() => this.btnPreImage()}
-                btnNextImage={() => this.btnNextImage()}
-                btnLastImage={() => this.btnLastImage()}
-                btnRemoveCurrentImage={() => this.btnRemoveCurrentImage()}
-                btnRemoveAllImages={() => this.btnRemoveAllImages()}
-                setlPreviewMode={() => this.setlPreviewMode()}
-
-                cameraSettings={this.state.cameraSettings}
-                acquireImage={() => this.acquireImage()}
-                switchViews={() => this.switchViews()}
-                captureImage={() => this.captureImage()}
-                loadImagesOfPDFs={() => this.loadImagesOfPDFs()}
-                btnShowImageEditor={() => this.btnShowImageEditor()}
-                rdTIFF={() => this.rdTIFF()}
-                rdPDF={() => this.rdPDF()}
-                rd={() => this.rd()}
+                dwt={this.state.dwt}
+                status={this.state.status}
+                buffer={this.state.buffer}
+                zones={this.state.zones}
+                runtimeInfo={this.state.runtimeInfo}
             />
         );
     }

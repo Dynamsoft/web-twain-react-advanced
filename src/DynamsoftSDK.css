@@ -77,30 +77,6 @@ ul {
     text-align: center;
 }
 
-.btnOrg {
-    padding: 0 15px;
-    height: 30px;
-    line-height: 28px;
-    font-size: 14px;
-    color: #fff;
-    background: #50a8e1;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    border-radius: 3px;
-    -webkit-border-radius: 3px;
-    -moz-border-right-colors: 3px;
-    -webkit-transition: all .2s ease-in-out;
-    -moz-transition: all .2s ease-in-out;
-    -ms-transition: all .2s ease-in-out;
-    -o-transition: all .2s ease-in-out;
-    transition: all .2s ease-in-out;
-}
-
-.btnOrg:hover {
-    background: #61c2ec;
-}
-
 .d-btn {
     display: inline-block;
     padding: 0 25px;
@@ -167,16 +143,7 @@ ul {
     background: #61c2ec;
 }
 
-/*=================================== dwtScanDemo =========================================*/
-
-#dwtScanDemo {
-    width: 980px;
-    margin: 0 auto;
-}
-
-/*=============== DWTcontainerTop ===============*/
-
-#DWTcontainerTop {
+.DWTcontainerTop {
     position: relative;
     float: left;
     width: 647px;
@@ -188,9 +155,7 @@ ul {
     border: none !important;
 }
 
-/*#divEdit*/
-
-#divEdit {
+.DWTcontainerTop .divEdit {
     float: left;
     margin: 0;
     padding: 0;
@@ -199,7 +164,7 @@ ul {
     border-right: 1px solid #ccc;
 }
 
-#divEdit .operateGrp li {
+.DWTcontainerTop .divEdit .operateGrp li {
     margin: 0;
     width: 60px;
     height: 57px;
@@ -208,16 +173,16 @@ ul {
     text-align: center;
 }
 
-#divEdit .operateGrp li:nth-last-child(2) {
+.DWTcontainerTop .divEdit .operateGrp li:nth-last-child(2) {
     height: 58px;
 }
 
-#divEdit .operateGrp li:last-child {
+.DWTcontainerTop .divEdit .operateGrp li:last-child {
     height: 56px;
     border-bottom: none;
 }
 
-#divEdit .operateGrp li>img {
+.DWTcontainerTop .divEdit .operateGrp li>img {
     cursor: pointer;
 }
 
@@ -234,7 +199,7 @@ ul {
     width: 250px
 }
 
-#ImgSizeEditor {
+.ImgSizeEditor {
     padding: 10px 15px;
     position: absolute;
     z-index: 1;
@@ -253,20 +218,22 @@ ul {
     -moz-box-shadow: 4px 4px 18px #ccc;
 }
 
-#ImgSizeEditor li {
+.ImgSizeEditor li {
     margin-bottom: 5px;
+    line-height: 19px;
+    text-align: center;
 }
 
-#ImgSizeEditor input {
+.ImgSizeEditor input {
     background: #fff;
     border: solid 1px #ccc;
 }
 
-#ImgSizeEditor input[type='text'] {
+.ImgSizeEditor input[type='text'] {
     padding-left: 3px;
 }
 
-#ImgSizeEditor input[type='button'] {
+.ImgSizeEditor input[type='button'] {
     padding: 5px 5px;
     margin: 6px 5px 0;
 }
@@ -289,9 +256,7 @@ ul {
     height: 590px;
 }
 
-/*#btnGroupBtm*/
-
-#DWTcontainerTop #btnGroupBtm {
+.DWTcontainerTop #btnGroupBtm {
     position: absolute;
     left: 60px;
     bottom: 0;
@@ -413,7 +378,7 @@ div.divinput {
     border-bottom: solid 1px #ccc;
 }
 
-.DWTController select, #div_SaveImages input[type='text'] {
+.DWTController select, .div_SaveImages input[type='text'] {
     margin-top: 3px;
     margin-bottom: 6px;
     height: 26px;
@@ -472,14 +437,24 @@ select#Resolution {
     cursor: default;
     outline: none;
     color: rgb(255, 255, 255);
-    background-color: rgb(80, 168, 225);
     cursor: pointer;
+    -webkit-transition: all .2s ease-in-out;
+    -moz-transition: all .2s ease-in-out;
+    -ms-transition: all .2s ease-in-out;
+    -o-transition: all .2s ease-in-out;
+    transition: all .2s ease-in-out;
 }
 
-#div_LoadLocalImage input[type='button'] {
-    margin: 15px 0;
-    width: 90px;
-    height: 30px;
+.disabled {
+    background:#aaa;
+}
+
+.enabled {
+    background: rgb(80, 168, 225);
+}
+
+.enabled:hover {
+    background: #61c2ec;
 }
 
 #tblLoadImage {
@@ -512,58 +487,20 @@ select#Resolution {
     color: #61c2ec;
 }
 
-/*#div_SaveImages*/
+/*.div_SaveImages*/
 
-#div_SaveImages input[type='text'] {
-    width: 100%;
-    padding-left: 5px;
-}
-
-#div_SaveImages li label {
+.div_SaveImages li label {
     display: inline-block;
     margin: 0 8px 0 0;
     font-size: 12px;
 }
 
-#div_SaveImages li img {
-    margin-right: 2px;
-}
-
-#div_SaveImages li label:last-child {
-    margin-right: 0;
-}
-
-#div_SaveImages li input {
-    width: 15px;
-    height: 15px;
-    vertical-align: middle;
-}
-
-#div_SaveImages li:nth-child(3) {
+.div_SaveImages li:nth-child(3) {
     margin: 5px 0 8px;
 }
 
-#div_SaveImages li:nth-child(2) {
+.div_SaveImages li:nth-child(2) {
     padding-top: 12px;
-}
-
-#div_SaveImages input[type='button'] {
-    margin: 14px 0 20px 0;
-}
-
-#div_SaveImages #btnSave, #div_SaveImages #btnUpload {
-    padding: 0;
-    width: 115px;
-    height: 30px;
-    margin: 15px;
-    margin-left: 0px;
-    font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
-    cursor: pointer;
-}
-
-#div_SaveImages #btnUpload {
-    width: 138px;
-    margin-right: 0;
 }
 
 /*=============== DWTcontainerBtm ===============*/
@@ -580,28 +517,19 @@ select#Resolution {
     width: 980px
 }
 
-#DWTemessageContainer {
+.DWTOutPut {
     float: left;
-}
-
-#DWTemessageContainer input[type='text'] {
-    border: solid 1px #ccc;
-    padding-left: 3px;
-}
-
-#DWTemessageContainer input[type='button'] {
-    cursor: pointer;
-    margin: 0 3px;
-    outline: none;
-}
-
-#DWTdivMsg {
     padding: 5px 0 0;
     font-size: 14px;
     color: #444;
+    user-select: none; /* standard syntax */
+    -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+    -moz-user-select: none; /* mozilla browsers */
+    -khtml-user-select: none; /* webkit (konqueror) browsers */
+    -ms-user-select: none; /* IE10+ */
 }
 
-#DWTemessage {
+.DWTOutPut .message {
     margin-top: 3px;
     width: 647px;
     height: 160px;
@@ -616,13 +544,19 @@ select#Resolution {
     font-size: 12px;
 }
 
-#DWTemessage b {
-    color: black;
-    font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
-    font-weight: normal;
+.DWTOutPut .message .info {
+    color:black;
 }
 
-#divNoteMessage {
+.DWTOutPut .message .error {
+    color:red;
+}
+
+.DWTOutPut .message .important {
+    color:#cE5E04;
+}
+
+.DWT_Notice {
     float: right;
     padding: 10px 15px;
     margin-top: 34px;
@@ -635,7 +569,7 @@ select#Resolution {
     color: #606060;
 }
 
-#divNoteMessage p {
+.DWT_Notice p {
     margin: 0;
     color: #444;
     font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
@@ -653,4 +587,12 @@ select#Resolution {
 
 .marginL_2p {
     margin-left: 2%;
+}
+
+.floatR {
+    float:right;
+}
+
+.floatL {
+    float:left;
 }

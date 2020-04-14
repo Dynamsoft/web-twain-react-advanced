@@ -1,3 +1,5 @@
+/* DWTUserInterface*/
+
 * {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -38,6 +40,14 @@ a:hover {
     color: #fe8e14;
 }
 
+a img {
+    border: none;
+}
+
+a img:hover {
+    border: none;
+}
+
 input {
     font: normal 12px verdana;
     color: #444;
@@ -46,14 +56,6 @@ input {
 input.invalid {
     background-color: #FF9;
     border: 2px red inset;
-}
-
-a img {
-    border: none;
-}
-
-a img:hover {
-    border: none;
 }
 
 ul {
@@ -77,71 +79,46 @@ ul {
     text-align: center;
 }
 
-.d-btn {
-    display: inline-block;
-    padding: 0 25px;
-    height: 36px;
-    line-height: 30px;
-    color: #fe8e14;
+.fullWidth {
+    width: 100%;
+}
+
+.width_48p {
+    width: 48%;
+}
+
+.marginL_2p {
+    margin-left: 2%;
+}
+
+.floatR {
+    float: right;
+}
+
+.floatL {
+    float: left;
+}
+
+.DWT_Notice {
+    float: right;
+    padding: 10px 15px;
+    margin-top: 34px;
+    width: 315px;
+    height: 160px;
+    font-size: 12px;
+    line-height: 20px;
+    border: 1px solid #ccc;
+    background: #e7f2fd;
+    color: #606060;
+}
+
+.DWT_Notice p {
+    margin: 0;
+    color: #444;
     font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
-    font-size: 14px;
-    text-align: center;
-    cursor: pointer;
-    border: solid 2px #fe8e14;
-    border-radius: 3px;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    -o-border-radius: 3px;
-    -webkit-transition: all .2s ease-in-out;
-    -moz-transition: all .2s ease-in-out;
-    -ms-transition: all .2s ease-in-out;
-    -o-transition: all .2s ease-in-out;
-    transition: all .2s ease-in-out;
 }
 
-.d-btn:link, .d-btn:visited {
-    color: #fe8e14;
-}
-
-.d-btn:hover {
-    color: #ffae38;
-    border: solid 2px #ffae38;
-}
-
-.d-btn.lgBtn {
-    height: 46px;
-    line-height: 40px;
-}
-
-.d-btn.mdBtn {
-    height: 42px;
-    line-height: 36px;
-}
-
-.d-btn.smBtn {
-    height: 38px;
-    line-height: 32px;
-}
-
-.d-btn.bgOrange {
-    background: #fe8e14;
-    color: #fff;
-}
-
-.d-btn.bgOrange:hover {
-    background: #ffae38;
-}
-
-.d-btn.bgBlue {
-    border-color: #50a8e1;
-    background: #50a8e1;
-    color: #fff;
-}
-
-.d-btn.bgBlue:hover {
-    border-color: #61c2ec;
-    background: #61c2ec;
-}
+/* DWTView */
 
 .DWTcontainerTop {
     position: relative;
@@ -149,10 +126,6 @@ ul {
     width: 647px;
     height: 572px;
     border: 1px solid #ccc;
-}
-
-.ds-dwt-container-box>div {
-    border: none !important;
 }
 
 .DWTcontainerTop .divEdit {
@@ -186,17 +159,8 @@ ul {
     cursor: pointer;
 }
 
-#Crop {
-    padding: 5px;
-    padding-top: 10px;
-    text-align: center;
-    border-collapse: collapse;
-    border: 3px solid #cE5E04;
-    position: absolute;
-    height: 80px;
-    z-index: 1;
-    background-color: #f0f0f0;
-    width: 250px
+.ds-dwt-container-box>div {
+    border: none !important;
 }
 
 .ImgSizeEditor {
@@ -238,16 +202,7 @@ ul {
     margin: 6px 5px 0;
 }
 
-/*#dwtcontrolContainer*/
-
-#dwtcontrolContainer {
-    position: relative;
-    float: left;
-    width: 585px;
-    height: 515px;
-}
-
-#dwtcontrolContainer .dynamsoft-dwt-container-box>div {
+.dynamsoft-dwt-container-box>div {
     border: none !important;
 }
 
@@ -270,11 +225,11 @@ ul {
     font-weight: bold;
 }
 
-.DWTcontainerTop #btnGroupBtm {
+.navigatePanel {
     position: absolute;
     left: 60px;
     bottom: 0;
-    padding: 14px 25px 15px 90px;
+    padding: 14px 25px;
     width: 585px;
     height: 57px;
     background: #f5f5f5;
@@ -283,50 +238,16 @@ ul {
     color: #606060;
 }
 
-#btnGroupBtm .ct-lt {
-    float: left;
-    font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
-}
-
-#btnGroupBtm .ct-lt input {
-    padding: 0;
-    margin-right: 6px;
-    width: 25px;
+.navigatePanel input[type='text'] {
     height: 20px;
-    font-size: 10px;
-    background: #f5f5f5;
-    border: solid 1px #bbbcc0;
-    outline: none;
-    cursor: pointer;
-}
-
-#btnGroupBtm .ct-lt input[type='text'] {
-    height: 20px;
+    width: 30px;
     font-size: 12px;
-    border: none;
+    border: 1px solid #ccc;
     cursor: default;
 }
 
-#btnGroupBtm .ct-lt #DW_btnFirstImage {
-    margin-left: 5px;
-}
-
-#btnGroupBtm .ct-lt #DW_CurrentImage {
-    margin: 0 0 0 -13px;
-    text-align: right;
-}
-
-#btnGroupBtm .ct-lt #DW_TotalImage {
-    margin: 0 -7px 0 0;
-    text-align: left;
-}
-
-#btnGroupBtm .ct-rt {
+.previewMode {
     float: right;
-    font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
-}
-
-#DW_PreviewMode {
     padding: 0 5px;
     margin-left: 5px;
     height: 26px;
@@ -337,7 +258,7 @@ ul {
     cursor: pointer;
 }
 
-/*=============== DWTController ===============*/
+/* DWTController */
 
 .DWTController {
     float: right;
@@ -352,6 +273,7 @@ div.divinput {
     margin-bottom: 20px;
     text-align: left;
     border: solid 1px #ccc;
+    border-bottom: none;
     background: #fff;
 }
 
@@ -407,36 +329,6 @@ div.divinput {
     margin: 0 3px 0 0;
 }
 
-/*#divScanner*/
-
-#divScanner {
-    border-bottom: none;
-}
-
-#PCollapse {
-    list-style: none inside none;
-    margin-left: 0;
-    padding-left: 0;
-}
-
-select#source, select#cameras {
-    margin-top: 3px;
-    padding-left: 3px;
-    width: 100%;
-    font-size: 12px;
-    border: solid 1px #ccc;
-    border-radius: 4px;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    outline: none;
-}
-
-select#Resolution {
-    margin-left: 3px;
-    width: 192px;
-    height: 26px;
-}
-
 .majorButton {
     margin-top: 10px;
     margin-bottom: 5px;
@@ -459,49 +351,17 @@ select#Resolution {
     transition: all .2s ease-in-out;
 }
 
-.disabled {
+Button.disabled {
     background: #aaa;
 }
 
-.enabled {
+Button.enabled {
     background: rgb(80, 168, 225);
 }
 
-.enabled:hover {
+Button.enabled:hover {
     background: #61c2ec;
 }
-
-#tblLoadImage {
-    position: absolute;
-    top: 102px;
-    z-index: 1;
-    padding: 30px 22px;
-    width: 275px;
-    height: 128px;
-    font-size: 14px;
-    line-height: 30px;
-    text-align: left;
-    border: 1px solid #fe8e14;
-    background-color: #f5f5f5;
-}
-
-#tblLoadImage>a {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    line-height: normal;
-    text-decoration: none;
-}
-
-#tblLoadImage a {
-    color: #50a8e1;
-}
-
-#tblLoadImage a:hover {
-    color: #61c2ec;
-}
-
-/*.div_SaveImages*/
 
 .div_SaveImages li label {
     display: inline-block;
@@ -517,19 +377,7 @@ select#Resolution {
     padding-top: 12px;
 }
 
-/*=============== DWTcontainerBtm ===============*/
-
-#DWTcontainerBody {
-    position: relative;
-    float: left;
-    width: 980px
-}
-
-#DWTcontainerBtm {
-    position: relative;
-    float: left;
-    width: 980px
-}
+/* DWTOutPut */
 
 .DWTOutPut {
     float: left;
@@ -537,15 +385,10 @@ select#Resolution {
     font-size: 14px;
     color: #444;
     user-select: none;
-    /* standard syntax */
     -webkit-user-select: none;
-    /* webkit (safari, chrome) browsers */
     -moz-user-select: none;
-    /* mozilla browsers */
     -khtml-user-select: none;
-    /* webkit (konqueror) browsers */
     -ms-user-select: none;
-    /* IE10+ */
 }
 
 .DWTOutPut .message {
@@ -573,45 +416,4 @@ select#Resolution {
 
 .DWTOutPut .message .important {
     color: #cE5E04;
-}
-
-.DWT_Notice {
-    float: right;
-    padding: 10px 15px;
-    margin-top: 34px;
-    width: 315px;
-    height: 160px;
-    font-size: 12px;
-    line-height: 20px;
-    border: 1px solid #ccc;
-    background: #e7f2fd;
-    color: #606060;
-}
-
-.DWT_Notice p {
-    margin: 0;
-    color: #444;
-    font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
-}
-
-/* General Purpose*/
-
-.fullWidth {
-    width: 100%;
-}
-
-.width_48p {
-    width: 48%;
-}
-
-.marginL_2p {
-    margin-left: 2%;
-}
-
-.floatR {
-    float: right;
-}
-
-.floatL {
-    float: left;
 }

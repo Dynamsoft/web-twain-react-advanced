@@ -11,7 +11,8 @@ class DWTView extends React.Component {
             bShowChangeSizeUI: false,
             newHeight: this.props.runtimeInfo.ImageHeight,
             newWidth: this.props.runtimeInfo.ImageWidth,
-            InterpolationMethod: "1" // 1> NearestNeighbor, 2> Bilinear, 3> Bicubic
+            InterpolationMethod: "1", // 1> NearestNeighbor, 2> Bilinear, 3> Bicubic
+            previewMode: "1"
         };
     }
     re = /^\d+$/;
@@ -30,6 +31,10 @@ class DWTView extends React.Component {
             this.props.handleOutPutMessage("There is no image in Buffer!", "error");
             return;
         }
+        if (this.props.bNoNavigating) {
+            this.props.handleOutPutMessage("Navigation not allowed", "error");
+            return;
+        }
         switch (event.target.getAttribute("value")) {
             case "editor": this.DWObject.ShowImageEditor(); break;
             case "rotateL": this.DWObject.RotateLeft(this.props.buffer.current); break;
@@ -38,7 +43,7 @@ class DWTView extends React.Component {
             case "mirror": this.DWObject.Mirror(this.props.buffer.current); break;
             case "flip": this.DWObject.Flip(this.props.buffer.current); break;
             case "removeS": this.DWObject.RemoveAllSelectedImages(); break;
-            case "removeA": this.DWObject.RemoveAllImages(); break;
+            case "removeA": this.DWObject.RemoveAllImages(); this.props.handleNavigation("removeAll"); break;
             case "changeSize": this.setState({ bShowChangeSizeUI: !this.state.bShowChangeSizeUI }); break;
             case "crop": this.crop(); break;
             case "changeImageSizeOK": this.changeImageSizeOK(); break;
@@ -61,7 +66,7 @@ class DWTView extends React.Component {
         })
     }
     changeImageSizeOK() {
-        this.DWObject.ChangeImageSize(this.props.buffer.current, this.state.newWidth, this.state.newHeight, this.state.InterpolationMethod);
+        this.DWObject.ChangeImageSize(this.props.buffer.current, this.state.newWidth, this.state.newHeight, parseInt(this.state.InterpolationMethod));
         this.setState({ bShowChangeSizeUI: !this.state.bShowChangeSizeUI });
     }
     crop() {
@@ -77,89 +82,21 @@ class DWTView extends React.Component {
             );
         }
     }
-    // Navigate
-    btnFirstImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
+    handlePreviewModeChange(event) {
+        if (this.props.bNoNavigating) {
+            this.props.handleOutPutMessage("Navigation not allowed", "error");
             return;
         }
-        this.props.buffer.current = 0;
-        this.updatePageInfo();
-    }
-
-    btnPreImage_wheel() {
-        if (this.DWObject.HowManyImagesInBuffer !== 0)
-            this.btnPreImage()
-    }
-
-    btnNextImage_wheel() {
-        if (this.DWObject.HowManyImagesInBuffer !== 0)
-            this.btnNextImage()
-    }
-
-    btnPreImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        else if (this.props.buffer.current === 0) {
-            return;
-        }
-        this.props.buffer.current = this.props.buffer.current - 1;
-        this.updatePageInfo();
-    }
-
-    btnNextImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        else if (this.props.buffer.current === this.DWObject.HowManyImagesInBuffer - 1) {
-            return;
-        }
-        this.props.buffer.current = this.props.buffer.current + 1;
-        this.updatePageInfo();
-    }
-
-    btnLastImage() {
-        if (!this.checkIfImagesInBuffer(true)) {
-            return;
-        }
-        this.props.buffer.current = this.DWObject.HowManyImagesInBuffer - 1;
-        this.updatePageInfo();
-    }
-    setlPreviewMode() {
-        let varNum = parseInt(document.getElementById("DW_PreviewMode").selectedIndex + 1);
-        let btnCrop = document.getElementById("btnCrop");
-        if (btnCrop) {
-            let tmpstr = btnCrop.src;
-            if (varNum > 1) {
-                tmpstr = tmpstr.replace('Crop.', 'Crop_gray.');
-                btnCrop.src = tmpstr;
-                btnCrop.onclick = function () { };
-            }
-            else {
-                tmpstr = tmpstr.replace('Crop_gray.', 'Crop.');
-                btnCrop.src = tmpstr;
-                btnCrop.onclick = () => { this.btnCrop(); };
-            }
-        }
-
-        this.DWObject.SetViewMode(varNum, varNum);
-        if (Dynamsoft.Lib.env.bMac || Dynamsoft.Lib.env.bLinux) {
-            return;
-        }
-        else if (document.getElementById("DW_PreviewMode").selectedIndex !== 0) {
-            this.DWObject.MouseShape = true;
-        }
-        else {
-            this.DWObject.MouseShape = false;
-        }
-    }
-    drawBarcodeRect() {
+        this.setState({ previewMode: event.target.value });
+        this.DWObject.SetViewMode(parseInt(event.target.value), parseInt(event.target.value));
+        Dynamsoft.Lib.env.bWin && (this.DWObject.MouseShape = (parseInt(event.target.value) > 1));
+        this.props.handleNavigation("viewModeChange");
     }
     render() {
         return (
             <div className="DWTcontainerTop">
                 <div className="divEdit">
-                    <ul className="operateGrp" onClick={(event) => { this.handleQuickEdit(event) }}>
+                    <ul className="operateGrp" onClick={(event) => this.handleQuickEdit(event)}>
                         <li><img value="editor" src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" /> </li>
                         <li><img value="rotateL" src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" /> </li>
                         <li><img value="rotateR" src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" /> </li>
@@ -174,23 +111,23 @@ class DWTView extends React.Component {
                     <div className="ImgSizeEditor" style={this.state.bShowChangeSizeUI ? { visisbility: "show" } : { visibility: "hidden" }}>
                         <ul>
                             <li>
-                                <label>New Height (pixel): <input type="text" value={this.state.newHeight} className="width_48p floatR" onChange={(event) => { this.handleNewSize(event, true) }} /></label>
+                                <label>New Height (pixel): <input type="text" value={this.state.newHeight} className="width_48p floatR" onChange={(event) => this.handleNewSize(event, true)} /></label>
                             </li>
                             <li>
-                                <label>New Width (pixel): <input type="text" value={this.state.newWidth} className="width_48p floatR" onChange={(event) => { this.handleNewSize(event) }} /></label>
+                                <label>New Width (pixel): <input type="text" value={this.state.newWidth} className="width_48p floatR" onChange={(event) => this.handleNewSize(event)} /></label>
                             </li>
                             <li>Interpolation method:
                             <select value={this.state.InterpolationMethod} className="width_48p floatR" onChange={(event) => this.handleInterpolationMethodChange(event)}>
                                     <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
                             </li>
                             <li style={{ textAlign: "center" }}>
-                                <button className="width_48p floatL" value="changeImageSizeOK" onClick={(event) => { this.handleQuickEdit(event) }} >OK</button>
-                                <button className="width_48p floatR" value="changeSize" onClick={(event) => { this.handleQuickEdit(event) }} >Cancel</button>
+                                <button className="width_48p floatL" value="changeImageSizeOK" onClick={(event) => this.handleQuickEdit(event)} >OK</button>
+                                <button className="width_48p floatR" value="changeSize" onClick={(event) => this.handleQuickEdit(event)} >Cancel</button>
                             </li>
                         </ul>
                     </div>
                 </div>
-                <div id={this.props.containerId}>
+                <div style={{ position: "relative", float: "left", width: "585px", height: "515px", }} id={this.props.containerId}>
                     {this.props.barcodeRects.map((_rect, _index) => (
                         <div key={_index} className="barcodeInfoRect" style={{ left: _rect.x + "px", top: _rect.y + "px", width: _rect.w + "px", height: _rect.h + "px" }} >
                             <div className="spanContainer"><span>[{_index + 1}]</span>
@@ -198,31 +135,29 @@ class DWTView extends React.Component {
                         </div>
                     ))}
                 </div>
-                <div id="btnGroupBtm" className="clearfix">
-                    <div className="ct-lt">Page:
-                        <button name="control-changePage" id="DW_btnFirstImage" onClick={this.props.btnFirstImage}> |&lt; </button>
+                <div className="navigatePanel clearfix">
+                    <div className="ct-lt fullWidth tc floatL">
+                        <button value="first" onClick={(event) => this.props.handleNavigation(event.target.value)}> |&lt; </button>
                         &nbsp;
-                        <button name="control-changePage" id="DW_btnPreImage" onClick={this.props.btnPreImage}> &lt; </button>
+                        <button value="previous" onClick={(event) => this.props.handleNavigation(event.target.value)}> &lt; </button>
                         &nbsp;&nbsp;&nbsp;&nbsp;
-                        <input name="control-changePage" type="text" size="2" id="DW_CurrentImage" readOnly="readonly" />
+                        <input type="text" value={this.props.buffer.current > -1 ? this.props.buffer.current + 1 : ""} readOnly="readonly" />
                         /
-                        <input name="control-changePage" type="text" size="2" id="DW_TotalImage" readOnly="readonly" />
+                        <input type="text" value={this.props.buffer.count > 0 ? this.props.buffer.count : ""} readOnly="readonly" />
                         &nbsp;&nbsp;&nbsp;&nbsp;
-                        <button name="control-changePage" id="DW_btnNextImage" onClick={this.props.btnNextImage}> &gt; </button>
+                        <button value="next" onClick={(event) => this.props.handleNavigation(event.target.value)}> &gt; </button>
                         &nbsp;
-                        <button name="control-changePage" id="DW_btnLastImage" onClick={this.props.btnLastImage}> &gt;| </button>
-                    </div>
-                    <div className="ct-rt">Preview Mode:
-                        <select name="control-changePage" size="1" id="DW_PreviewMode" onChange={this.props.setlPreviewMode}>
-                            <option value="0">1X1</option>
-                            <option value="1">2X2</option>
-                            <option value="2">3X3</option>
-                            <option value="3">4X4</option>
-                            <option value="4">5X5</option>
+                        <button value="last" onClick={(event) => this.props.handleNavigation(event.target.value)}> &gt;| </button>
+                        <select className="previewMode" value={this.state.previewMode} onChange={(event) => this.handlePreviewModeChange(event)}>
+                            <option value="1">1X1</option>
+                            <option value="2">2X2</option>
+                            <option value="3">3X3</option>
+                            <option value="4">4X4</option>
+                            <option value="5">5X5</option>
                         </select>
                     </div>
                 </div>
-            </div>
+            </div >
         );
     }
 }
@@ -378,24 +313,24 @@ class DWTController extends React.Component {
             }
         }
         this.DWObject.OpenSource();
-        this.DWObject.AcquireImage({
-            IfShowUI: this.state.deviceSetup.bShowUI,
-            PixelType: this.state.deviceSetup.nPixelType,
-            Resolution: this.state.deviceSetup.nResolution,
-            IfFeederEnabled: this.state.deviceSetup.bADF,
-            IfDuplexEnabled: this.state.deviceSetup.bDuplex,
-            IfDisableSourceAfterAcquire: true,
-            IfGetImageInfo: true,
-            IfGetExtImageInfo: true,
-            extendedImageInfoQueryLevel: 0
-            /**
-             * NOTE: No errors are being logged!!
-             */
-        }, () => {
-            this.props.handleOutPutMessage("Acquire success!", "important");
-        }, () => {
-            this.props.handleOutPutMessage("Acquire failure!", "error");
-        });
+        this.DWObject.AcquireImage(
+            {
+                IfShowUI: this.state.deviceSetup.bShowUI,
+                PixelType: this.state.deviceSetup.nPixelType,
+                Resolution: this.state.deviceSetup.nResolution,
+                IfFeederEnabled: this.state.deviceSetup.bADF,
+                IfDuplexEnabled: this.state.deviceSetup.bDuplex,
+                IfDisableSourceAfterAcquire: true,
+                IfGetImageInfo: true,
+                IfGetExtImageInfo: true,
+                extendedImageInfoQueryLevel: 0
+                /**
+                 * NOTE: No errors are being logged!!
+                 */
+            },
+            () => this.props.handleOutPutMessage("Acquire success!", "important"),
+            () => this.props.handleOutPutMessage("Acquire failure!", "error")
+        );
     }
     // Tab 2: Camera    
     onCameraChange(value) {
@@ -659,11 +594,7 @@ class DWTController extends React.Component {
     }
     captureImage() {
         if (this.DWObject) {
-            let funCaptureImage = () => {
-                setTimeout(() => {
-                    this.toggleCameraVideo(false);
-                }, 50);
-            };
+            let funCaptureImage = () => setTimeout(() => { this.toggleCameraVideo(false); }, 50);
             this.DWObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
         }
     }
@@ -674,9 +605,7 @@ class DWTController extends React.Component {
         this.DWObject.Addon.PDF.SetConvertMode(1/*EnumDWT_ConvertMode.CM_RENDERALL*/);
         this.DWObject.LoadImageEx("", 5 /*EnumDWT_ImageType.IT_ALL*/, () => {
             this.props.handleOutPutMessage("Loaded an image successfully.");
-        }, (errorCode, errorString) => {
-            this.props.handleException({ code: errorCode, message: errorString });
-        });
+        }, (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString }));
     }
     // Tab 4: Save & Upload
     handleFileNameChange(event) {
@@ -710,10 +639,10 @@ class DWTController extends React.Component {
             _type === "local" ? this.props.handleOutPutMessage(fileName + " saved successfully!", "important") : this.props.handleOutPutMessage(fileName + " uploaded successfully!", "important");
         };
         let onFailure = (errorCode, errorString, httpResponse) => {
-            httpResponse && httpResponse !== "" ? this.props.handleOutPutMessage(httpResponse, "httpResponse") : this.props.handleException({ code: errorCode, message: errorString });
+            httpResponse && (httpResponse !== "" ? this.props.handleOutPutMessage(httpResponse, "httpResponse") : this.props.handleException({ code: errorCode, message: errorString }));
         };
         if (this.state.bMulti) {
-            if (this.props.buffer.selected.length === 1 || this.props.buffer.selected.length === this.props.buffer.count) {
+            if (this.props.selected.length === 1 || this.props.selected.length === this.props.buffer.count) {
                 if (_type === "local") {
                     switch (this.state.saveFileFormat) {
                         default: break;
@@ -734,7 +663,7 @@ class DWTController extends React.Component {
                     }
                 }
                 else {
-                    imagesToUpload = this.props.buffer.selected;
+                    imagesToUpload = this.props.selected;
                 }
             }
         } else {
@@ -776,14 +705,12 @@ class DWTController extends React.Component {
                 this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
             else if (this.state.ocrReady)
                 this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
-        }, (ex) => {
-            this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) });
-        });
+        }, (ex) => this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) }));
     }
     readBarcode() {
         this.setState({ readingBarcode: true });
         this.props.handleNavigating(false);
-        this.props.handleBarcodeRects(null);
+        this.props.handleBarcodeResults("clear");
         let settings = this.dbrObject.getRuntimeSettings();
         if (this.DWObject.GetImageBitDepth(this.props.buffer.current) === 1)
             settings.scaleDownThreshold = 214748347;
@@ -863,6 +790,7 @@ class DWTController extends React.Component {
         this.dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
     }
     doneReadingBarcode() {
+        this.props.handleNavigating(true);
         this.setState({ readingBarcode: false });
         this.dbrResults = [];
     }
@@ -882,9 +810,7 @@ class DWTController extends React.Component {
                     () => { /*console.log('OCR dll is installed');*/
                         this.downloadOCRBasic(false);
                     },
-                    (errorCode, errorString) => {
-                        this.props.handleException({ code: errorCode, message: errorString });
-                    }
+                    (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString })
                 );
             }
         } else {
@@ -892,7 +818,7 @@ class DWTController extends React.Component {
                 strOCRLangPath,
                 () => {
                     this.setState({ ocrReady: true });
-                    if (_features & 0b100000 && this.state.ocrReady) //barcode too
+                    if ((_features & 0b100000) && this.state.ocrReady) //barcode too
                         this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
                     else
                         this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
@@ -940,11 +866,11 @@ class DWTController extends React.Component {
                         this.props.handleOutPutMessage("", "", true);
                     this.props.handleOutPutMessage("OCR result in the rect [" + left + ", " + top + ", " + right + ", " + bottom + "]", "important");
                     this.props.handleOutPutMessage(Dynamsoft.Lib.base64.decode(result.Get()), "info", false, true);
-                    ++_zoneId < _zones.length && doRectOCR(_zones[_zoneId], _zoneId);
+                    (++_zoneId < _zones.length) && doRectOCR(_zones[_zoneId], _zoneId);
                 },
                 (errorCode, errorString) => {
                     this.props.handleException({ code: errorCode, message: errorString });
-                    ++_zoneId < _zones.length && doRectOCR(_zones[_zoneId], _zoneId);
+                    (++_zoneId < _zones.length) && doRectOCR(_zones[_zoneId], _zoneId);
                 }
             );
         }
@@ -964,7 +890,7 @@ class DWTController extends React.Component {
                                     <ul>
                                         <li>
                                             <p>Select Source:</p>
-                                            <select value={this.state.deviceSetup.currentScanner} className="fullWidth" onChange={(e) => { this.onSourceChange(e.target.value); }}>
+                                            <select value={this.state.deviceSetup.currentScanner} className="fullWidth" onChange={(e) => this.onSourceChange(e.target.value)}>
                                                 {
                                                     this.state.scanners.length > 0 ?
                                                         this.state.scanners.map((_name, _index) =>
@@ -1014,7 +940,7 @@ class DWTController extends React.Component {
                                             </ul>
                                         </li>
                                         <li className="tc">
-                                            <button className={this.state.scanners.length > 0 ? "majorButton enabled fullWidth" : "majorButton disabled fullWidth"} onClick={() => { this.acquireImage(); }} disabled={this.state.scanners.length > 0 ? "" : "disabled"}>Scan</button>
+                                            <button className={this.state.scanners.length > 0 ? "majorButton enabled fullWidth" : "majorButton disabled fullWidth"} onClick={() => this.acquireImage()} disabled={this.state.scanners.length > 0 ? "" : "disabled"}>Scan</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -1029,7 +955,7 @@ class DWTController extends React.Component {
                                     <ul>
                                         <li>
                                             <p>Select a Camera:</p>
-                                            <select value={this.state.currentCamera} className="fullWidth" onChange={(e) => { this.onCameraChange(e.target.value); }}>
+                                            <select value={this.state.currentCamera} className="fullWidth" onChange={(e) => this.onCameraChange(e.target.value)}>
                                                 {
                                                     this.state.cameras.length > 0 ?
                                                         this.state.cameras.map((_name, _index) =>
@@ -1046,8 +972,8 @@ class DWTController extends React.Component {
                                             }</ul>
                                         </li>
                                         <li className="tc">
-                                            <button className="majorButton enabled width_48p" onClick={() => { this.toggleShowVideo(); }}>{this.state.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>
-                                            <button className={this.state.deviceSetup.isVideoOn ? "majorButton enabled width_48p marginL_2p" : "majorButton disabled width_48p marginL_2p"} onClick={() => { this.captureImage(); }} disabled={this.state.deviceSetup.isVideoOn ? "" : "disabled"} > Capture</button>
+                                            <button className="majorButton enabled width_48p" onClick={() => this.toggleShowVideo()}>{this.state.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>
+                                            <button className={this.state.deviceSetup.isVideoOn ? "majorButton enabled width_48p marginL_2p" : "majorButton disabled width_48p marginL_2p"} onClick={() => this.captureImage()} disabled={this.state.deviceSetup.isVideoOn ? "" : "disabled"} > Capture</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -1061,13 +987,13 @@ class DWTController extends React.Component {
                                 <div style={{ display: "none" }} className="divTableStyle">
                                     <ul>
                                         <li className="tc">
-                                            <button className="majorButton enabled" onClick={() => { this.loadImagesOfPDFs(); }} style={{ width: "100%" }}>Load</button>
+                                            <button className="majorButton enabled" onClick={() => this.loadImagesOfPDFs()} style={{ width: "100%" }}>Load</button>
                                         </li>
                                     </ul>
                                 </div>
                             </li>
                         ) : ""}
-                        {this.props.features & 0b1000 && this.props.features & 0b10000 ? (
+                        {(this.props.features & 0b1000) && (this.props.features & 0b10000) ? (
                             <li>
                                 <div className="divType" selfvalue="save">
                                     <div className="mark_arrow collapsed"></div>
@@ -1076,40 +1002,40 @@ class DWTController extends React.Component {
                                     <ul>
                                         <li>
                                             <label className="fullWidth"><span style={{ width: "25%" }}>File Name:</span>
-                                                <input style={{ width: "73%", marginLeft: "2%" }} type="text" size="20" value={this.state.saveFileName} onChange={(e) => { this.handleFileNameChange(e) }} /></label>
+                                                <input style={{ width: "73%", marginLeft: "2%" }} type="text" size="20" value={this.state.saveFileName} onChange={(e) => this.handleFileNameChange(e)} /></label>
                                         </li>
                                         <li>
-                                            <label><input type="radio" value="bmp" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />BMP</label>
-                                            <label><input type="radio" value="jpg" name="ImageType" defaultChecked onClick={(e) => { this.handleSaveConfigChange(e) }} />JPEG</label>
-                                            <label><input type="radio" value="tif" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />TIFF</label>
-                                            <label><input type="radio" value="png" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />PNG</label>
-                                            <label><input type="radio" value="pdf" name="ImageType" onClick={(e) => { this.handleSaveConfigChange(e) }} />PDF</label>
+                                            <label><input type="radio" value="bmp" name="ImageType" onClick={(e) => this.handleSaveConfigChange(e)} />BMP</label>
+                                            <label><input type="radio" value="jpg" name="ImageType" defaultChecked onClick={(e) => this.handleSaveConfigChange(e)} />JPEG</label>
+                                            <label><input type="radio" value="tif" name="ImageType" onClick={(e) => this.handleSaveConfigChange(e)} />TIFF</label>
+                                            <label><input type="radio" value="png" name="ImageType" onClick={(e) => this.handleSaveConfigChange(e)} />PNG</label>
+                                            <label><input type="radio" value="pdf" name="ImageType" onClick={(e) => this.handleSaveConfigChange(e)} />PDF</label>
                                         </li>
                                         <li>
-                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "tif" && this.state.bMulti ? "checked" : ""} value="multiTIF" disabled={this.state.saveFileFormat === "tif" ? "" : "disabled"} onChange={(e) => { this.handleSaveConfigChange(e) }} />Multi-Page TIFF</label>
-                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "pdf" && this.state.bMulti ? "checked" : ""} value="multiPDF" disabled={this.state.saveFileFormat === "pdf" ? "" : "disabled"} onChange={(e) => { this.handleSaveConfigChange(e) }} />Multi-Page PDF</label>
+                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "tif" && (this.state.bMulti ? "checked" : "")} value="multiTIF" disabled={this.state.saveFileFormat === "tif" ? "" : "disabled"} onChange={(e) => this.handleSaveConfigChange(e)} />Multi-Page TIFF</label>
+                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "pdf" && (this.state.bMulti ? "checked" : "")} value="multiPDF" disabled={this.state.saveFileFormat === "pdf" ? "" : "disabled"} onChange={(e) => this.handleSaveConfigChange(e)} />Multi-Page PDF</label>
                                         </li>
                                         <li>
-                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => { this.saveOrUploadImage('local') }} >Save to Local</button>
-                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => { this.saveOrUploadImage('server') }} >Upload to Server</button>
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('local')} >Save to Local</button>
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('server')} >Upload to Server</button>
                                         </li>
                                     </ul>
                                 </div>
                             </li>
                         ) : ""}
-                        {this.props.features & 0b10000 && this.props.features & 0b100000 ? (
+                        {(this.props.features & 0b10000) && (this.props.features & 0b100000) ? (
                             <li>
                                 <div className="divType" selfvalue="recognize">
                                     <div className="mark_arrow collapsed"></div>
                                     Recognize</div>
-                                <div id="div_Recognize" style={{ display: "none" }} className="divTableStyle">
+                                <div className="divTableStyle" style={{ display: "none" }}>
                                     <ul>
                                         <li className="tc">
-                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 || this.state.readingBarcode ? "disabled" : ""} onClick={() => { this.readBarcode(); }} >{this.state.readingBarcode ? "Reading..." : "Read Barcode"}</button>
-                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 || this.state.ocring ? "disabled" : ""} onClick={() => { this.ocr(); }}>{this.state.ocring ? "Ocring..." : "OCR (English)"}</button>
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 || this.state.readingBarcode ? "disabled" : ""} onClick={() => this.readBarcode()} >{this.state.readingBarcode ? "Reading..." : "Read Barcode"}</button>
+                                            <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 || this.state.ocring ? "disabled" : ""} onClick={() => this.ocr()}>{this.state.ocring ? "Ocring..." : "OCR (English)"}</button>
                                         </li>
                                         {this.props.barcodeRects.length > 0 &&
-                                            <li><button className="majorButton enabled fullWidth" onClick={() => { this.props.handleBarcodeResults("clear"); }}>Clear Barcode Rects</button></li>
+                                            (<li><button className="majorButton enabled fullWidth" onClick={() => this.props.handleBarcodeResults("clear")}>Clear Barcode Rects</button></li>)
                                         }
                                     </ul>
                                 </div>
@@ -1160,6 +1086,8 @@ class DWTUserInterface extends React.Component {
     componentDidUpdate(prevProps) {
         if (prevProps.status !== this.props.status)
             this.setState({ messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }] });
+        if (prevProps.buffer.current !== this.props.buffer.currentScanner)
+            this.state.barcodeRects.length > 0 && this.handleBarcodeResults("clear");
     }
     handleBarcodeResults(results) {
         if (results === "clear")
@@ -1225,13 +1153,10 @@ class DWTUserInterface extends React.Component {
     handleNavigating(bAllow) {
         this.setState({ bNoNavigating: !bAllow });
     }
-    handleBarcodeRects(_rects) {
-        console.log(_rects);
-    }
     render() {
         return (
             <div id="DWTcontainer" className="container">
-                <div id="DWTcontainerBody" style={{ textAlign: "left" }} className="clearfix">
+                <div style={{ textAlign: "left", position: "relative", float: "left", width: "980px" }} className="fullWidth clearfix">
                     <DWTView
                         dwt={this.props.dwt}
                         buffer={this.props.buffer}
@@ -1241,6 +1166,7 @@ class DWTUserInterface extends React.Component {
                         bNoNavigating={this.state.bNoNavigating}
                         barcodeRects={this.state.barcodeRects}
 
+                        handleNavigation={(action) => this.props.handleNavigation(action)}
                         handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
                     />
                     <DWTController
@@ -1248,20 +1174,20 @@ class DWTUserInterface extends React.Component {
                         features={this.props.features}
                         dwt={this.props.dwt}
                         buffer={this.props.buffer}
+                        selected={this.props.selected}
                         zones={this.props.zones}
                         runtimeInfo={this.props.runtimeInfo}
                         barcodeRects={this.state.barcodeRects}
 
                         handleBarcodeResults={(results) => this.handleBarcodeResults(results)}
                         handleNavigating={(bAllow) => this.handleNavigating(bAllow)}
-                        handleBarcodeRects={(_rects) => this.handleBarcodeRects(_rects)}
-                        handleException={(ex) => { this.handleException(ex) }}
+                        handleException={(ex) => this.handleException(ex)}
                         handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
                     />
                 </div>
-                <div id="DWTcontainerBtm" style={{ textAlign: "left" }} className="clearfix">
+                <div style={{ textAlign: "left", position: "relative", float: "left", width: "980px" }} className="fullWidth clearfix">
                     <DWTOutPut
-                        handleClearOutPut={() => { this.handleOutPutMessage("", "", true) }}
+                        handleClearOutPut={() => this.handleOutPutMessage("", "", true)}
                         messages={this.state.messages}
                         bNoScroll={this.state.bNoScroll}
                     />
@@ -1284,184 +1210,134 @@ export default class DWT extends React.Component {
         super(props);
         this.state = {
             startTime: (new Date()).getTime(),
+            unSupportedEnv: false,
             dwt: null,
             status: "Initializing...",
+            selected: [],
             buffer: {
-                selected: [],
                 count: 0,
                 current: -1
             },
             zones: [],
-            runtimeInfo: {},
+            runtimeInfo: {
+                curImageTimeStamp: null,
+                showAbleWidth: 0,
+                showAbleHeight: 0,
+                ImageWidth: 0,
+                ImageHeight: 0
+            },
             exception: {}
         };
     }
     DWObject = null;
     containerId = 'dwtcontrolContainer';
+    width = 583;
+    height = 513;
     productKey = 't0140cQMAAGnOvWTyoOR4HEFckJJmzMWpZcPSHyXGAvYGxgEkg5fBnRoFPslaAayuNOe5B/gp7plUCIUAtf6Ttb98d7Ifv/3A6Mxsu7CZLJhKHUuMorfuu/E/ZrOfuSyoMz7zjXKjgvHcMO1HiGbvyHv+GBWM54ZpP4Wej2RorGBUMJ4b4tx40yqnXlIiqvs=';
-    showAbleWidthOri = 0;
-    showAbleHeightOri = 0;
     componentDidMount() {
         if (Dynamsoft && (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition)) {
-            let ObjString = [];
-            ObjString.push('<div style="padding:0 20px;">');
-            ObjString.push(
-                "Please note that your current browser can't run this sample, please use modern browsers like Chrome, Firefox, Edge or IE 11."
-            );
-            ObjString.push('</div>');
-            Dynamsoft.WebTwainEnv.ShowDialog(400, 180, ObjString.join(''));
-            if (document.getElementsByClassName("dynamsoft-dialog-close"))
-                document.getElementsByClassName("dynamsoft-dialog-close")[0].style.display = "none";
+            this.setState({ unSupportedEnv: true });
             return;
+        } else {
+            Dynamsoft.WebTwainEnv.RegisterEvent('OnWebTwainReady', () => {
+                this.setState({
+                    dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId),
+                    status: "Ready..."
+                })
+                this.DWObject = this.state.dwt;
+                if (this.DWObject) {
+                    /**
+                     * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
+                     */
+                    this.DWObject.RegisterEvent("OnBitmapChanged", () => this.handleBufferChange());
+                    this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => this.go(index));
+                    this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
+                    this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
+                    this.DWObject.RegisterEvent("OnPostAllTransfers", () => this.DWObject.CloseSource());
+                    this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
+                        let oldZones = this.state.zones;
+                        oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
+                        this.setState({
+                            zones: oldZones
+                        });
+                    });
+                    this.DWObject.RegisterEvent('OnImageAreaDeSelected', () => this.setState({ zones: [] }));
+                    if (Dynamsoft.Lib.env.bWin)
+                        this.DWObject.MouseShape = false;
+                    this.handleBufferChange();
+                }
+            });
+            this.loadDWT();
         }
-        Dynamsoft.WebTwainEnv.RegisterEvent('OnWebTwainReady', () => {
-            this.showAbleWidthOri = $("#" + this.containerId).width() - 2;//2 for border
-            this.showAbleHeightOri = $("#" + this.containerId).height() - 4;//4 for border
-            this.dwtChangePageBtns = $("button[name='control-changePage']");
-            this.setState({
-                dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId),
-                status: "Ready..."
-            })
-            this.DWObject = this.state.dwt;
-            if (this.DWObject) {
-                /**
-                 * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
-                 */
-                this.DWObject.RegisterEvent("OnBitmapChanged", () => {
-                    let selection = [];
-                    let count = this.DWObject.SelectedImagesCount;
-                    for (let i = 0; i < count; i++) {
-                        selection.push(this.DWObject.GetSelectedImageIndex(i));
-                    }
-                    this.setState({
-                        buffer: {
-                            selected: selection,
-                            count: this.DWObject.HowManyImagesInBuffer,
-                            current: this.DWObject.CurrentImageIndexInBuffer
-                        }
-                    });
-                });
-                this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => {
-                    this.DWObject.CurrentImageIndexInBuffer = index;
-                    this.setState({
-                        zones: []
-                    });
-                    let selection = [];
-                    let count = this.DWObject.SelectedImagesCount;
-                    for (let i = 0; i < count; i++) {
-                        selection.push(this.DWObject.GetSelectedImageIndex(i));
-                    }
-                    this.setState({
-                        buffer: {
-                            selected: selection,
-                            count: this.DWObject.HowManyImagesInBuffer,
-                            current: this.DWObject.CurrentImageIndexInBuffer
-                        }
-                    });
-                });
-                this.DWObject.RegisterEvent("OnPostTransfer", () => {
-                    this.updatePageInfo();
-                });
-                this.DWObject.RegisterEvent("OnPostLoad", () => {
-                    this.updatePageInfo();
-                });
-                this.DWObject.RegisterEvent("OnPostAllTransfers", () => {
-                    this.DWObject.CloseSource();
-                    this.updatePageInfo();
-                    //this.checkErrorString();
-                });
-                this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
-                    let oldZones = this.state.zones;
-                    oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
-                    this.setState({
-                        zones: oldZones
-                    });
-                });
-                this.DWObject.RegisterEvent('OnImageAreaDeSelected', (nImageIndex) => {
-                    this.setState({
-                        zones: []
-                    });
-                });
-                if (Dynamsoft.Lib.env.bWin)
-                    this.DWObject.MouseShape = false;
-                this.updatePageInfo();
-                this.setlPreviewMode();
-            }
-        });
-        this.loadDWT();
     }
     loadDWT() {
         Dynamsoft.WebTwainEnv.ProductKey = this.productKey;
         dynamsoft.dbrEnv.productKey = this.productKey;
-        Dynamsoft.WebTwainEnv.Containers = [{ ContainerId: this.containerId, Width: '583px', Height: '513px' }];
+        Dynamsoft.WebTwainEnv.Containers = [{ ContainerId: this.containerId, Width: this.width, Height: this.height }];
         Dynamsoft.WebTwainEnv.Load();
     }
-    updatePageInfo() {
-        if (document.getElementById("DW_TotalImage") && document.getElementById("DW_CurrentImage")) {
-            if (document.getElementById("DW_CurrentImage").value === this.DWObject.CurrentImageIndexInBuffer + 1 &&
-                document.getElementById("DW_TotalImage").value === this.DWObject.HowManyImagesInBuffer)
-                // no page change
-                return;
-        }
-        else
-            return;
-        document.getElementById("DW_TotalImage").value = this.DWObject.HowManyImagesInBuffer;
-        document.getElementById("DW_CurrentImage").value = this.DWObject.CurrentImageIndexInBuffer + 1;
-        this.isSelectedArea = false;
-        this.updateBtnsState();
-        //this.clearBarcodeRect();
-        if (this.checkIfImagesInBuffer(false)) {
-            this.setState({
-                runtimeInfo: {
-                    curImageTimeStamp: (new Date()).getTime(),
-                    showAbleWidth: this.DWObject.HowManyImagesInBuffer > 1 ? this.showAbleWidthOri - 16 : this.showAbleWidthOri,
-                    showAbleHeight: this.showAbleHeightOri,
-                    ImageWidth: this.DWObject.GetImageWidth(this.DWObject.CurrentImageIndexInBuffer),
-                    ImageHeight: this.DWObject.GetImageHeight(this.DWObject.CurrentImageIndexInBuffer),
-                }
-            })
-        }
+    go(index) {
+        this.DWObject.CurrentImageIndexInBuffer = index;
+        this.handleBufferChange();
     }
-    checkErrorString() {
-        return this.checkErrorStringWithErrorCode(this.DWObject.ErrorCode, this.DWObject.ErrorString);
-    }
-    updateBtnsState() {
-        if (this.checkIfImagesInBuffer(false)) {
-            this.dwtChangePageBtns.prop("disabled", false);
-            if (this.DWObject.CurrentImageIndexInBuffer === 0) {
-                $("#DW_btnFirstImage").prop("disabled", true);
-                $("#DW_btnPreImage").prop("disabled", true);
+    handleBufferChange() {
+        let selection = [];
+        let count = this.DWObject.SelectedImagesCount;
+        for (let i = 0; i < count; i++) {
+            selection.push(this.DWObject.GetSelectedImageIndex(i));
+        }
+        this.setState({
+            zones: [],
+            selected: selection,
+            buffer: {
+                current: this.DWObject.CurrentImageIndexInBuffer,
+                count: this.DWObject.HowManyImagesInBuffer
             }
-            if (this.DWObject.CurrentImageIndexInBuffer === this.DWObject.HowManyImagesInBuffer - 1) {
-                $("#DW_btnNextImage").prop("disabled", true);
-                $("#DW_btnLastImage").prop("disabled", true);
+        }, () => {
+            if (this.state.buffer.count > 0) {
+                this.setState({
+                    runtimeInfo: {
+                        curImageTimeStamp: (new Date()).getTime(),
+                        showAbleWidth: this.DWObject.HowManyImagesInBuffer > 1 ? this.width - 16 : this.width,
+                        showAbleHeight: this.height,
+                        ImageWidth: this.DWObject.GetImageWidth(this.state.current),
+                        ImageHeight: this.DWObject.GetImageHeight(this.state.current)
+                    }
+                });
             }
-        }
-        else {
-            this.dwtChangePageBtns.prop("disabled", true);
-        }
+
+        });
     }
-    checkIfImagesInBuffer(bAppendMSG) {
-        if (this.DWObject.HowManyImagesInBuffer === 0) {
-            if (bAppendMSG)
-                this.appendMessage("There is no image in buffer.<br />")
-            return false;
+    handleNavigation(action) {
+        switch (action) {
+            default://viewModeChange, removeAll
+                break;
+            case "first":
+                this.DWObject.CurrentImageIndexInBuffer = 0; break;
+            case "last":
+                this.DWObject.CurrentImageIndexInBuffer = this.state.buffer.count - 1; break;
+            case "previous":
+                this.DWObject.CurrentImageIndexInBuffer = (this.state.buffer.current > 0) && (this.state.buffer.current - 1); break;
+            case "next":
+                this.DWObject.CurrentImageIndexInBuffer = (this.state.buffer.current < this.state.buffer.count - 1) && (this.state.buffer.current + 1); break;
         }
-        else
-            return true;
+        this.handleBufferChange();
     }
     render() {
         return (
-            <DWTUserInterface
-                startTime={this.state.startTime}
-                features={0b1111101}/** 0b1: scan, 0b10: camera, 0b100: load, 0b1000: save, 0b10000: upload, 0b100000:baroce, 0b1000000: ocr */
-                containerId={this.containerId}
-                dwt={this.state.dwt}
-                status={this.state.status}
-                buffer={this.state.buffer}
-                zones={this.state.zones}
-                runtimeInfo={this.state.runtimeInfo}
-            />
+            this.state.unSupportedEnv ? <div>Please use Chrome, Firefox or Edge on Windows!</div> :
+                <DWTUserInterface
+                    features={0b1111111}/** 0b1: scan, 0b10: camera, 0b100: load, 0b1000: save, 0b10000: upload, 0b100000:baroce, 0b1000000: ocr */
+                    containerId={this.containerId}
+                    startTime={this.state.startTime}
+                    dwt={this.state.dwt}
+                    status={this.state.status}
+                    buffer={this.state.buffer}
+                    selected={this.state.selected}
+                    zones={this.state.zones}
+                    runtimeInfo={this.state.runtimeInfo}
+                    handleNavigation={(action) => this.handleNavigation(action)}
+                />
         );
     }
 }

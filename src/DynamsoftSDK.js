@@ -19,8 +19,8 @@ class DWTView extends React.Component {
     DWObject = null;
     componentDidUpdate(prevProps) {
         if (this.props.dwt !== prevProps.dwt) this.DWObject = this.props.dwt;
-        if (this.props.barcodeRects.length !== 0 && this.props.barcodeRects.length !== prevProps.barcodeRects.length) {
-            if (this.DWObject) this.DWObject.SetViewMode(1, 1);
+        if (this.props.barcodeRects.length !== 0) {
+            !this.props.bNoNavigating && this.handlePreviewModeChange("1");
         }
         if (this.props.runtimeInfo.ImageHeight !== prevProps.runtimeInfo.ImageHeight) this.setState({ newHeight: this.props.runtimeInfo.ImageHeight })
         if (this.props.runtimeInfo.ImageWidth !== prevProps.runtimeInfo.ImageWidth) this.setState({ newWidth: this.props.runtimeInfo.ImageWidth })
@@ -83,14 +83,28 @@ class DWTView extends React.Component {
         }
     }
     handlePreviewModeChange(event) {
-        if (this.props.bNoNavigating) {
-            this.props.handleOutPutMessage("Navigation not allowed", "error");
-            return;
+        let _newMode = "";
+        if (event && event.target) {
+            _newMode = event.target.value
         }
-        this.setState({ previewMode: event.target.value });
-        this.DWObject.SetViewMode(parseInt(event.target.value), parseInt(event.target.value));
-        Dynamsoft.Lib.env.bWin && (this.DWObject.MouseShape = (parseInt(event.target.value) > 1));
-        this.props.handleNavigation("viewModeChange");
+        else {
+            if (parseInt(event) > 0 && (parseInt(event) < 6)) _newMode = parseInt(event).toString();
+        }
+        if (_newMode !== this.state.previewMode) {
+            if (this.props.bNoNavigating) {
+                console.log(this.props.barcodeRects.length);
+                this.props.handleOutPutMessage("Navigation not allowed!", "error");
+                return;
+            }
+            if (this.state.previewMode === "1" && this.props.barcodeRects.length > 0) {
+                this.props.handleOutPutMessage("Can't change view mode when barcode rects are on display!", "error");
+                return;
+            }
+            this.setState({ previewMode: _newMode });
+            this.DWObject.SetViewMode(parseInt(_newMode), parseInt(_newMode));
+            Dynamsoft.Lib.env.bWin && (this.DWObject.MouseShape = (parseInt(_newMode) > 1));
+            this.props.handleNavigation("viewModeChange");
+        }
     }
     render() {
         return (

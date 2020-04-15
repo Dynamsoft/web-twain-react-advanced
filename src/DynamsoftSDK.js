@@ -710,7 +710,6 @@ class DWTController extends React.Component {
     readBarcode() {
         this.setState({ readingBarcode: true });
         this.props.handleNavigating(false);
-        this.props.handleBarcodeResults("clear");
         let settings = this.dbrObject.getRuntimeSettings();
         if (this.DWObject.GetImageBitDepth(this.props.buffer.current) === 1)
             settings.scaleDownThreshold = 214748347;
@@ -1086,7 +1085,7 @@ class DWTUserInterface extends React.Component {
     componentDidUpdate(prevProps) {
         if (prevProps.status !== this.props.status)
             this.setState({ messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }] });
-        if (prevProps.buffer.current !== this.props.buffer.currentScanner)
+        if (prevProps.buffer.current !== this.props.buffer.current)
             this.state.barcodeRects.length > 0 && this.handleBarcodeResults("clear");
     }
     handleBarcodeResults(results) {
@@ -1300,8 +1299,8 @@ export default class DWT extends React.Component {
                         curImageTimeStamp: (new Date()).getTime(),
                         showAbleWidth: this.DWObject.HowManyImagesInBuffer > 1 ? this.width - 16 : this.width,
                         showAbleHeight: this.height,
-                        ImageWidth: this.DWObject.GetImageWidth(this.state.current),
-                        ImageHeight: this.DWObject.GetImageHeight(this.state.current)
+                        ImageWidth: this.DWObject.GetImageWidth(this.state.buffer.current),
+                        ImageHeight: this.DWObject.GetImageHeight(this.state.buffer.current)
                     }
                 });
             }

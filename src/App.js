@@ -6,6 +6,7 @@ import './App.css';
 import DWT from './DynamsoftSDK';
 
 class App extends Component {
+  productKey = 't0140cQMAAGnOvWTyoOR4HEFckJJmzMWpZcPSHyXGAvYGxgEkg5fBnRoFPslaAayuNOe5B/gp7plUCIUAtf6Ttb98d7Ifv/3A6Mxsu7CZLJhKHUuMorfuu/E/ZrOfuSyoMz7zjXKjgvHcMO1HiGbvyHv+GBWM54ZpP4Wej2RorGBUMJ4b4tx40yqnXlIiqvs=';
   render() {
     return (
       <div className="App">
@@ -17,7 +18,10 @@ class App extends Component {
           <img src={DynamsoftLogo} className="ds-logo" alt="Dynamsoft Logo" />
         </header>
         <br />
-        <DWT />
+        <DWT
+          productKey={this.productKey}
+          features={0b1111111}/** 0b1: scan, 0b10: camera, 0b100: load, 0b1000: save, 0b10000: upload, 0b100000:baroce, 0b1000000: ocr */
+        />
       </div>
     );
   }

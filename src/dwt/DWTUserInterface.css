@@ -1,0 +1,119 @@
+/* DWTUserInterface*/
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+*:before, *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: OpenSans-Regular, Arial, sans-serif, Verdana, Helvetica;
+    font-size: 16px;
+    line-height: 26px;
+}
+
+img {
+    vertical-align: middle;
+    border: 0;
+}
+
+p {
+    margin: 0;
+    padding: 0;
+}
+
+a:link, a:visited {
+    color: #606060;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #fe8e14;
+}
+
+a img {
+    border: none;
+}
+
+a img:hover {
+    border: none;
+}
+
+input {
+    font: normal 12px verdana;
+    color: #444;
+}
+
+input.invalid {
+    background-color: #FF9;
+    border: 2px red inset;
+}
+
+ul {
+    list-style: none;
+    padding-left: 0px;
+    margin: 0px;
+}
+
+.container {
+    width: 980px;
+    margin: 0 auto;
+}
+
+.container:after, .clearfix:after {
+    content: '';
+    display: table;
+    clear: both;
+}
+
+.tc {
+    text-align: center;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.width_48p {
+    width: 48%;
+}
+
+.marginL_2p {
+    margin-left: 2%;
+}
+
+.floatR {
+    float: right;
+}
+
+.floatL {
+    float: left;
+}
+
+.DWT_Notice {
+    float: right;
+    padding: 10px 15px;
+    margin-top: 34px;
+    width: 315px;
+    height: 160px;
+    font-size: 12px;
+    line-height: 20px;
+    border: 1px solid #ccc;
+    background: #e7f2fd;
+    color: #606060;
+}
+
+.DWT_Notice p {
+    margin: 0;
+    color: #444;
+    font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
+}

@@ -1,6 +1,5 @@
 import React from 'react';
 import './DWTController.css';
-import $ from 'jquery';
 
 /**
  * @props
@@ -23,6 +22,7 @@ export default class DWTController extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            shownTabs: 9,
             scanners: [],
             deviceSetup: {
                 currentScanner: "Looking for devices..",
@@ -50,29 +50,28 @@ export default class DWTController extends React.Component {
     DWObject = null;
     dbrObject = null;
     dbrResults = [];
-    componentDidMount() {
-        $("ul.PCollapse li>div").click(function (event) {
-            let _this = $(event.target);
-            switch (_this.attr("selfvalue")) {
-                case "capture":
-                    break;
-                case "scan":
-                case "load":
-                case "save":
-                    if (this.DWObject)
-                        this.DWObject.Addon.Webcam.StopVideo();
-                    break;
-                default: break;
-            }
-            if (_this.next().css("display") === "none") {
-                $(".divType").next().hide("normal");
-                $(".divType").children(".mark_arrow").removeClass("expanded");
-                $(".divType").children(".mark_arrow").addClass("collapsed");
-                _this.next().show("normal");
-                _this.children(".mark_arrow").removeClass("collapsed");
-                _this.children(".mark_arrow").addClass("expanded");
-            }
-        }.bind(this));
+    handleTabs(event) {
+        event.target.blur();
+        switch (event.target.getAttribute("selfvalue")) {
+            case "capture":
+                break;
+            case "scan":
+            case "load":
+            case "save":
+                if (this.DWObject)
+                    this.DWObject.Addon.Webcam.StopVideo();
+                break;
+            default: break;
+        }
+        let nTabClicked = parseInt(event.target.getAttribute("tabIndex"));
+        if (this.state.shownTabs & nTabClicked) { //close a Tab
+            this.setState({ shownTabs: this.state.shownTabs - nTabClicked });
+        } else { //Open a tab
+            let _tabToShown = this.state.shownTabs;
+            if (nTabClicked & 7) _tabToShown &= ~7;
+            if (nTabClicked & 24) _tabToShown &= ~24;
+            this.setState({ shownTabs: _tabToShown + nTabClicked });
+        }
     }
     componentDidUpdate(prevProps) {
         if (this.props.dwt !== prevProps.dwt) {
@@ -328,7 +327,7 @@ export default class DWTController extends React.Component {
             });
         }
     }
-    showRangePicker(property) {
+    showRangePicker(property) {/*
         $("#ValueSelector").html("");
         $("#ValueSelector").append(
             ["<div style='text-align:center'>",
@@ -377,7 +376,7 @@ export default class DWTController extends React.Component {
             height: "auto",
             modal: true,
             buttons: _btn
-        });
+        });*/
     }
     toggleShowVideo() {
         if (this.state.deviceSetup.isVideoOn === false) {
@@ -498,7 +497,7 @@ export default class DWTController extends React.Component {
             _type === "local" ? this.props.handleOutPutMessage(fileName + " saved successfully!", "important") : this.props.handleOutPutMessage(fileName + " uploaded successfully!", "important");
         };
         let onFailure = (errorCode, errorString, httpResponse) => {
-            httpResponse && (httpResponse !== "" ? this.props.handleOutPutMessage(httpResponse, "httpResponse") : this.props.handleException({ code: errorCode, message: errorString }));
+            (httpResponse && httpResponse !== "") ? this.props.handleOutPutMessage(httpResponse, "httpResponse") : this.props.handleException({ code: errorCode, message: errorString });
         };
         if (this.state.bMulti) {
             if (this.props.selected.length === 1 || this.props.selected.length === this.props.buffer.count) {
@@ -548,9 +547,11 @@ export default class DWTController extends React.Component {
         }
         if (_type === "server") {
             let protocol = this.Dynamsoft.Lib.detect.ssl ? "https://" : "http://"
-            let _strPort = window.location.port === "" ? 80 : window.location.port;
+            let _strPort = 2020;//for testing
+            /*window.location.port === "" ? 80 : window.location.port;
             if (this.Dynamsoft.Lib.detect.ssl === true)
-                _strPort = window.location.port === "" ? 443 : window.location.port;
+                _strPort = window.location.port === "" ? 443 : window.location.port;*/
+
             let strActionPage = "/upload";
             this.DWObject.HTTPUpload(protocol + window.location.hostname + ":" + _strPort + strActionPage, imagesToUpload, fileType, window.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
         }
@@ -741,10 +742,10 @@ export default class DWTController extends React.Component {
                     <ul className="PCollapse">
                         {this.props.features & 0b1 ? (
                             <li>
-                                <div className="divType" selfvalue="scan">
-                                    <div className="mark_arrow expanded"></div>
+                                <div className="divType" selfvalue="scan" tabIndex="1" onClick={(event) => this.handleTabs(event)}>
+                                    <div className={this.state.shownTabs & 1 ? "mark_arrow expanded" : "mark_arrow collapsed"} ></div>
                                     Custom Scan</div>
-                                <div className="divTableStyle">
+                                <div className="divTableStyle" style={this.state.shownTabs & 1 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li>
                                             <p>Select Source:</p>
@@ -806,10 +807,10 @@ export default class DWTController extends React.Component {
                         ) : ""}
                         {this.props.features & 0b10 ? (
                             <li>
-                                <div className="divType" selfvalue="capture">
-                                    <div className="mark_arrow collapsed"></div>
+                                <div className="divType" selfvalue="capture" tabIndex="2" onClick={(event) => this.handleTabs(event)}>
+                                    <div className={this.state.shownTabs & 2 ? "mark_arrow expanded" : "mark_arrow collapsed"} ></div>
                                     Use Webcams</div>
-                                <div style={{ display: "none" }} className="divTableStyle">
+                                <div className="divTableStyle" style={this.state.shownTabs & 2 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li>
                                             <p>Select a Camera:</p>
@@ -839,10 +840,10 @@ export default class DWTController extends React.Component {
                         ) : ""}
                         {this.props.features & 0b100 ? (
                             <li>
-                                <div className="divType" selfvalue="load">
-                                    <div className="mark_arrow collapsed"></div>
+                                <div className="divType" selfvalue="load" tabIndex="4" onClick={(event) => this.handleTabs(event)}>
+                                    <div className={this.state.shownTabs & 4 ? "mark_arrow expanded" : "mark_arrow collapsed"} ></div>
                                     Load Images or PDFs</div>
-                                <div style={{ display: "none" }} className="divTableStyle">
+                                <div className="divTableStyle" style={this.state.shownTabs & 4 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li className="tc">
                                             <button className="majorButton enabled" onClick={() => this.loadImagesOfPDFs()} style={{ width: "100%" }}>Load</button>
@@ -853,10 +854,10 @@ export default class DWTController extends React.Component {
                         ) : ""}
                         {(this.props.features & 0b1000) && (this.props.features & 0b10000) ? (
                             <li>
-                                <div className="divType" selfvalue="save">
-                                    <div className="mark_arrow collapsed"></div>
+                                <div className="divType" selfvalue="save" tabIndex="8" onClick={(event) => this.handleTabs(event)}>
+                                    <div className={this.state.shownTabs & 8 ? "mark_arrow expanded" : "mark_arrow collapsed"} ></div>
                                     Save Documents</div>
-                                <div style={{ display: "none" }} className="divTableStyle div_SaveImages">
+                                <div className="divTableStyle div_SaveImages" style={this.state.shownTabs & 8 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li>
                                             <label className="fullWidth"><span style={{ width: "25%" }}>File Name:</span>
@@ -883,10 +884,10 @@ export default class DWTController extends React.Component {
                         ) : ""}
                         {(this.props.features & 0b10000) && (this.props.features & 0b100000) ? (
                             <li>
-                                <div className="divType" selfvalue="recognize">
-                                    <div className="mark_arrow collapsed"></div>
+                                <div className="divType" selfvalue="recognize" tabIndex="16" onClick={(event) => this.handleTabs(event)}>
+                                    <div className={this.state.shownTabs & 16 ? "mark_arrow expanded" : "mark_arrow collapsed"} ></div>
                                     Recognize</div>
-                                <div className="divTableStyle" style={{ display: "none" }}>
+                                <div className="divTableStyle" style={this.state.shownTabs & 16 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li className="tc">
                                             <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 || this.state.readingBarcode ? "disabled" : ""} onClick={() => this.readBarcode()} >{this.state.readingBarcode ? "Reading..." : "Read Barcode"}</button>
@@ -901,7 +902,7 @@ export default class DWTController extends React.Component {
                         ) : ""}
                     </ul>
                 </div>
-            </div>
+            </div >
         );
     }
 }

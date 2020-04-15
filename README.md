@@ -4,7 +4,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 In the project directory, you can run:
 
-### `node src\server.js`
+### `cd server && npm install && node server.js`
 
 Turns on the server to listen to the port 2016 which is used to receive uploaded files.
 

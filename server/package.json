@@ -1,0 +1,13 @@
+{
+  "name": "formidable-server",
+  "version": "0.1.0",
+  "homepage": ".",
+  "private": true,
+  "dependencies": {
+    "express": "^4.17.1",
+    "formidable": "^1.2.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

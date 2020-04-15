@@ -98,11 +98,11 @@ export default class DWTView extends React.Component {
             case "first":
                 this.DWObject.CurrentImageIndexInBuffer = 0; break;
             case "last":
-                this.DWObject.CurrentImageIndexInBuffer = this.state.buffer.count - 1; break;
+                this.DWObject.CurrentImageIndexInBuffer = this.props.buffer.count - 1; break;
             case "previous":
-                this.DWObject.CurrentImageIndexInBuffer = (this.state.buffer.current > 0) && (this.state.buffer.current - 1); break;
+                this.DWObject.CurrentImageIndexInBuffer = (this.props.buffer.current > 0) && (this.props.buffer.current - 1); break;
             case "next":
-                this.DWObject.CurrentImageIndexInBuffer = (this.state.buffer.current < this.state.buffer.count - 1) && (this.state.buffer.current + 1); break;
+                this.DWObject.CurrentImageIndexInBuffer = (this.props.buffer.current < this.props.buffer.count - 1) && (this.props.buffer.current + 1); break;
         }
         this.props.handleBufferChange();
     }

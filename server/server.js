@@ -4,7 +4,6 @@ var express = require('express');
 var fs = require('fs');
 var app = express();
 app.use(express.static(__dirname));
-app.use(express.static(__dirname + '/Resources')); // load static resources
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS");
@@ -33,7 +32,7 @@ app.post('/upload', function (req, res) {
     });
 })
 
-var server = app.listen(2016, function () {
+var server = app.listen(2020, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('listening at http://%s:%s', host, port);

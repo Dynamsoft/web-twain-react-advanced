@@ -15,7 +15,7 @@ div.divinput {
     background: #fff;
 }
 
-.divType, .DWTController .toggle {
+.divType {
     padding-left: 20px;
     height: 38px;
     line-height: 36px;
@@ -25,10 +25,6 @@ div.divinput {
     border-bottom: solid 1px #ccc;
     background: #eee;
     cursor: pointer;
-}
-
-.DWTController .toggle {
-    cursor: default;
 }
 
 .mark_arrow {

@@ -9,7 +9,8 @@ export default class DWT extends React.Component {
         if (this.props.features) {
             this.features = 0;
             this.props.features.map((value) => {
-                if (this.featureSet[value]) return this.features += this.featureSet[value];
+                if (this.featureSet[value]) this.features += this.featureSet[value];
+                return this.features;
             });
         }
         this.state = {

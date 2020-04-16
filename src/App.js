@@ -21,13 +21,14 @@ class App extends Component {
         <DWT
           productKey={this.productKey}
           features={[
-            //"scan",
-            //"camera",
+            "scan",
+            "camera",
             "load",
-            //"save",
+            "save",
             "upload",
-            //"barcode",
-            "ocr"]}
+            "barcode",
+            "ocr"
+          ]}
         />
       </div>
     );

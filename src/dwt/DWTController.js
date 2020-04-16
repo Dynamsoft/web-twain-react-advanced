@@ -47,7 +47,8 @@ export default class DWTController extends React.Component {
                 isVideoOn: false
             },
             cameras: [],
-            cameraSettings: {},
+            currentSetting: { name: "", items: [] },
+            cameraSettings: [],
             saveFileName: (new Date()).getTime().toString(),
             saveFileFormat: "jpg",
             bMulti: false,
@@ -204,88 +205,57 @@ export default class DWTController extends React.Component {
         this.DWObject.Addon.Webcam.StopVideo();
         if (this.DWObject.Addon.Webcam.SelectSource(value)) {
             let mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
-                _mediaTypes = {},
+                _mediaTypes = [],
                 _currentmT = mediaTypes.GetCurrent();
             let frameRates = this.DWObject.Addon.Webcam.GetFrameRate(),
-                _frameRates = {},
+                _frameRates = [],
                 _currentfR = frameRates.GetCurrent();
             let resolutions = this.DWObject.Addon.Webcam.GetResolution(),
-                _resolutions = {},
+                _resolutions = [],
                 _currentRes = resolutions.GetCurrent();
-            let _advancedSettings = {},
-                _advancedCameraSettings = {};
+            let _advancedSettings = [],
+                _advancedCameraSettings = [];
             mediaTypes = mediaTypes._resultlist;
             frameRates = frameRates._resultlist;
             resolutions = resolutions._resultlist;
             for (let i = 0; i < mediaTypes.length - 1; i++) {
-                if (mediaTypes[i] !== _currentmT)
-                    _mediaTypes["mT-key" + i.toString()] = {
-                        "name": mediaTypes[i].toString()
-                    };
-                else {
-                    _mediaTypes["mT-key" + i.toString()] = {
-                        "name": mediaTypes[i].toString(),
-                        "icon": "checkmark"
-                    };
-                }
+                mediaTypes[i] === _currentmT
+                    ? _mediaTypes[i] = { value: mediaTypes[i].toString(), checked: true }
+                    : _mediaTypes[i] = { value: mediaTypes[i].toString() };
             }
             for (let i = 0; i < frameRates.length - 1; i++) {
-                if (frameRates[i] !== _currentfR)
-                    _frameRates["fR-key" + i.toString()] = {
-                        "name": frameRates[i].toString()
-                    };
-                else {
-                    _frameRates["fR-key" + i.toString()] = {
-                        "name": frameRates[i].toString(),
-                        "icon": "checkmark"
-                    };
-                }
+                frameRates[i] === _currentfR
+                    ? _frameRates[i] = { value: frameRates[i].toString(), checked: true }
+                    : _frameRates[i] = { value: frameRates[i].toString() };
             }
             for (let i = 0; i < resolutions.length - 1; i++) {
-                if (resolutions[i] !== _currentRes)
-                    _resolutions["res-key" + i.toString()] = {
-                        "name": resolutions[i].toString()
-                    };
-                else {
-                    _resolutions["res-key" + i.toString()] = {
-                        "name": resolutions[i].toString(),
-                        "icon": "checkmark"
-                    };
-                }
+                resolutions[i] === _currentRes
+                    ? _resolutions[i] = { value: resolutions[i].toString(), checked: true }
+                    : _resolutions[i] = { value: resolutions[i].toString() };
             }
-            for (let item in window.EnumDWT_VideoProperty) {
-                _advancedSettings["adv-key" + window.EnumDWT_VideoProperty[item].toString() + "-" + item.substr(3)] = {
-                    "name": item.substr(3)
-                };
-            }
-            for (let item in window.EnumDWT_CameraControlProperty) {
-                _advancedCameraSettings["advc-key" + window.EnumDWT_CameraControlProperty[item].toString() + "-" + item.substr(4)] = {
-                    "name": item.substr(4)
-                };
-            }
+            _advancedSettings = Object.keys(window.EnumDWT_VideoProperty).map((_value) => { return { value: _value.substr(3) } });
+            _advancedCameraSettings = Object.keys(window.EnumDWT_CameraControlProperty).map((_value) => { return { value: _value.substr(4) } });
             this.setState({
-                cameraSettings: {
-                    "mT": {
-                        "name": "Media Type",
-                        "items": _mediaTypes
-                    },
-                    "fR": {
-                        "name": "Frame Rate",
-                        "items": _frameRates
-                    },
-                    "res": {
-                        "name": "Resolution",
-                        "items": _resolutions
-                    },
-                    "adv": {
-                        "name": "Advanced Video Setting",
-                        "items": _advancedSettings
-                    },
-                    "advc": {
-                        "name": "Advanced Camera Setting",
-                        "items": _advancedCameraSettings
-                    }
-                }
+                currentSetting: {
+                    name: "Resolution",
+                    items: _resolutions
+                },
+                cameraSettings: [{
+                    name: "Media Type",
+                    items: _mediaTypes
+                }, {
+                    name: "Frame Rate",
+                    items: _frameRates
+                }, {
+                    name: "Resolution",
+                    items: _resolutions
+                }, {
+                    name: "Video Setup",
+                    items: _advancedSettings
+                }, {
+                    name: "Camera Setup",
+                    items: _advancedCameraSettings
+                }]
             });
 
             /*return {
@@ -328,6 +298,15 @@ export default class DWTController extends React.Component {
                 code: -2,
                 message: "Can't use the Webcam " + value + ", please make sure it's not in use!"
             });
+        }
+    }
+    handleCameraSettingChange(event) {
+        let settingName = event.target.getAttribute("value");
+        for (let i = 0; i < this.state.cameraSettings.length; i++) {
+            if (this.state.cameraSettings[i].name === settingName) {
+                this.setState({ currentSetting: this.state.cameraSettings[i] });
+                break;
+            }
         }
     }
     showRangePicker(property) {/*
@@ -753,7 +732,6 @@ export default class DWTController extends React.Component {
                                 <div className="divTableStyle" style={this.state.shownTabs & 1 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li>
-                                            <p>Select Source:</p>
                                             <select value={this.state.deviceSetup.currentScanner} className="fullWidth" onChange={(e) => this.onSourceChange(e.target.value)}>
                                                 {
                                                     this.state.scanners.length > 0 ?
@@ -818,7 +796,6 @@ export default class DWTController extends React.Component {
                                 <div className="divTableStyle" style={this.state.shownTabs & 2 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li>
-                                            <p>Select a Camera:</p>
                                             <select value={this.state.currentCamera} className="fullWidth" onChange={(e) => this.onCameraChange(e.target.value)}>
                                                 {
                                                     this.state.cameras.length > 0 ?
@@ -829,11 +806,22 @@ export default class DWTController extends React.Component {
                                                         <option value="nocamera">Looking for devices..</option>
                                                 }
                                             </select>
-                                            <ul>{
-                                                Object.values(this.state.cameraSettings).map((topItem, _key) =>
-                                                    <li key={_key}>{topItem.name}</li>
-                                                )
-                                            }</ul>
+                                            {this.state.cameraSettings.length > 0 ? (<div className="valuePicker">
+                                                <ul>
+                                                    {
+                                                        this.state.cameraSettings.map((topItem, _key) =>
+                                                            <li className={(topItem.name === this.state.currentSetting.name) ? "current" : ""} value={topItem.name} key={Math.floor(Math.random() * 10000)} onClick={(event) => this.handleCameraSettingChange(event)}>{topItem.name}</li>
+                                                        )
+                                                    }
+                                                </ul>
+                                                <ul>
+                                                    {
+                                                        this.state.currentSetting.items.map((values, __key) => (
+                                                            <li className={values.checked ? "current" : ""} value={values.value} key={Math.floor(Math.random() * 100000)}>{values.value}</li>
+                                                        ))
+                                                    }
+                                                </ul>
+                                            </div>) : ""}
                                         </li>
                                         <li className="tc">
                                             <button className="majorButton enabled width_48p" onClick={() => this.toggleShowVideo()}>{this.state.deviceSetup.isVideoOn ? "Hide Video" : "Show Video"}</button>

@@ -6,6 +6,12 @@ import DWTUserInterface from './dwt/DWTUserInterface';
 export default class DWT extends React.Component {
     constructor(props) {
         super(props);
+        if (this.props.features) {
+            this.features = 0;
+            this.props.features.map((value) => {
+                if (this.featureSet[value]) return this.features += this.featureSet[value];
+            });
+        }
         this.state = {
             startTime: (new Date()).getTime(),
             unSupportedEnv: false,
@@ -26,6 +32,8 @@ export default class DWT extends React.Component {
             }
         };
     }
+    featureSet = { scan: 0b1, camera: 0b10, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, ocr: 0b1000000 };
+    features = 0b1111111;
     DWObject = null;
     containerId = 'dwtcontrolContainer';
     width = 583;
@@ -109,7 +117,7 @@ export default class DWT extends React.Component {
                 <DWTUserInterface
                     Dynamsoft={Dynamsoft}
                     dynamsoft={dynamsoft}
-                    features={this.props.features}
+                    features={this.features}
                     containerId={this.containerId}
                     startTime={this.state.startTime}
                     dwt={this.state.dwt}

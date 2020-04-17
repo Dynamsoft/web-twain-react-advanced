@@ -206,6 +206,7 @@ div.range-buttons button {
     user-select: none;
     overflow: visible;
     -webkit-appearance: button;
+    writing-mode: horizontal-tb !important;
     -webkit-writing-mode: horizontal-tb !important;
     text-rendering: auto;
     letter-spacing: normal;

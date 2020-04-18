@@ -25,6 +25,11 @@ div.divinput {
     border-bottom: solid 1px #ccc;
     background: #eee;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -ms-user-select: none;
 }
 
 .mark_arrow {

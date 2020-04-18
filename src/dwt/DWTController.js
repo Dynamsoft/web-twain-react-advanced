@@ -61,6 +61,7 @@ export default class DWTController extends React.Component {
             },
             saveFileName: (new Date()).getTime().toString(),
             saveFileFormat: "jpg",
+            bUseFileUploader: false,
             bMulti: false,
             readingBarcode: false,
             ocring: false
@@ -76,6 +77,7 @@ export default class DWTController extends React.Component {
     dynamsoft = this.props.dynamsoft;
     DWObject = null;
     dbrObject = null;
+    fileUploaderManager = null;
     dbrResults = [];
     handleTabs(event) {
         event.target.blur();
@@ -114,6 +116,21 @@ export default class DWTController extends React.Component {
                 }
                 if (this.props.features & 0b1000000) {
                     this.initOCR(this.props.features);
+                }
+                if (this.props.features & 0b10000000) {
+                    this.Dynamsoft.FileUploader.Init("", (objFileUploader) => {
+                        this.fileUploaderManager = objFileUploader;
+                        if (!this.fileUploaderReady) {
+                            this.fileUploaderReady = true;
+                            this.props.handleStatusChange(128);
+                        }
+                    }, (errorCode, errorString) => {
+                        this.handleException({ code: errorCode, message: errorString });
+                        if (!this.fileUploaderReady) {
+                            this.fileUploaderReady = true;
+                            this.props.handleStatusChange(128);
+                        }
+                    });
                 }
             }
         }
@@ -386,8 +403,7 @@ export default class DWTController extends React.Component {
         let format = event.target.value;
         switch (format) {
             default: break;
-            case "multiTIF":
-            case "multiPDF":
+            case "multiPage":
                 this.setState({ bMulti: event.target.checked }); break;
             case "tif":
             case "pdf":
@@ -397,6 +413,9 @@ export default class DWTController extends React.Component {
             case "png":
                 this.setState({ saveFileFormat: event.target.value, bMulti: false }); break;
         }
+    }
+    toggleUseUploade(event) {
+        this.setState({ bUseFileUploader: event.target.checked });
     }
     saveOrUploadImage(_type) {
         if (_type !== "local" && _type !== "server") return;
@@ -466,7 +485,25 @@ export default class DWTController extends React.Component {
                 _strPort = window.location.port === "" ? 443 : window.location.port;*/
 
             let strActionPage = "/upload";
-            this.DWObject.HTTPUpload(protocol + window.location.hostname + ":" + _strPort + strActionPage, imagesToUpload, fileType, window.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
+            let serverUrl = protocol + window.location.hostname + ":" + _strPort + strActionPage;
+            if (this.state.bUseFileUploader) {
+                var job = this.fileUploaderManager.CreateJob();
+                job.ServerUrl = serverUrl;
+                job.FileName = fileName;
+                job.ImageType = fileType;
+                this.DWObject.GenerateURLForUploadData(imagesToUpload, fileType, (resultURL, newIndices, enumImageType) => {
+                    job.SourceValue.Add(resultURL, fileName);
+                    job.OnUploadTransferPercentage = (job, sPercentage) => {
+                        this.props.handleOutPutMessage("Uploading...(" + sPercentage + "%)");
+                    };
+                    job.OnRunSuccess = (job) => { onSuccess() };
+                    job.OnRunFailure = (job, errorCode, errorString) => onFailure(errorCode, errorString);
+                    this.fileUploaderManager.Run(job);
+                }, (errorCode, errorString, strHTTPPostResponseString, newIndices, enumImageType) => {
+                    this.handleException({ code: errorCode, message: errorString });
+                });
+            } else
+                this.DWObject.HTTPUpload(serverUrl, imagesToUpload, fileType, window.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
         }
     }
     // Tab 5: read Barcode & OCR
@@ -734,6 +771,7 @@ export default class DWTController extends React.Component {
                                                         <option value="100">100 DPI</option>
                                                         <option value="200">200 DPI</option>
                                                         <option value="300">300 DPI</option>
+                                                        <option value="600">600 DPI</option>
                                                     </select>
                                                 </li>
                                             </ul>
@@ -813,12 +851,17 @@ export default class DWTController extends React.Component {
                                             <label><input type="radio" value="pdf" name="ImageType" onClick={(e) => this.handleSaveConfigChange(e)} />PDF</label>
                                         </li>
                                         <li>
-                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "tif" && (this.state.bMulti ? "checked" : "")} value="multiTIF" disabled={this.state.saveFileFormat === "tif" ? "" : "disabled"} onChange={(e) => this.handleSaveConfigChange(e)} />Multi-Page TIFF</label>
-                                            <label><input type="checkbox" checked={this.state.saveFileFormat === "pdf" && (this.state.bMulti ? "checked" : "")} value="multiPDF" disabled={this.state.saveFileFormat === "pdf" ? "" : "disabled"} onChange={(e) => this.handleSaveConfigChange(e)} />Multi-Page PDF</label>
+                                            <label><input type="checkbox"
+                                                checked={(this.state.saveFileFormat === "pdf" || this.state.saveFileFormat === "tif") && (this.state.bMulti ? "checked" : "")}
+                                                value="multiPage" disabled={this.state.saveFileFormat === "tif" ? "" : "disabled"} onChange={(e) => this.handleSaveConfigChange(e)} />Upload Multiple Pages</label>
+                                            {((this.props.features & 0b10000) && (this.props.features & 0b10000000))
+                                                ? <label>
+                                                    <input title="Use Uploader" type="checkbox" onChange={(e) => this.toggleUseUploade(e)} />Use File Uploader</label>
+                                                : ""}
                                         </li>
                                         <li className="tc">
                                             {(this.props.features & 0b1000) ? <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('local')} >Save to Local</button> : ""}
-                                            {(this.props.features & 0b10000) ? <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('server')} >Upload to Server</button> : ""}
+                                            {(this.props.features & 0b10000) ? <button className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_4p marginL_2p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('server')} >Upload to Server</button> : ""}
                                         </li>
                                     </ul>
                                 </div>

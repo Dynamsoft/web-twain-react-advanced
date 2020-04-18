@@ -48,6 +48,14 @@ a img:hover {
     border: none;
 }
 
+button {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -ms-user-select: none;
+}
+
 input {
     font: normal 12px verdana;
     color: #444;

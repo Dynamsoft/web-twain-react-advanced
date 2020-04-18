@@ -135,6 +135,7 @@ export default class DWTUserInterface extends React.Component {
             <div id="DWTcontainer" className="container">
                 <div style={{ textAlign: "left", position: "relative", float: "left", width: "980px" }} className="fullWidth clearfix">
                     <DWTView
+                        blocks={0b11} /** 1: navigate 2: quick edit */
                         dwt={this.props.dwt}
                         buffer={this.props.buffer}
                         zones={this.props.zones}
@@ -142,6 +143,7 @@ export default class DWTUserInterface extends React.Component {
                         runtimeInfo={this.props.runtimeInfo}
                         bNoNavigating={this.state.bNoNavigating}
                         barcodeRects={this.state.barcodeRects}
+                        handleViewerSizeChange={(viewSize) => this.props.handleViewerSizeChange(viewSize)}
                         handleBufferChange={() => this.props.handleBufferChange()}
                         handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
                     />

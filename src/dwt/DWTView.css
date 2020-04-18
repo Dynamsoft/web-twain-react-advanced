@@ -3,7 +3,12 @@
     float: left;
     width: 647px;
     height: 572px;
+    border: 1px solid white;
+}
+
+.hasBorder {
     border: 1px solid #ccc;
+    background: white;
 }
 
 .DWTcontainerTop .divEdit {
@@ -105,10 +110,8 @@
 
 .navigatePanel {
     position: absolute;
-    left: 60px;
     bottom: 0;
     padding: 14px 25px;
-    width: 585px;
     height: 57px;
     background: #f5f5f5;
     border-top: 1px solid #ccc;

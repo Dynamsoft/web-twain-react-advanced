@@ -30,7 +30,6 @@ export default class RangePicker extends React.Component {
         this.refs.overlayDIV.addEventListener('mousemove', this.move);
     }
     remove = e => {
-        const el = e.target;
         this.refs.rangePicker.removeEventListener('mousemove', this.move);
         this.refs.overlayDIV.removeEventListener('mousemove', this.move);
     }

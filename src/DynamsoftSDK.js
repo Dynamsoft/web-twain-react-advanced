@@ -123,6 +123,11 @@ export default class DWT extends React.Component {
     handleStatusChange(value) {
         this.setState((state) => { return { status: state.status + value } });
     }
+    handleViewerSizeChange(viewSize) {
+        console.log(viewSize);
+        this.width = viewSize.width;
+        this.height = viewSize.height;
+    }
     render() {
         return (
             this.state.unSupportedEnv ? <div>Please use Chrome, Firefox or Edge on Windows!</div> :
@@ -138,6 +143,7 @@ export default class DWT extends React.Component {
                     selected={this.state.selected}
                     zones={this.state.zones}
                     runtimeInfo={this.state.runtimeInfo}
+                    handleViewerSizeChange={(viewSize) => this.handleViewerSizeChange(viewSize)}
                     handleStatusChange={(value) => this.handleStatusChange(value)}
                     handleBufferChange={() => this.handleBufferChange()}
                 />

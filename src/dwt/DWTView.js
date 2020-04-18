@@ -16,7 +16,19 @@ import './DWTView.css';
 export default class DWTView extends React.Component {
     constructor(props) {
         super(props);
+        if (this.props.blocks !== undefined) {
+            switch (this.props.blocks) {
+                default: break;
+                case 0: /** No navigate, no quick edit */
+                    this.width = "100%"; this.height = "100%"; break;
+                case 1: /** No quick edit */
+                    this.width = "100%"; this.navigatorWidth = "100%"; this.navigatorRight = "0px"; break;
+                case 2: /** No navigate */
+                    this.height = "100%"; break;
+            }
+        }
         this.state = {
+            viewReady: false,
             bShowChangeSizeUI: false,
             newHeight: this.props.runtimeInfo.ImageHeight,
             newWidth: this.props.runtimeInfo.ImageWidth,
@@ -26,13 +38,28 @@ export default class DWTView extends React.Component {
     }
     re = /^\d+$/;
     DWObject = null;
+    width = "583px"
+    height = "513px";
+    navigatorRight = "60px";
+    navigatorWidth = "585px";
     componentDidUpdate(prevProps) {
-        if (this.props.dwt !== prevProps.dwt) this.DWObject = this.props.dwt;
+        if (this.props.dwt !== prevProps.dwt) {
+            this.DWObject = this.props.dwt;
+            this.DWObject.Width = this.width;
+            this.DWObject.Height = this.height;
+            this.setState({ viewReady: true });
+        }
         if (this.props.barcodeRects.length !== 0) {
             !this.props.bNoNavigating && this.handlePreviewModeChange("1");
         }
         if (this.props.runtimeInfo.ImageHeight !== prevProps.runtimeInfo.ImageHeight) this.setState({ newHeight: this.props.runtimeInfo.ImageHeight })
         if (this.props.runtimeInfo.ImageWidth !== prevProps.runtimeInfo.ImageWidth) this.setState({ newWidth: this.props.runtimeInfo.ImageWidth })
+    }
+    componentDidMount() {
+        this.props.handleViewerSizeChange({
+            width: document.getElementById(this.props.containerId).offsetWidth,
+            height: document.getElementById(this.props.containerId).offsetHeight
+        });
     }
     // Quick Edit
     handleQuickEdit(event) {
@@ -132,8 +159,8 @@ export default class DWTView extends React.Component {
     }
     render() {
         return (
-            <div className="DWTcontainerTop">
-                <div className="divEdit">
+            <div className={this.state.viewReady ? "DWTcontainerTop hasBorder" : "DWTcontainerTop"}>
+                <div style={(this.props.blocks & 2 && this.state.viewReady) ? { display: "block" } : { display: "none" }} className="divEdit">
                     <ul className="operateGrp" onClick={(event) => this.handleQuickEdit(event)}>
                         <li><img value="editor" src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" /> </li>
                         <li><img value="rotateL" src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" /> </li>
@@ -165,7 +192,7 @@ export default class DWTView extends React.Component {
                         </ul>
                     </div>
                 </div>
-                <div style={{ position: "relative", float: "left", width: "585px", height: "515px", }} id={this.props.containerId}>
+                <div style={{ position: "relative", float: "left", width: this.width, height: this.height }} id={this.props.containerId}>
                     {this.props.barcodeRects.map((_rect, _index) => (
                         <div key={_index} className="barcodeInfoRect" style={{ left: _rect.x + "px", top: _rect.y + "px", width: _rect.w + "px", height: _rect.h + "px" }} >
                             <div className="spanContainer"><span>[{_index + 1}]</span>
@@ -173,7 +200,7 @@ export default class DWTView extends React.Component {
                         </div>
                     ))}
                 </div>
-                <div className="navigatePanel clearfix">
+                <div style={(this.props.blocks & 1 && this.state.viewReady) ? { display: "block", width: this.navigatorWidth, left: this.navigatorRight } : { display: "none" }} className="navigatePanel clearfix">
                     <div className="ct-lt fullWidth tc floatL">
                         <button value="first" onClick={(event) => this.handleNavigation(event.target.value)}> |&lt; </button>
                         &nbsp;

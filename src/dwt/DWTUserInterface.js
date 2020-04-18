@@ -24,17 +24,45 @@ export default class DWTUserInterface extends React.Component {
         super(props);
         this.state = {
             startTime: this.props.startTime,
-            messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }],
+            messages: [{ time: (new Date()).getTime(), text: this.statusChangeText(this.props.status), type: "info" }],
             bNoScroll: false,
             bNoNavigating: false,
             barcodeRects: []
         };
     }
     componentDidUpdate(prevProps) {
-        if (prevProps.status !== this.props.status)
-            this.setState({ messages: [{ time: (new Date()).getTime(), text: this.props.status, type: "info" }] });
+        if (prevProps.status !== this.props.status) {
+            let _statusChange = this.props.status - prevProps.status;
+            let _text = this.statusChangeText(this.props.status, _statusChange);
+            if (_text.indexOf("_ALLDONE_") !== -1) {
+                this.handleOutPutMessage(_text.substr(9));
+                this.handleOutPutMessage("All ready... <initialization took " + ((new Date()).getTime() - this.props.startTime) + " milliseconds>", "important");
+            } else
+                this.handleOutPutMessage(_text);
+        }
         if (prevProps.buffer.current !== this.props.buffer.current)
             this.state.barcodeRects.length > 0 && this.handleBarcodeResults("clear");
+    }
+    statusChangeText(_status, _statusChange) {
+        let text = "Initializing...";
+        if (_statusChange) {
+            text = [];
+            (_statusChange & 1) && text.push("Core module ");
+            (_statusChange & 2) && text.push("Webcam module ");
+            (_statusChange & 32) && text.push("Barcode Reader module ");
+            (_statusChange & 64) && text.push("OCR module ");
+            (_statusChange & 128) && text.push("File Uploader module ");
+            if (text.length > 1)
+                text = text.join(" & ");
+            text += "ready...";
+        }
+        if (_status === 255) {
+            if (_statusChange)
+                text = "_ALLDONE_" + text;
+            else
+                text = "Ready...";
+        }
+        return text;
     }
     handleBarcodeResults(results) {
         if (results === "clear")
@@ -80,9 +108,11 @@ export default class DWTUserInterface extends React.Component {
             if (bNoScroll)
                 _noScroll = true;
             if (bReset)
-                this.setState({
-                    messages: [{ time: (new Date()).getTime(), text: "Ready...", type: "info" }],
-                    bNoScroll: false
+                this.setState((state, props) => {
+                    return {
+                        messages: [{ time: (new Date()).getTime(), text: this.statusChangeText(props.status), type: "info" }],
+                        bNoScroll: false
+                    }
                 });
             else {
                 let oldMessages = this.state.messages;
@@ -126,6 +156,7 @@ export default class DWTUserInterface extends React.Component {
                         zones={this.props.zones}
                         runtimeInfo={this.props.runtimeInfo}
                         barcodeRects={this.state.barcodeRects}
+                        handleStatusChange={(value) => this.props.handleStatusChange(value)}
                         handleBarcodeResults={(results) => this.handleBarcodeResults(results)}
                         handleNavigating={(bAllow) => this.handleNavigating(bAllow)}
                         handleException={(ex) => this.handleException(ex)}

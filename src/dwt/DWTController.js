@@ -61,13 +61,16 @@ export default class DWTController extends React.Component {
             saveFileName: (new Date()).getTime().toString(),
             saveFileFormat: "jpg",
             bMulti: false,
-            barcodeReady: false,
             readingBarcode: false,
-            ocrReady: false,
             ocring: false
         };
     }
     initialShownTabs = 127;
+    scannerReady = false;
+    cameraReady = false;
+    barcodeReady = false;
+    ocrReady = false;
+    fileUploaderReady = false;
     Dynamsoft = this.props.Dynamsoft;
     dynamsoft = this.props.dynamsoft;
     DWObject = null;
@@ -111,8 +114,6 @@ export default class DWTController extends React.Component {
                 if (this.props.features & 0b1000000) {
                     this.initOCR(this.props.features);
                 }
-                if (this.props.features < 0b100000)
-                    this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
             }
         }
     }
@@ -123,6 +124,7 @@ export default class DWTController extends React.Component {
         this.setState({
             deviceSetup: oldDeviceSetup
         });
+        this.scannerReady = true;
         if (value === "noscanner") return;
         if (this.Dynamsoft.Lib.env.bMac) {
             if (value.indexOf("ICA") === 0) {
@@ -210,7 +212,13 @@ export default class DWTController extends React.Component {
         this.setState({
             deviceSetup: oldDeviceSetup
         });
-        if (value === "nocamera") return;
+        if (value === "nocamera") {
+            if (!this.cameraReady) {
+                this.cameraReady = true;
+                this.props.handleStatusChange(2);
+            }
+            return;
+        }
         this.DWObject.Addon.Webcam.StopVideo();
         if (this.DWObject.Addon.Webcam.SelectSource(value)) {
             let mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
@@ -262,11 +270,19 @@ export default class DWTController extends React.Component {
                     items: _advancedCameraSettings
                 }]
             });
+            if (!this.cameraReady) {
+                this.cameraReady = true;
+                this.props.handleStatusChange(2);
+            }
         } else {
             this.props.handleException({
                 code: -2,
                 message: "Can't use the Webcam " + value + ", please make sure it's not in use!"
             });
+            if (!this.cameraReady) {
+                this.cameraReady = true;
+                this.props.handleStatusChange(2);
+            }
         }
     }
     toggleShowVideo() {
@@ -456,11 +472,10 @@ export default class DWTController extends React.Component {
     initBarcodeReader(_features) {
         this.dynamsoft.BarcodeReader.initServiceConnection().then(() => {
             this.dbrObject = new this.dynamsoft.BarcodeReader();
-            this.setState({ barcodeReady: true });
-            if (_features < 0b1000000) // no OCR
-                this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
-            else if (this.state.ocrReady)
-                this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
+            if (!this.barcodeReady) {
+                this.barcodeReady = true;
+                this.props.handleStatusChange(32);
+            }
         }, (ex) => this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) }));
     }
     readBarcode() {
@@ -560,7 +575,7 @@ export default class DWTController extends React.Component {
             strOCRLangPath = this.Dynamsoft.WebTwainEnv.ResourcesPath + '/OCRResources/OCRBasicLanguages/English.zip';
         if (bDownloadDLL) {
             if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
-                this.downloadOCRBasic(false);
+                this.downloadOCRBasic(false, _features);
             } else {
                 this.DWObject.Addon.OCR.Download(
                     strOCRPath,
@@ -574,11 +589,10 @@ export default class DWTController extends React.Component {
             this.DWObject.Addon.OCR.DownloadLangData(
                 strOCRLangPath,
                 () => {
-                    this.setState({ ocrReady: true });
-                    if ((_features & 0b100000) && this.state.ocrReady) //barcode too
-                        this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
-                    else
-                        this.props.handleOutPutMessage("Initialization done in " + ((new Date()).getTime() - this.props.startTime).toString() + " milliseconds!", "important");
+                    if (!this.ocrReady) {
+                        this.ocrReady = true;
+                        this.props.handleStatusChange(64);
+                    }
                 },
                 function (errorCode, errorString) {
                     this.props.handleException({ code: errorCode, message: errorString });
@@ -632,6 +646,11 @@ export default class DWTController extends React.Component {
             );
         }
         doRectOCR(_zones[0], 0);
+    }
+
+
+    handleRangeChange(event) {
+        console.log(event.target.value);
     }
     render() {
         return (

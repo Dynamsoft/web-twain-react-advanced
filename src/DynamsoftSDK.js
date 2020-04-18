@@ -12,12 +12,21 @@ export default class DWT extends React.Component {
                 if (this.featureSet[value]) this.features += this.featureSet[value];
                 return this.features;
             });
+            this.initialStatus = 255 - (this.features & 0b11100011);
         }
         this.state = {
             startTime: (new Date()).getTime(),
             unSupportedEnv: false,
             dwt: null,
-            status: "Initializing...",
+            /** status
+             * 0:  "Initializing..."
+             * 1:  "Core Ready..." (scan)
+             * 2:  "Camera Ready..."
+             * 32: "BarcodeReader Ready..."
+             * 64: "OCR engine Ready..."
+             * 128:"Uploader Ready..."
+             */
+            status: this.initialStatus,
             selected: [],
             buffer: {
                 count: 0,
@@ -33,8 +42,9 @@ export default class DWT extends React.Component {
             }
         };
     }
-    featureSet = { scan: 0b1, camera: 0b10, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, ocr: 0b1000000 };
-    features = 0b1111111;
+    featureSet = { scan: 0b1, camera: 0b10, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, ocr: 0b1000000, uploader: 0b10000000 };
+    features = 0b11111111;
+    initialStatus = 0;
     DWObject = null;
     containerId = 'dwtcontrolContainer';
     width = 583;
@@ -45,10 +55,10 @@ export default class DWT extends React.Component {
             return;
         } else {
             Dynamsoft.WebTwainEnv.RegisterEvent('OnWebTwainReady', () => {
+                this.handleStatusChange(1);
                 this.setState({
-                    dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId),
-                    status: "Ready..."
-                })
+                    dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId)
+                });
                 this.DWObject = this.state.dwt;
                 if (this.DWObject) {
                     /**
@@ -62,9 +72,7 @@ export default class DWT extends React.Component {
                     this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
                         let oldZones = this.state.zones;
                         oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
-                        this.setState({
-                            zones: oldZones
-                        });
+                        this.setState({ zones: oldZones });
                     });
                     this.DWObject.RegisterEvent('OnImageAreaDeSelected', () => this.setState({ zones: [] }));
                     if (Dynamsoft.Lib.env.bWin)
@@ -112,6 +120,9 @@ export default class DWT extends React.Component {
             }
         });
     }
+    handleStatusChange(value) {
+        this.setState((state) => { return { status: state.status + value } });
+    }
     render() {
         return (
             this.state.unSupportedEnv ? <div>Please use Chrome, Firefox or Edge on Windows!</div> :
@@ -127,6 +138,7 @@ export default class DWT extends React.Component {
                     selected={this.state.selected}
                     zones={this.state.zones}
                     runtimeInfo={this.state.runtimeInfo}
+                    handleStatusChange={(value) => this.handleStatusChange(value)}
                     handleBufferChange={() => this.handleBufferChange()}
                 />
         );

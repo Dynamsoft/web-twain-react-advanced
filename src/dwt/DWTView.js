@@ -159,50 +159,52 @@ export default class DWTView extends React.Component {
     }
     render() {
         return (
-            <div className={this.state.viewReady ? "DWTcontainerTop hasBorder" : "DWTcontainerTop"}>
-                <div style={(this.props.blocks & 2 && this.state.viewReady) ? { display: "block" } : { display: "none" }} className="divEdit">
-                    <ul className="operateGrp" onClick={(event) => this.handleQuickEdit(event)}>
-                        <li><img value="editor" src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" /> </li>
-                        <li><img value="rotateL" src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" /> </li>
-                        <li><img value="rotateR" src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" /> </li>
-                        <li><img value="rotate180" src="Images/Rotate180.png" title="Rotate 180" alt="Rotate 180" /> </li>
-                        <li><img value="mirror" src="Images/Mirror.png" title="Mirror" alt="Mirror" /> </li>
-                        <li><img value="flip" src="Images/Flip.png" title="Flip" alt="Flip" /> </li>
-                        <li><img value="removeS" src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" /></li>
-                        <li><img value="removeA" src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" /></li>
-                        <li><img value="changeSize" src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" /> </li>
-                        <li><img value="crop" src="Images/Crop.png" title="Crop" alt="Crop" /></li>
-                    </ul>
-                    <div className="ImgSizeEditor" style={this.state.bShowChangeSizeUI ? { visisbility: "show" } : { visibility: "hidden" }}>
-                        <ul>
-                            <li>
-                                <label>New Height (pixel): <input type="text" value={this.state.newHeight} className="width_48p floatR" onChange={(event) => this.handleNewSize(event, true)} /></label>
-                            </li>
-                            <li>
-                                <label>New Width (pixel): <input type="text" value={this.state.newWidth} className="width_48p floatR" onChange={(event) => this.handleNewSize(event)} /></label>
-                            </li>
-                            <li>Interpolation method:
-                            <select value={this.state.InterpolationMethod} className="width_48p floatR" onChange={(event) => this.handleInterpolationMethodChange(event)}>
-                                    <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
-                            </li>
-                            <li style={{ textAlign: "center" }}>
-                                <button className="width_48p floatL" value="changeImageSizeOK" onClick={(event) => this.handleQuickEdit(event)} >OK</button>
-                                <button className="width_48p floatR" value="changeSize" onClick={(event) => this.handleQuickEdit(event)} >Cancel</button>
-                            </li>
+            <>
+                <div style={{ display: this.state.viewReady ? "none" : "block" }} className="DWTcontainerTop"></div>
+                <div style={{ display: this.state.viewReady ? "block" : "none" }} className="DWTcontainerTop">
+                    <div style={(this.props.blocks & 2 && this.state.viewReady) ? { display: "block" } : { display: "none" }} className="divEdit">
+                        <ul className="operateGrp" onClick={(event) => this.handleQuickEdit(event)}>
+                            <li><img value="editor" src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" /> </li>
+                            <li><img value="rotateL" src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" /> </li>
+                            <li><img value="rotateR" src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" /> </li>
+                            <li><img value="rotate180" src="Images/Rotate180.png" title="Rotate 180" alt="Rotate 180" /> </li>
+                            <li><img value="mirror" src="Images/Mirror.png" title="Mirror" alt="Mirror" /> </li>
+                            <li><img value="flip" src="Images/Flip.png" title="Flip" alt="Flip" /> </li>
+                            <li><img value="removeS" src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" /></li>
+                            <li><img value="removeA" src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" /></li>
+                            <li><img value="changeSize" src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" /> </li>
+                            <li><img value="crop" src="Images/Crop.png" title="Crop" alt="Crop" /></li>
                         </ul>
-                    </div>
-                </div>
-                <div style={{ position: "relative", float: "left", width: this.width, height: this.height }} id={this.props.containerId}>
-                    {this.props.barcodeRects.map((_rect, _index) => (
-                        <div key={_index} className="barcodeInfoRect" style={{ left: _rect.x + "px", top: _rect.y + "px", width: _rect.w + "px", height: _rect.h + "px" }} >
-                            <div className="spanContainer"><span>[{_index + 1}]</span>
-                            </div>
+                        <div className="ImgSizeEditor" style={this.state.bShowChangeSizeUI ? { visisbility: "show" } : { visibility: "hidden" }}>
+                            <ul>
+                                <li>
+                                    <label>New Height (pixel): <input type="text" value={this.state.newHeight} className="width_48p floatR" onChange={(event) => this.handleNewSize(event, true)} /></label>
+                                </li>
+                                <li>
+                                    <label>New Width (pixel): <input type="text" value={this.state.newWidth} className="width_48p floatR" onChange={(event) => this.handleNewSize(event)} /></label>
+                                </li>
+                                <li>Interpolation method:
+                            <select value={this.state.InterpolationMethod} className="width_48p floatR" onChange={(event) => this.handleInterpolationMethodChange(event)}>
+                                        <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
+                                </li>
+                                <li style={{ textAlign: "center" }}>
+                                    <button className="width_48p floatL" value="changeImageSizeOK" onClick={(event) => this.handleQuickEdit(event)} >OK</button>
+                                    <button className="width_48p floatR" value="changeSize" onClick={(event) => this.handleQuickEdit(event)} >Cancel</button>
+                                </li>
+                            </ul>
                         </div>
-                    ))}
-                </div>
-                <div style={(this.props.blocks & 1 && this.state.viewReady) ? { display: "block", width: this.navigatorWidth, left: this.navigatorRight } : { display: "none" }} className="navigatePanel clearfix">
-                    <div className="ct-lt fullWidth tc floatL">
-                        <button value="first" onClick={(event) => this.handleNavigation(event.target.value)}> |&lt; </button>
+                    </div>
+                    <div style={{ position: "relative", float: "left", width: this.width, height: this.height }} id={this.props.containerId}>
+                        {this.props.barcodeRects.map((_rect, _index) => (
+                            <div key={_index} className="barcodeInfoRect" style={{ left: _rect.x + "px", top: _rect.y + "px", width: _rect.w + "px", height: _rect.h + "px" }} >
+                                <div className="spanContainer"><span>[{_index + 1}]</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={(this.props.blocks & 1 && this.state.viewReady) ? { display: "block", width: this.navigatorWidth, left: this.navigatorRight } : { display: "none" }} className="navigatePanel clearfix">
+                        <div className="ct-lt fullWidth tc floatL">
+                            <button value="first" onClick={(event) => this.handleNavigation(event.target.value)}> |&lt; </button>
                         &nbsp;
                         <button value="previous" onClick={(event) => this.handleNavigation(event.target.value)}> &lt; </button>
                         &nbsp;&nbsp;&nbsp;&nbsp;
@@ -213,16 +215,17 @@ export default class DWTView extends React.Component {
                         <button value="next" onClick={(event) => this.handleNavigation(event.target.value)}> &gt; </button>
                         &nbsp;
                         <button value="last" onClick={(event) => this.handleNavigation(event.target.value)}> &gt;| </button>
-                        <select className="previewMode" value={this.state.previewMode} onChange={(event) => this.handlePreviewModeChange(event)}>
-                            <option value="1">1X1</option>
-                            <option value="2">2X2</option>
-                            <option value="3">3X3</option>
-                            <option value="4">4X4</option>
-                            <option value="5">5X5</option>
-                        </select>
+                            <select className="previewMode" value={this.state.previewMode} onChange={(event) => this.handlePreviewModeChange(event)}>
+                                <option value="1">1X1</option>
+                                <option value="2">2X2</option>
+                                <option value="3">3X3</option>
+                                <option value="4">4X4</option>
+                                <option value="5">5X5</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-            </div >
+                </div >
+            </>
         );
     }
 }

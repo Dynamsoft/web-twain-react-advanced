@@ -4,11 +4,8 @@
     width: 647px;
     height: 572px;
     border: 1px solid white;
-}
-
-.hasBorder {
+    z-index: 1000000000;
     border: 1px solid #ccc;
-    background: white;
 }
 
 .DWTcontainerTop .divEdit {

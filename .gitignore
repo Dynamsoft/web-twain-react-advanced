@@ -7,7 +7,7 @@
 .pnp.js
 
 # files
-/server/uploaded
+/server/uploaded/*
 
 # testing
 /coverage

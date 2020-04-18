@@ -1,6 +1,7 @@
 import React from 'react';
 import './DWTController.css';
 import ValuePicker from './ValuePicker';
+import RangePicker from './RangePicker';
 /**
  * @props
  * @prop {object} Dynamsoft a namespace
@@ -314,33 +315,33 @@ export default class DWTController extends React.Component {
     playVideo(config) {
         let basicSetting, moreSetting;
         if (config) {
-            if (config.prop === "Video Setup") {
-                basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(window.EnumDWT_VideoProperty["VP_" + config.value]);
-                moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(window.EnumDWT_VideoProperty["VP_" + config.value]);
+            if (config.prop === "Video Setup" || config.prop === "Camera Setup") {
+                let bCamera = true;
+                if (config.prop === "Video Setup") {
+                    bCamera = false;
+                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(window.EnumDWT_VideoProperty["VP_" + config.value]);
+                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(window.EnumDWT_VideoProperty["VP_" + config.value]);
+                } else {
+                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(window.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(window.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                }
+                let value = basicSetting.GetValue(),
+                    min = moreSetting.GetMinValue(),
+                    max = moreSetting.GetMaxValue(),
+                    defaultvalue = moreSetting.GetDefaultValue();
+                let bMutable = true;
+                if (min === max && value === defaultvalue && min === value) {
+                    bMutable = false;
+                }
                 this.setState({
                     bShowRangePicker: true,
                     rangePicker: {
-                        bCamera: false,
-                        value: basicSetting.GetValue(),
-                        min: moreSetting.GetMinValue(),
-                        max: moreSetting.GetMaxValue(),
-                        defaultvalue: moreSetting.GetDefaultValue(),
-                        step: moreSetting.GetSteppingDelta(),
-                        title: config.value
-                    }
-                });
-                return;
-            } else if (config.prop === "Camera Setup") {
-                basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(window.EnumDWT_CameraControlProperty["CCP_" + config.value]);
-                moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(window.EnumDWT_CameraControlProperty["CCP_" + config.value]);
-                this.setState({
-                    bShowRangePicker: true,
-                    rangePicker: {
-                        bCamera: true,
-                        value: basicSetting.GetValue(),
-                        min: moreSetting.GetMinValue(),
-                        max: moreSetting.GetMaxValue(),
-                        defaultvalue: moreSetting.GetDefaultValue(),
+                        bMutable: bMutable,
+                        bCamera: bCamera,
+                        value: value,
+                        min: min,
+                        max: max,
+                        defaultvalue: defaultvalue,
                         step: moreSetting.GetSteppingDelta(),
                         title: config.value
                     }
@@ -647,10 +648,33 @@ export default class DWTController extends React.Component {
         }
         doRectOCR(_zones[0], 0);
     }
-
-
     handleRangeChange(event) {
-        console.log(event.target.value);
+        let value = event.target.value ? event.target.value : event.target.getAttribute("value");
+        if (value === "reset-range") {
+            let prop = event.target.getAttribute("prop");
+            let _type = event.target.getAttribute("_type");
+            let _default = event.target.getAttribute("_default");
+            this.setState(state => {
+                state.rangePicker.value = _default;
+                return state;
+            });
+            _type === "camera"
+                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(window.EnumDWT_CameraControlProperty["CCP_" + prop], _default, true)
+                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(window.EnumDWT_VideoProperty["VP_" + prop], _default, true);
+            this.setState({ bShowRangePicker: false });
+        } else if (value === "close-picker") {
+            this.setState({ bShowRangePicker: false });
+        } else {
+            let _type = event.target.getAttribute("_type");
+            let prop = event.target.getAttribute("prop");
+            this.setState(state => {
+                state.rangePicker.value = value;
+                return state;
+            });
+            _type === "camera"
+                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(window.EnumDWT_CameraControlProperty["CCP_" + prop], value, false)
+                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(window.EnumDWT_VideoProperty["VP_" + prop], value, false);
+        }
     }
     render() {
         return (
@@ -821,68 +845,11 @@ export default class DWTController extends React.Component {
                     </ul>
                 </div>
                 {this.state.bShowRangePicker ? (
-                    <><div className="overlay"></div>
-                        <div className="range-Picker">
-                            <div className="range-title">
-                                <span className="range-title" >{this.state.rangePicker.title}</span>
-                            </div>
-                            <div className="range-content">
-                                <span className="range-current" >{this.state.rangePicker.value}</span>
-                                <span>{this.state.rangePicker.min}</span>
-                                <input type="range"
-                                    min={this.state.rangePicker.min} max={this.state.rangePicker.max}
-                                    step={this.state.rangePicker.step} value={this.state.rangePicker.value}
-                                    onChange={(event) => this.handleRangeChange(event)} />
-                                <span>{this.state.rangePicker.max}</span>
-                            </div>
-                            <div className="range-buttons">
-                                <button>OK</button>
-                                <button>Reset</button>
-                                <button>Cancel</button>
-                            </div>
-                        </div>
-                    </>
+                    <RangePicker
+                        rangePicker={this.state.rangePicker}
+                        handleRangeChange={(event) => this.handleRangeChange(event)}
+                    />
                 ) : ""
-                    /*
-                        let rangeCurrentValue = property.value;
-                        $("#ValueSelector input").off('change').on('input', function (evt) {
-                            rangeCurrentValue = evt.originalEvent.target.value;
-                            $("#ValueSelector .rangeCurrent").html(evt.originalEvent.target.value);
-                        });
-                        let _btn = {
-                            "OK": function () {
-                                $("#ValueSelector").html("");
-                                $(this).dialog("close");
-                                setTimeout(function () {
-                                    if (property.bCamera) {
-                                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, rangeCurrentValue, false);
-                                    } else
-                                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, rangeCurrentValue, false);
-                                }, 100);
-                            },
-                            "Reset": function () {
-                                $("#ValueSelector").html("");
-                                $(this).dialog("close");
-                                setTimeout(function () {
-                                    if (property.bCamera) {
-                                        this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(property.id, property.defaultvalue, true);
-                                    } else
-                                        this.DWObject.Addon.Webcam.SetVideoPropertySetting(property.id, property.defaultvalue, true);
-                                }, 100);
-                            },
-                            "Cancle": function () {
-                                $("#ValueSelector").html("");
-                                $(this).dialog("close");
-                            }
-                        };
-                        $("#ValueSelector").dialog({
-                            title: property.title,
-                            resizable: true,
-                            width: 400,
-                            height: "auto",
-                            modal: true,
-                            buttons: _btn
-                        });*/
                 }
             </div >
         );

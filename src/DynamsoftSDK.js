@@ -29,6 +29,7 @@ export default class DWT extends React.Component {
             status: this.initialStatus,
             selected: [],
             buffer: {
+                updated: false,
                 count: 0,
                 current: -1
             },
@@ -64,7 +65,7 @@ export default class DWT extends React.Component {
                     /**
                      * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
                      */
-                    this.DWObject.RegisterEvent("OnBitmapChanged", () => this.handleBufferChange());
+                    this.DWObject.RegisterEvent("OnBitmapChanged", (changedIndex, changeType) => this.handleBufferChange(changedIndex, changeType));
                     this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => this.go(index));
                     this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
                     this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
@@ -93,7 +94,11 @@ export default class DWT extends React.Component {
         this.DWObject.CurrentImageIndexInBuffer = index;
         this.handleBufferChange();
     }
-    handleBufferChange() {
+    handleBufferChange(changedIndex, changeType) {
+        let _updated = false;
+        if (changeType === 4) {// Modified
+            _updated = true;
+        }
         let selection = [];
         let count = this.DWObject.SelectedImagesCount;
         for (let i = 0; i < count; i++) {
@@ -103,6 +108,7 @@ export default class DWT extends React.Component {
             zones: [],
             selected: selection,
             buffer: {
+                updated: _updated,
                 current: this.DWObject.CurrentImageIndexInBuffer,
                 count: this.DWObject.HowManyImagesInBuffer
             }
@@ -124,7 +130,6 @@ export default class DWT extends React.Component {
         this.setState((state) => { return { status: state.status + value } });
     }
     handleViewerSizeChange(viewSize) {
-        console.log(viewSize);
         this.width = viewSize.width;
         this.height = viewSize.height;
     }

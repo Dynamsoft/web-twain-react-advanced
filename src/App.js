@@ -11,11 +11,11 @@ class App extends Component {
     return (
       <div className="App">
         <header className="App-header">
-          <img src={DWTLogo} className="dwt-logo" alt="Dynamic Web TWAIN Logo" />
+          <a href="https://www.dynamsoft.com/Products/WebTWAIN_Overview.aspx" target="_blank" rel="noopener noreferrer" ><img src={DWTLogo} className="dwt-logo" alt="Dynamic Web TWAIN Logo" /></a>
           <div style={{ width: "10px" }}></div>
-          <img src={logo} className="App-logo" alt="logo" />
+          <a href="https://reactjs.org/" target="_blank" rel="noopener noreferrer" ><img src={logo} className="App-logo" alt="logo" /></a>
           <div style={{ width: "770px" }}></div>
-          <img src={DynamsoftLogo} className="ds-logo" alt="Dynamsoft Logo" />
+          <a href="https://www.dynamsoft.com" target="_blank" rel="noopener noreferrer" ><img src={DynamsoftLogo} className="ds-logo" alt="Dynamsoft Logo" /></a>
         </header>
         <br />
         <DWT

@@ -61,7 +61,6 @@ div.divinput {
     border-radius: 3px;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
-    outline: none;
 }
 
 .DWTController input[type='checkbox'], .DWTController input[type='radio'] {
@@ -80,7 +79,6 @@ div.divinput {
     font-size: 14px;
     font-family: OpenSans-Semibold, Arial, sans-serif, Verdana, Helvetica;
     cursor: default;
-    outline: none;
     color: rgb(255, 255, 255);
     cursor: pointer;
     -webkit-transition: all .2s ease-in-out;

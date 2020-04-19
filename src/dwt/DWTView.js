@@ -54,15 +54,16 @@ export default class DWTView extends React.Component {
         }
         if (this.props.runtimeInfo.ImageHeight !== prevProps.runtimeInfo.ImageHeight) this.setState({ newHeight: this.props.runtimeInfo.ImageHeight })
         if (this.props.runtimeInfo.ImageWidth !== prevProps.runtimeInfo.ImageWidth) this.setState({ newWidth: this.props.runtimeInfo.ImageWidth })
-    }
-    componentDidMount() {
-        this.props.handleViewerSizeChange({
-            width: document.getElementById(this.props.containerId).offsetWidth,
-            height: document.getElementById(this.props.containerId).offsetHeight
-        });
+        if (document.getElementById(this.props.containerId).offsetWidth !== 0) {
+            this.props.handleViewerSizeChange({
+                width: document.getElementById(this.props.containerId).offsetWidth,
+                height: document.getElementById(this.props.containerId).offsetHeight
+            });
+        }
     }
     // Quick Edit
     handleQuickEdit(event) {
+        if (event.keyCode && event.keyCode !== 32) return;
         if (this.props.buffer.count === 0) {
             this.props.handleOutPutMessage("There is no image in Buffer!", "error");
             return;
@@ -163,33 +164,33 @@ export default class DWTView extends React.Component {
                 <div style={{ display: this.state.viewReady ? "none" : "block" }} className="DWTcontainerTop"></div>
                 <div style={{ display: this.state.viewReady ? "block" : "none" }} className="DWTcontainerTop">
                     <div style={(this.props.blocks & 2 && this.state.viewReady) ? { display: "block" } : { display: "none" }} className="divEdit">
-                        <ul className="operateGrp" onClick={(event) => this.handleQuickEdit(event)}>
-                            <li><img value="editor" src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" /> </li>
-                            <li><img value="rotateL" src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" /> </li>
-                            <li><img value="rotateR" src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" /> </li>
-                            <li><img value="rotate180" src="Images/Rotate180.png" title="Rotate 180" alt="Rotate 180" /> </li>
-                            <li><img value="mirror" src="Images/Mirror.png" title="Mirror" alt="Mirror" /> </li>
-                            <li><img value="flip" src="Images/Flip.png" title="Flip" alt="Flip" /> </li>
-                            <li><img value="removeS" src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" /></li>
-                            <li><img value="removeA" src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" /></li>
-                            <li><img value="changeSize" src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" /> </li>
-                            <li><img value="crop" src="Images/Crop.png" title="Crop" alt="Crop" /></li>
+                        <ul className="operateGrp" onKeyUp={(event) => this.handleQuickEdit(event)} onClick={(event) => this.handleQuickEdit(event)}>
+                            <li><img tabIndex="6" value="editor" src="Images/ShowEditor.png" title="Show Image Editor" alt="Show Editor" /> </li>
+                            <li><img tabIndex="6" value="rotateL" src="Images/RotateLeft.png" title="Rotate Left" alt="Rotate Left" /> </li>
+                            <li><img tabIndex="6" value="rotateR" src="Images/RotateRight.png" title="Rotate Right" alt="Rotate Right" /> </li>
+                            <li><img tabIndex="6" value="rotate180" src="Images/Rotate180.png" title="Rotate 180" alt="Rotate 180" /> </li>
+                            <li><img tabIndex="6" value="mirror" src="Images/Mirror.png" title="Mirror" alt="Mirror" /> </li>
+                            <li><img tabIndex="6" value="flip" src="Images/Flip.png" title="Flip" alt="Flip" /> </li>
+                            <li><img tabIndex="6" value="removeS" src="Images/RemoveSelectedImages.png" title="Remove Selected Images" alt="Remove Selected Images" /></li>
+                            <li><img tabIndex="6" value="removeA" src="Images/RemoveAllImages.png" title="Remove All Images" alt="Remove All" /></li>
+                            <li><img tabIndex="6" value="changeSize" src="Images/ChangeSize.png" title="Change Image Size" alt="Change Size" /> </li>
+                            <li><img tabIndex="6" value="crop" src="Images/Crop.png" title="Crop" alt="Crop" /></li>
                         </ul>
                         <div className="ImgSizeEditor" style={this.state.bShowChangeSizeUI ? { visisbility: "show" } : { visibility: "hidden" }}>
                             <ul>
                                 <li>
-                                    <label>New Height (pixel): <input type="text" value={this.state.newHeight} className="width_48p floatR" onChange={(event) => this.handleNewSize(event, true)} /></label>
+                                    <label>New Height (pixel): <input tabIndex="6" type="text" value={this.state.newHeight} className="width_48p floatR" onChange={(event) => this.handleNewSize(event, true)} /></label>
                                 </li>
                                 <li>
-                                    <label>New Width (pixel): <input type="text" value={this.state.newWidth} className="width_48p floatR" onChange={(event) => this.handleNewSize(event)} /></label>
+                                    <label>New Width (pixel): <input tabIndex="6" type="text" value={this.state.newWidth} className="width_48p floatR" onChange={(event) => this.handleNewSize(event)} /></label>
                                 </li>
                                 <li>Interpolation method:
-                            <select value={this.state.InterpolationMethod} className="width_48p floatR" onChange={(event) => this.handleInterpolationMethodChange(event)}>
+                            <select tabIndex="6" value={this.state.InterpolationMethod} className="width_48p floatR" onChange={(event) => this.handleInterpolationMethodChange(event)}>
                                         <option value="1">NearestNeighbor</option><option value="2">Bilinear</option><option value="3">Bicubic</option></select>
                                 </li>
                                 <li style={{ textAlign: "center" }}>
-                                    <button className="width_48p floatL" value="changeImageSizeOK" onClick={(event) => this.handleQuickEdit(event)} >OK</button>
-                                    <button className="width_48p floatR" value="changeSize" onClick={(event) => this.handleQuickEdit(event)} >Cancel</button>
+                                    <button tabIndex="6" className="width_48p floatL" value="changeImageSizeOK" onClick={(event) => this.handleQuickEdit(event)} >OK</button>
+                                    <button tabIndex="6" className="width_48p floatR" value="changeSize" onClick={(event) => this.handleQuickEdit(event)} >Cancel</button>
                                 </li>
                             </ul>
                         </div>
@@ -204,18 +205,18 @@ export default class DWTView extends React.Component {
                     </div>
                     <div style={(this.props.blocks & 1 && this.state.viewReady) ? { display: "block", width: this.navigatorWidth, left: this.navigatorRight } : { display: "none" }} className="navigatePanel clearfix">
                         <div className="ct-lt fullWidth tc floatL">
-                            <button value="first" onClick={(event) => this.handleNavigation(event.target.value)}> |&lt; </button>
+                            <button tabIndex="7" value="first" onClick={(event) => this.handleNavigation(event.target.value)}> |&lt; </button>
                         &nbsp;
-                        <button value="previous" onClick={(event) => this.handleNavigation(event.target.value)}> &lt; </button>
+                        <button tabIndex="7" value="previous" onClick={(event) => this.handleNavigation(event.target.value)}> &lt; </button>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                         <input type="text" value={this.props.buffer.current > -1 ? this.props.buffer.current + 1 : ""} readOnly="readonly" />
                         /
                         <input type="text" value={this.props.buffer.count > 0 ? this.props.buffer.count : ""} readOnly="readonly" />
                         &nbsp;&nbsp;&nbsp;&nbsp;
-                        <button value="next" onClick={(event) => this.handleNavigation(event.target.value)}> &gt; </button>
+                        <button tabIndex="7" value="next" onClick={(event) => this.handleNavigation(event.target.value)}> &gt; </button>
                         &nbsp;
-                        <button value="last" onClick={(event) => this.handleNavigation(event.target.value)}> &gt;| </button>
-                            <select className="previewMode" value={this.state.previewMode} onChange={(event) => this.handlePreviewModeChange(event)}>
+                        <button tabIndex="7" value="last" onClick={(event) => this.handleNavigation(event.target.value)}> &gt;| </button>
+                            <select tabIndex="7" className="previewMode" value={this.state.previewMode} onChange={(event) => this.handlePreviewModeChange(event)}>
                                 <option value="1">1X1</option>
                                 <option value="2">2X2</option>
                                 <option value="3">3X3</option>

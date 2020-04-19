@@ -40,8 +40,10 @@ export default class DWTUserInterface extends React.Component {
             } else
                 this.handleOutPutMessage(_text);
         }
-        if (prevProps.buffer.current !== this.props.buffer.current)
+        if ((prevProps.buffer.current !== this.props.buffer.current) || this.props.buffer.updated) {
             this.state.barcodeRects.length > 0 && this.handleBarcodeResults("clear");
+            this.props.buffer.updated && this.props.handleBufferChange();
+        }
     }
     statusChangeText(_status, _statusChange) {
         let text = "Initializing...";
@@ -130,6 +132,13 @@ export default class DWTUserInterface extends React.Component {
     handleNavigating(bAllow) {
         this.setState({ bNoNavigating: !bAllow });
     }
+    handleEvent(evt) {
+        switch (evt) {
+            default: break;
+            case "doubleClick": this.handleOutPutMessage("", "", true); break;
+            case "delete": this.handleOutPutMessage("", "", true); break;
+        }
+    }
     render() {
         return (
             <div id="DWTcontainer" className="container">
@@ -167,8 +176,8 @@ export default class DWTUserInterface extends React.Component {
                 </div>
                 <div style={{ textAlign: "left", position: "relative", float: "left", width: "980px" }} className="fullWidth clearfix">
                     <DWTOutPut
-                        note={"(Double Click to Clear!)"}
-                        handleDoubleClick={() => this.handleOutPutMessage("", "", true)}
+                        note={"(Double click or hit 'delete' to clear!)"}
+                        handleEvent={(evt) => this.handleEvent(evt)}
                         messages={this.state.messages}
                         bNoScroll={this.state.bNoScroll}
                     />

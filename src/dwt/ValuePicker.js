@@ -43,6 +43,8 @@ export default class ValuePicker extends React.Component {
         }
     }
     handlePackChange(event) {
+        if (event.keyCode && event.keyCode !== 32) return;
+        if (event.keyCode && event.keyCode === 32) event.preventDefault();
         let packName = event.target.getAttribute("value");
         for (let i = 0; i < this.props.valuePacks.length; i++) {
             if (this.props.valuePacks[i].name === packName) {
@@ -52,6 +54,8 @@ export default class ValuePicker extends React.Component {
         }
     }
     handleValuePicked(event) {
+        if (event.keyCode && event.keyCode !== 32) return;
+        if (event.keyCode && event.keyCode === 32) event.preventDefault();
         let value = event.target.getAttribute("value");
         let old_Values = this.state.currentValues;
         for (let i = 0; i < old_Values.length; i++) {
@@ -70,11 +74,12 @@ export default class ValuePicker extends React.Component {
                 <ul ref="valuePacksList">
                     {
                         this.props.valuePacks.map((topItem, _key) =>
-                            <li
+                            <li tabIndex={this.props.tabIndex}
                                 className={(topItem.name === this.state.current) ? "current" : ""}
                                 value={topItem.name}
                                 key={Math.floor(Math.random() * 10000000)}
                                 onClick={(event) => this.handlePackChange(event)}
+                                onKeyUp={(event) => this.handlePackChange(event)}
                             >{topItem.name}</li>
                         )
                     }
@@ -82,11 +87,12 @@ export default class ValuePicker extends React.Component {
                 <ul ref="valuesList">
                     {
                         this.state.currentValues.map((values, __key) => (
-                            <li
+                            <li tabIndex={this.props.tabIndex}
                                 className={values.checked ? "current" : ""}
                                 value={values.value}
                                 key={Math.floor(Math.random() * 10000000)}
                                 onClick={(event) => this.handleValuePicked(event)}
+                                onKeyUp={(event) => this.handleValuePicked(event)}
                             >{values.value}</li>
                         ))
                     }

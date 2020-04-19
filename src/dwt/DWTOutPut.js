@@ -15,14 +15,19 @@ export default class DWTOutPut extends React.Component {
         else
             this.refs.DWTOutPut_message.scrollTop = this.refs.DWTOutPut_message.scrollHeight;
     }
+    handleKeyUp(e) {
+        if (e.keyCode && e.keyCode === 46) {
+            this.props.handleEvent("delete");
+        }
+    }
     render() {
         return (
             <div className="DWTOutPut">Message: {this.props.note}<br />
-                <div ref="DWTOutPut_message" className="message" onDoubleClick={() => this.props.handleDoubleClick()}>
+                <div ref="DWTOutPut_message" tabIndex="8" className="message" onKeyUp={(e) => this.handleKeyUp(e)} onDoubleClick={() => this.props.handleEvent("doubleClick")}>
                     <ul>
                         {
                             this.props.messages.map((oneMsg) =>
-                                <li key={oneMsg.time + "_" + Math.floor(Math.random(1) * 1000)} className={oneMsg.type}>{oneMsg.text}</li>
+                                <li key={oneMsg.time + "_" + Math.floor(Math.random(1) * 10000000)} className={oneMsg.type}>{oneMsg.text}</li>
                             )
                         }
                     </ul>

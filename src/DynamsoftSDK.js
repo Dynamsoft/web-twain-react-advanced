@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import Dynamsoft from 'dwt';
 import dynamsoft from 'dynamsoft-sdk';
-import DWTUserInterface from './dwt/DWTUserInterface';
+const DWTUserInterface = React.lazy(() => import('./dwt/DWTUserInterface'));
 
 export default class DWT extends React.Component {
     constructor(props) {
@@ -135,23 +135,26 @@ export default class DWT extends React.Component {
     }
     render() {
         return (
-            this.state.unSupportedEnv ? <div>Please use Chrome, Firefox or Edge on Windows!</div> :
-                <DWTUserInterface
-                    Dynamsoft={Dynamsoft}
-                    dynamsoft={dynamsoft}
-                    features={this.features}
-                    containerId={this.containerId}
-                    startTime={this.state.startTime}
-                    dwt={this.state.dwt}
-                    status={this.state.status}
-                    buffer={this.state.buffer}
-                    selected={this.state.selected}
-                    zones={this.state.zones}
-                    runtimeInfo={this.state.runtimeInfo}
-                    handleViewerSizeChange={(viewSize) => this.handleViewerSizeChange(viewSize)}
-                    handleStatusChange={(value) => this.handleStatusChange(value)}
-                    handleBufferChange={() => this.handleBufferChange()}
-                />
+            this.state.unSupportedEnv ? <div>Please use Chrome, Firefox or Edge on Windows!</div>
+                : <div>
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <DWTUserInterface
+                            Dynamsoft={Dynamsoft}
+                            dynamsoft={dynamsoft}
+                            features={this.features}
+                            containerId={this.containerId}
+                            startTime={this.state.startTime}
+                            dwt={this.state.dwt}
+                            status={this.state.status}
+                            buffer={this.state.buffer}
+                            selected={this.state.selected}
+                            zones={this.state.zones}
+                            runtimeInfo={this.state.runtimeInfo}
+                            handleViewerSizeChange={(viewSize) => this.handleViewerSizeChange(viewSize)}
+                            handleStatusChange={(value) => this.handleStatusChange(value)}
+                            handleBufferChange={() => this.handleBufferChange()}
+                        /></Suspense>
+                </div>
         );
     }
 }

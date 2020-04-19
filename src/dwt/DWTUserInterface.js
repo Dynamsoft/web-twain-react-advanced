@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import './DWTUserInterface.css';
 import DWTOutPut from './DWTOutPut';
 import DWTView from './DWTView';
-import DWTController from './DWTController';
+const DWTController = React.lazy(() => import('./DWTController'));
 
 /**
  * @props
@@ -156,23 +156,25 @@ export default class DWTUserInterface extends React.Component {
                         handleBufferChange={() => this.props.handleBufferChange()}
                         handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
                     />
-                    <DWTController
-                        Dynamsoft={this.props.Dynamsoft}
-                        dynamsoft={this.props.dynamsoft}
-                        startTime={this.props.startTime}
-                        features={this.props.features}
-                        dwt={this.props.dwt}
-                        buffer={this.props.buffer}
-                        selected={this.props.selected}
-                        zones={this.props.zones}
-                        runtimeInfo={this.props.runtimeInfo}
-                        barcodeRects={this.state.barcodeRects}
-                        handleStatusChange={(value) => this.props.handleStatusChange(value)}
-                        handleBarcodeResults={(results) => this.handleBarcodeResults(results)}
-                        handleNavigating={(bAllow) => this.handleNavigating(bAllow)}
-                        handleException={(ex) => this.handleException(ex)}
-                        handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
-                    />
+                    <Suspense>
+                        <DWTController
+                            Dynamsoft={this.props.Dynamsoft}
+                            dynamsoft={this.props.dynamsoft}
+                            startTime={this.props.startTime}
+                            features={this.props.features}
+                            dwt={this.props.dwt}
+                            buffer={this.props.buffer}
+                            selected={this.props.selected}
+                            zones={this.props.zones}
+                            runtimeInfo={this.props.runtimeInfo}
+                            barcodeRects={this.state.barcodeRects}
+                            handleStatusChange={(value) => this.props.handleStatusChange(value)}
+                            handleBarcodeResults={(results) => this.handleBarcodeResults(results)}
+                            handleNavigating={(bAllow) => this.handleNavigating(bAllow)}
+                            handleException={(ex) => this.handleException(ex)}
+                            handleOutPutMessage={(message, type, bReset, bNoScroll) => this.handleOutPutMessage(message, type, bReset, bNoScroll)}
+                        />
+                    </Suspense>
                 </div>
                 <div style={{ textAlign: "left", position: "relative", float: "left", width: "980px" }} className="fullWidth clearfix">
                     <DWTOutPut

@@ -42,12 +42,14 @@ export default class DWTView extends React.Component {
     height = "513px";
     navigatorRight = "60px";
     navigatorWidth = "585px";
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
         if (this.props.dwt !== prevProps.dwt) {
             this.DWObject = this.props.dwt;
+            this.setState({ viewReady: true });
+        }
+        if (this.DWObject !== null && this.state.viewReady && !prevState.viewReady) {
             this.DWObject.Width = this.width;
             this.DWObject.Height = this.height;
-            this.setState({ viewReady: true });
         }
         if (this.props.barcodeRects.length !== 0) {
             !this.props.bNoNavigating && this.handlePreviewModeChange("1");

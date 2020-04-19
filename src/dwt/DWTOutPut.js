@@ -9,11 +9,15 @@ import './DWTOutPut.css';
  * @prop {boolean} bNoScroll whether the message box should scroll to show the last message
  */
 export default class DWTOutPut extends React.Component {
+    constructor(props) {
+        super(props);
+        this.DWTOutPut_message = React.createRef();
+    }
     componentDidUpdate(prevProps) {
         if (this.props.bNoScroll)
-            this.refs.DWTOutPut_message.scrollTop = 0;
+            this.DWTOutPut_message.current.scrollTop = 0;
         else
-            this.refs.DWTOutPut_message.scrollTop = this.refs.DWTOutPut_message.scrollHeight;
+            this.DWTOutPut_message.current.scrollTop = this.DWTOutPut_message.current.scrollHeight;
     }
     handleKeyUp(e) {
         if (e.keyCode && e.keyCode === 46) {
@@ -23,7 +27,7 @@ export default class DWTOutPut extends React.Component {
     render() {
         return (
             <div className="DWTOutPut">Message: {this.props.note}<br />
-                <div ref="DWTOutPut_message" tabIndex="8" className="message" onKeyUp={(e) => this.handleKeyUp(e)} onDoubleClick={() => this.props.handleEvent("doubleClick")}>
+                <div ref={this.DWTOutPut_message} tabIndex="8" className="message" onKeyUp={(e) => this.handleKeyUp(e)} onDoubleClick={() => this.props.handleEvent("doubleClick")}>
                     <ul>
                         {
                             this.props.messages.map((oneMsg) =>

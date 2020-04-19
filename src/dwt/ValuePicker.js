@@ -9,6 +9,7 @@ import './ValuePicker.css';
 export default class ValuePicker extends React.Component {
     constructor(props) {
         super(props);
+        this.valuesList = React.createRef();
         this.state = {
             current: this.props.current,
             currentValues: []
@@ -27,7 +28,7 @@ export default class ValuePicker extends React.Component {
         this.changeScrollTop();
     }
     changeScrollTop() {
-        let _valueLIs = this.refs.valuesList.children, _scrollTop = 0, _height = 0;
+        let _valueLIs = this.valuesList.current.children, _scrollTop = 0, _height = 0;
         if (_valueLIs && _valueLIs.length > 0) {
             for (let i = 0; i < this.state.currentValues.length; i++) {
                 if (this.state.currentValues[i].checked) {
@@ -36,10 +37,10 @@ export default class ValuePicker extends React.Component {
                 }
             }
         }
-        if (this.refs.valuesList.scrollTop - _scrollTop > 0)
-            this.refs.valuesList.scrollTop = _scrollTop;
-        else if (this.refs.valuesList.scrollTop + this.refs.valuesList.offsetHeight < _scrollTop + _height) {
-            this.refs.valuesList.scrollTop = _scrollTop + _height - this.refs.valuesList.offsetHeight;
+        if (this.valuesList.current.scrollTop - _scrollTop > 0)
+            this.valuesList.current.scrollTop = _scrollTop;
+        else if (this.valuesList.current.scrollTop + this.valuesList.current.offsetHeight < _scrollTop + _height) {
+            this.valuesList.current.scrollTop = _scrollTop + _height - this.valuesList.current.offsetHeight;
         }
     }
     handlePackChange(event) {
@@ -71,7 +72,7 @@ export default class ValuePicker extends React.Component {
     render() {
         return (
             <div className="valuePicker">
-                <ul ref="valuePacksList">
+                <ul>
                     {
                         this.props.valuePacks.map((topItem, _key) =>
                             <li tabIndex={this.props.tabIndex}
@@ -84,7 +85,7 @@ export default class ValuePicker extends React.Component {
                         )
                     }
                 </ul>
-                <ul ref="valuesList">
+                <ul ref={this.valuesList}>
                     {
                         this.state.currentValues.map((values, __key) => (
                             <li tabIndex={this.props.tabIndex}

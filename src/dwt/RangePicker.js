@@ -7,12 +7,17 @@ import './RangePicker.css';
  * @prop {object} rangePicker info about the range 
  */
 export default class RangePicker extends React.Component {
+    constructor(props) {
+        super(props);
+        this.rangePicker = React.createRef();
+        this.overlayDIV = React.createRef();
+    }
     offsetX
     offsetY
     oldX
     oldY
     move = e => {
-        const parent = this.refs.rangePicker;
+        const parent = this.rangePicker.current;
         parent.style.left = `${this.oldX + (e.clientX - this.offsetX)}px`;
         parent.style.top = `${this.oldY + (e.clientY - this.offsetY)}px`;
         this.oldX = parent.offsetLeft;
@@ -21,21 +26,21 @@ export default class RangePicker extends React.Component {
         this.offsetY = e.clientY;
     }
     add = e => {
-        const parent = this.refs.rangePicker;
+        const parent = this.rangePicker.current;
         this.oldX = parent.offsetLeft;
         this.oldY = parent.offsetTop;
         this.offsetX = e.clientX;
         this.offsetY = e.clientY;
         parent.addEventListener('mousemove', this.move);
-        this.refs.overlayDIV.addEventListener('mousemove', this.move);
+        this.overlayDIV.current.addEventListener('mousemove', this.move);
     }
     remove = e => {
-        this.refs.rangePicker.removeEventListener('mousemove', this.move);
-        this.refs.overlayDIV.removeEventListener('mousemove', this.move);
+        this.rangePicker.current.removeEventListener('mousemove', this.move);
+        this.overlayDIV.current.removeEventListener('mousemove', this.move);
     }
     render() {
-        return (<><div ref="overlayDIV" className="overlay" onMouseUp={this.remove}></div>
-            <div ref="rangePicker" className="range-Picker" onMouseUp={this.remove}>
+        return (<><div ref={this.overlayDIV} className="overlay" onMouseUp={this.remove}></div>
+            <div ref={this.rangePicker} className="range-Picker" onMouseUp={this.remove}>
                 <div className="range-title" onMouseDown={this.add}>
                     <span className="range-title" >{this.props.rangePicker.title}</span>
                 </div>

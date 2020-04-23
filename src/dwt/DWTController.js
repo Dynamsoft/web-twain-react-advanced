@@ -388,7 +388,7 @@ export default class DWTController extends React.Component {
         }
     }
     // Tab 3: Load
-    loadImagesOfPDFs() {
+    loadImagesOrPDFs() {
         this.DWObject.IfShowFileDialog = true;
         this.DWObject.Addon.PDF.SetResolution(200);
         this.DWObject.Addon.PDF.SetConvertMode(1/*EnumDWT_ConvertMode.CM_RENDERALL*/);
@@ -828,7 +828,7 @@ export default class DWTController extends React.Component {
                                 <div className="divTableStyle" style={this.state.shownTabs & 4 ? { display: "block" } : { display: "none" }}>
                                     <ul>
                                         <li className="tc">
-                                            <button tabIndex="3" className="majorButton enabled" onClick={() => this.loadImagesOfPDFs()} style={{ width: "100%" }}>Load</button>
+                                            <button tabIndex="3" className="majorButton enabled" onClick={() => this.loadImagesOrPDFs()} style={{ width: "100%" }}>Load</button>
                                         </li>
                                     </ul>
                                 </div>

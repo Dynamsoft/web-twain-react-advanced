@@ -84,47 +84,56 @@ export default class DWT extends React.Component {
     loadDWT(UseService) {
         Dynamsoft.WebTwainEnv.ProductKey = this.props.productKey;
         Dynamsoft.WebTwainEnv.ResourcesPath = "dwt-resources";
-        this.innerLoadDWT(UseService)
-            .then(
-                _DWObject => {
-                    this.DWObject = _DWObject;
-                    this.basicView = {
-                        Height: this.height,
-                        Width: this.width,
-                        view: { bShow: false, Width: "80%" }
-                    }
-                    if (this.DWObject.BindViewer(this.containerId, this.basicView)) {
-                        this.DWObject.Viewer.setViewMode(1, 1);
-                        this.handleStatusChange(1);
-                        this.setState({
-                            dwt: this.DWObject
-                        });
-                        this.DWObject = this.state.dwt;
-                        if (this.DWObject) {
-                            /**
-                             * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
-                             */
-                            this.DWObject.RegisterEvent("OnBitmapChanged", (changedIndex, changeType) => this.handleBufferChange(changedIndex, changeType));
-                            this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => this.go(index));
-                            this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
-                            this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
-                            this.DWObject.RegisterEvent("OnPostAllTransfers", () => this.DWObject.CloseSource());
-                            this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
-                                let oldZones = this.state.zones;
-                                oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
-                                this.setState({ zones: oldZones });
-                            });
-                            this.DWObject.RegisterEvent('OnImageAreaDeSelected', () => this.setState({ zones: [] }));
-                            if (Dynamsoft.Lib.env.bWin)
-                                this.DWObject.MouseShape = false;
-                            this.handleBufferChange();
+        let innerLoad = (UseService) => {
+            this.innerLoadDWT(UseService)
+                .then(
+                    _DWObject => {
+                        this.DWObject = _DWObject;
+                        this.basicView = {
+                            Height: this.height,
+                            Width: this.width,
+                            view: { bShow: false, Width: "80%" }
                         }
+                        if (this.DWObject.BindViewer(this.containerId, this.basicView)) {
+                            this.DWObject.Viewer.setViewMode(1, 1);
+                            this.handleStatusChange(1);
+                            this.setState({
+                                dwt: this.DWObject
+                            });
+                            this.DWObject = this.state.dwt;
+                            if (this.DWObject) {
+                                /**
+                                 * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
+                                 */
+                                this.DWObject.RegisterEvent("OnBitmapChanged", (changedIndex, changeType) => this.handleBufferChange(changedIndex, changeType));
+                                this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => this.go(index));
+                                this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
+                                this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
+                                this.DWObject.RegisterEvent("OnPostAllTransfers", () => this.DWObject.CloseSource());
+                                this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
+                                    let oldZones = this.state.zones;
+                                    oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
+                                    this.setState({ zones: oldZones });
+                                });
+                                this.DWObject.RegisterEvent('OnImageAreaDeSelected', () => this.setState({ zones: [] }));
+                                if (Dynamsoft.Lib.env.bWin)
+                                    this.DWObject.MouseShape = false;
+                                this.handleBufferChange();
+                            }
+                        }
+                    },
+                    err => {
+                        console.log(err);
                     }
-                },
-                err => {
-                    console.log(err);
-                }
-            );
+                );
+        };
+        /**
+        * ConnectToTheService is overwritten here for smoother install process.
+        */
+        Dynamsoft.WebTwainEnv.ConnectToTheService = () => {
+            innerLoad(UseService);
+        };
+        innerLoad(UseService);
     }
     innerLoadDWT(UseService) {
         return new Promise((res, rej) => {

@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /server/node_modules
+/public/dwt-resources
 /.pnp
 .pnp.js
 
@@ -18,6 +19,11 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.zip
+.exe
+.msi
+.pkg
+.deb
 
 npm-debug.log*
 yarn-debug.log*

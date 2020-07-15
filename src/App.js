@@ -6,7 +6,7 @@ import './App.css';
 import DWT from './DynamsoftSDK';
 
 class App extends Component {
-  productKey = 't00891wAAAKMMxI1NaR/+z7HwBVIxDwDkwWgZjaB3x/D+lCAgo8M+5JuYAKtakJFEIigw9WNxXFyyjaSOsaqw7QuYmRIMxJsX0KM5QeELfIAyA9HVSk5Jd9R/LLA=';
+  productKey = 't01074wAAABu6b/2CX+HyDhSY7UU9BlKVsM4ZHLlZFNhShY9CcjEG2ZBUxEg0MJliNDxRbpW64DFHK48nFNTKdiCLwMMSpVj8GEgEYrcNjaapy5THnD4mzR+NqsBNMzOAOihfgDWmkg/RCzt5LeA=';
   render() {
     return (
       <div className="App">

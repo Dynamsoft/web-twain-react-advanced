@@ -5,7 +5,6 @@ import RangePicker from './RangePicker';
 /**
  * @props
  * @prop {object} Dynamsoft a namespace
- * @prop {object} dynamsoft a namespace
  * @prop {number} startTime the time when initializing started
  * @prop {number} features the features that are enabled
  * @prop {WebTwain} dwt the object to perform the magic of Dynamic Web TWAIN
@@ -74,7 +73,6 @@ export default class DWTController extends React.Component {
     ocrReady = false;
     fileUploaderReady = false;
     Dynamsoft = this.props.Dynamsoft;
-    dynamsoft = this.props.dynamsoft;
     DWObject = null;
     dbrObject = null;
     fileUploaderManager = null;
@@ -269,8 +267,8 @@ export default class DWTController extends React.Component {
                     ? _resolutions[i] = { value: resolutions[i].toString(), checked: true }
                     : _resolutions[i] = { value: resolutions[i].toString(), checked: false };
             }
-            _advancedSettings = Object.keys(window.EnumDWT_VideoProperty).map((_value) => { return { value: _value.substr(3) } });
-            _advancedCameraSettings = Object.keys(window.EnumDWT_CameraControlProperty).map((_value) => { return { value: _value.substr(4) } });
+            _advancedSettings = Object.keys(this.Dynamsoft.EnumDWT_VideoProperty).map((_value) => { return { value: _value.substr(3) } });
+            _advancedCameraSettings = Object.keys(this.Dynamsoft.EnumDWT_CameraControlProperty).map((_value) => { return { value: _value.substr(4) } });
             this.setState({
                 cameraSettings: [{
                     name: "Media Type",
@@ -337,11 +335,11 @@ export default class DWTController extends React.Component {
                 let bCamera = true;
                 if (config.prop === "Video Setup") {
                     bCamera = false;
-                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(window.EnumDWT_VideoProperty["VP_" + config.value]);
-                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(window.EnumDWT_VideoProperty["VP_" + config.value]);
+                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + config.value]);
+                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + config.value]);
                 } else {
-                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(window.EnumDWT_CameraControlProperty["CCP_" + config.value]);
-                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(window.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + config.value]);
                 }
                 let value = basicSetting.GetValue(),
                     min = moreSetting.GetMinValue(),
@@ -379,7 +377,7 @@ export default class DWTController extends React.Component {
          * NOTE: The video playing is not smooth, there is a zoom-out effect (unwanted)
          */
         if ((config && this.state.deviceSetup.isVideoOn) || !config)
-            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, () => { });
+            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, function () { });
     }
     captureImage() {
         if (this.DWObject) {
@@ -391,8 +389,8 @@ export default class DWTController extends React.Component {
     loadImagesOrPDFs() {
         this.DWObject.IfShowFileDialog = true;
         this.DWObject.Addon.PDF.SetResolution(200);
-        this.DWObject.Addon.PDF.SetConvertMode(1/*EnumDWT_ConvertMode.CM_RENDERALL*/);
-        this.DWObject.LoadImageEx("", 5 /*EnumDWT_ImageType.IT_ALL*/, () => {
+        this.DWObject.Addon.PDF.SetConvertMode(1/*this.Dynamsoft.EnumDWT_ConvertMode.CM_RENDERALL*/);
+        this.DWObject.LoadImageEx("", 5 /*this.Dynamsoft.EnumDWT_ImageType.IT_ALL*/, () => {
             this.props.handleOutPutMessage("Loaded an image successfully.");
         }, (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString }));
     }
@@ -472,9 +470,9 @@ export default class DWTController extends React.Component {
                 imagesToUpload.push(this.props.buffer.current);
             }
         }
-        for (let o in window.EnumDWT_ImageType) {
-            if (o.toLowerCase().indexOf(this.state.saveFileFormat) !== -1 && window.EnumDWT_ImageType[o] < 7) {
-                fileType = window.EnumDWT_ImageType[o];
+        for (let o in this.Dynamsoft.EnumDWT_ImageType) {
+            if (o.toLowerCase().indexOf(this.state.saveFileFormat) !== -1 && this.Dynamsoft.EnumDWT_ImageType[o] < 7) {
+                fileType = this.Dynamsoft.EnumDWT_ImageType[o];
                 break;
             }
         }
@@ -504,100 +502,103 @@ export default class DWTController extends React.Component {
                     this.handleException({ code: errorCode, message: errorString });
                 });
             } else
-                this.DWObject.HTTPUpload(serverUrl, imagesToUpload, fileType, window.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
+                this.DWObject.HTTPUpload(serverUrl, imagesToUpload, fileType, this.Dynamsoft.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
         }
     }
     // Tab 5: read Barcode & OCR
     initBarcodeReader(_features) {
-        this.dynamsoft.BarcodeReader.initServiceConnection().then(() => {
-            this.dbrObject = new this.dynamsoft.BarcodeReader();
-            if (!this.barcodeReady) {
-                this.barcodeReady = true;
-                this.props.handleStatusChange(32);
-            }
-        }, (ex) => this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) }));
+        this.DWObject.Addon.BarcodeReader.getRuntimeSettings()
+            .then(settings => {
+                if (!this.barcodeReady) {
+                    this.barcodeReady = true;
+                    this.props.handleStatusChange(32);
+                }
+            }, (ex) => this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) }));
     }
     readBarcode() {
         this.Dynamsoft.Lib.showMask();
         this.setState({ readingBarcode: true });
         this.props.handleNavigating(false);
-        let settings = this.dbrObject.getRuntimeSettings();
-        if (this.DWObject.GetImageBitDepth(this.props.buffer.current) === 1)
-            settings.scaleDownThreshold = 214748347;
-        else
-            settings.scaleDownThreshold = 2300;
-        settings.barcodeFormatIds = this.dynamsoft.BarcodeReader.EnumBarcodeFormat.All;
-        settings.region.measuredByPercentage = 0;
-        if (this.props.zones.length > 0) {
-            let i = 0;
-            let readBarcodeFromRect = () => {
-                i++;
-                settings.region.left = this.props.zones[i].x;
-                settings.region.top = this.props.zones[i].y;
-                settings.region.right = this.props.zones[i].x + this.props.zones[i].width;
-                settings.region.bottom = this.props.zones[i].y + this.props.zones[i].height;
-                if (i === this.props.zones.length - 1)
-                    this.doReadBarode(settings);
+        this.DWObject.Addon.BarcodeReader.getRuntimeSettings()
+            .then(settings => {
+                if (this.DWObject.GetImageBitDepth(this.props.buffer.current) === 1)
+                    settings.scaleDownThreshold = 214748347;
                 else
-                    this.doReadBarode(settings, readBarcodeFromRect);
-            }
-            settings.region.left = this.props.zones[0].x;
-            settings.region.top = this.props.zones[0].y;
-            settings.region.right = this.props.zones[0].x + this.props.zones[0].width;
-            settings.region.bottom = this.props.zones[0].y + this.props.zones[0].height;
-            if (this.props.zones.length === 1)
-                this.doReadBarode(settings);
-            else
-                this.doReadBarode(settings, readBarcodeFromRect);
-        }
-        else {
-            settings.region.left = 0;
-            settings.region.top = 0;
-            settings.region.right = 0;
-            settings.region.bottom = 0;
-            this.doReadBarode(settings);
-        }
+                    settings.scaleDownThreshold = 2300;
+                settings.barcodeFormatIds = this.Dynamsoft.EnumBarcodeFormat.BF_ALL;
+                settings.region.measuredByPercentage = 0;
+                if (this.props.zones.length > 0) {
+                    let i = 0;
+                    let readBarcodeFromRect = () => {
+                        i++;
+                        settings.region.left = this.props.zones[i].x;
+                        settings.region.top = this.props.zones[i].y;
+                        settings.region.right = this.props.zones[i].x + this.props.zones[i].width;
+                        settings.region.bottom = this.props.zones[i].y + this.props.zones[i].height;
+                        if (i === this.props.zones.length - 1)
+                            this.doReadBarode(settings);
+                        else
+                            this.doReadBarode(settings, readBarcodeFromRect);
+                    }
+                    settings.region.left = this.props.zones[0].x;
+                    settings.region.top = this.props.zones[0].y;
+                    settings.region.right = this.props.zones[0].x + this.props.zones[0].width;
+                    settings.region.bottom = this.props.zones[0].y + this.props.zones[0].height;
+                    if (this.props.zones.length === 1)
+                        this.doReadBarode(settings);
+                    else
+                        this.doReadBarode(settings, readBarcodeFromRect);
+                }
+                else {
+                    settings.region.left = 0;
+                    settings.region.top = 0;
+                    settings.region.right = 0;
+                    settings.region.bottom = 0;
+                    this.doReadBarode(settings);
+                }
+            });
     }
     doReadBarode(settings, callback) {
         let bHasCallback = this.Dynamsoft.Lib.isFunction(callback);
-        this.dbrObject.updateRuntimeSettings(settings);
-        // Make sure the same image is on display
-        let userData = this.props.runtimeInfo.curImageTimeStamp;
-        let outputResults = () => {
-            if (this.dbrResults.length === 0) {
-                this.props.handleOutPutMessage("--------------------------", "seperator");
-                this.props.handleOutPutMessage("Nothing found on the image!", "important", false, false);
-                this.doneReadingBarcode();
-            } else {
-                this.props.handleOutPutMessage("--------------------------", "seperator");
-                this.props.handleOutPutMessage("Total barcode(s) found: " + this.dbrResults.length, "important");
-                for (let i = 0; i < this.dbrResults.length; ++i) {
-                    let result = this.dbrResults[i];
-                    this.props.handleOutPutMessage("------------------", "seperator");
-                    this.props.handleOutPutMessage("Barcode " + (i + 1).toString());
-                    this.props.handleOutPutMessage("Type: " + result.BarcodeFormatString);
-                    this.props.handleOutPutMessage("Value: " + result.BarcodeText, "important");
-                }
-                if (this.props.runtimeInfo.curImageTimeStamp === userData) {
-                    this.props.handleBarcodeResults("clear");
-                    this.props.handleBarcodeResults(this.dbrResults);
-                }
-                this.doneReadingBarcode();
-            }
-        };
-        let onDbrReadSuccess = (results) => {
-            this.dbrResults = this.dbrResults.concat(results);
-            bHasCallback ? callback() : outputResults();
-        };
-        let onDbrReadFail = (_code, _msg) => {
-            this.props.handleException({
-                code: _code,
-                message: _msg
+        this.DWObject.Addon.BarcodeReader.updateRuntimeSettings(settings)
+            .then(settings => {
+                // Make sure the same image is on display
+                let userData = this.props.runtimeInfo.curImageTimeStamp;
+                let outputResults = () => {
+                    if (this.dbrResults.length === 0) {
+                        this.props.handleOutPutMessage("--------------------------", "seperator");
+                        this.props.handleOutPutMessage("Nothing found on the image!", "important", false, false);
+                        this.doneReadingBarcode();
+                    } else {
+                        this.props.handleOutPutMessage("--------------------------", "seperator");
+                        this.props.handleOutPutMessage("Total barcode(s) found: " + this.dbrResults.length, "important");
+                        for (let i = 0; i < this.dbrResults.length; ++i) {
+                            let result = this.dbrResults[i];
+                            this.props.handleOutPutMessage("------------------", "seperator");
+                            this.props.handleOutPutMessage("Barcode " + (i + 1).toString());
+                            this.props.handleOutPutMessage("Type: " + result.BarcodeFormatString);
+                            this.props.handleOutPutMessage("Value: " + result.BarcodeText, "important");
+                        }
+                        if (this.props.runtimeInfo.curImageTimeStamp === userData) {
+                            this.props.handleBarcodeResults("clear");
+                            this.props.handleBarcodeResults(this.dbrResults);
+                        }
+                        this.doneReadingBarcode();
+                    }
+                };
+                let onDbrReadSuccess = (results) => {
+                    this.dbrResults = this.dbrResults.concat(results);
+                    bHasCallback ? callback() : outputResults();
+                };
+                let onDbrReadFail = (_code, _msg) => {
+                    this.props.handleException({
+                        code: _code,
+                        message: _msg
+                    });
+                    bHasCallback ? callback() : outputResults();
+                };
+                this.DWObject.Addon.BarcodeReader.decode(this.props.buffer.current).then(onDbrReadSuccess, onDbrReadFail);
             });
-            bHasCallback ? callback() : outputResults();
-        };
-        let dwtUrl = this.DWObject.GetImagePartURL(this.props.buffer.current);
-        this.dbrObject.decode(dwtUrl).then(onDbrReadSuccess, onDbrReadFail);
     }
     doneReadingBarcode() {
         this.props.handleNavigating(true);
@@ -610,8 +611,8 @@ export default class DWTController extends React.Component {
         this.downloadOCRBasic(true, _features);
     }
     downloadOCRBasic(bDownloadDLL, _features) {
-        let strOCRPath = this.Dynamsoft.WebTwainEnv.ResourcesPath + "/OCRResources/OCR.zip",
-            strOCRLangPath = this.Dynamsoft.WebTwainEnv.ResourcesPath + '/OCRResources/OCRBasicLanguages/English.zip';
+        let strOCRPath = this.Dynamsoft.WebTwainEnv.ResourcesPath + "/addon/OCRx64.zip";
+        let strOCRLangPath = this.Dynamsoft.WebTwainEnv.ResourcesPath + '/addon/OCRBasicLanguages/English.zip';
         if (bDownloadDLL) {
             if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
                 this.downloadOCRBasic(false, _features);
@@ -633,14 +634,14 @@ export default class DWTController extends React.Component {
                         this.props.handleStatusChange(64);
                     }
                 },
-                (errorCode, errorString) => {
+                function (errorCode, errorString) {
                     this.props.handleException({ code: errorCode, message: errorString });
                 });
         }
     }
     ocr() {
         this.DWObject.Addon.OCR.SetLanguage('eng');
-        this.DWObject.Addon.OCR.SetOutputFormat(window.EnumDWT_OCROutputFormat.OCROF_TEXT);
+        this.DWObject.Addon.OCR.SetOutputFormat(this.Dynamsoft.EnumDWT_OCROutputFormat.OCROF_TEXT);
         if (this.props.zones.length > 0) {
             this.ocrRect(this.props.zones);
         }
@@ -697,8 +698,8 @@ export default class DWTController extends React.Component {
                 return state;
             });
             _type === "camera"
-                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(window.EnumDWT_CameraControlProperty["CCP_" + prop], _default, true)
-                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(window.EnumDWT_VideoProperty["VP_" + prop], _default, true);
+                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + prop], _default, true)
+                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + prop], _default, true);
             this.setState({ bShowRangePicker: false });
         } else if (value === "close-picker") {
             this.setState({ bShowRangePicker: false });
@@ -710,8 +711,8 @@ export default class DWTController extends React.Component {
                 return state;
             });
             _type === "camera"
-                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(window.EnumDWT_CameraControlProperty["CCP_" + prop], value, false)
-                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(window.EnumDWT_VideoProperty["VP_" + prop], value, false);
+                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + prop], value, false)
+                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + prop], value, false);
         }
     }
     render() {

@@ -7,7 +7,6 @@ const DWTController = React.lazy(() => import('./DWTController'));
 /**
  * @props
  * @prop {object} Dynamsoft a namespace
- * @prop {object} dynamsoft a namespace
  * @prop {number} features the features that are enabled
  * @prop {string} containerId the id of a DIV in which the view of Dynamic Web TWAIN will be built
  * @prop {number} startTime the time when initializing started
@@ -82,17 +81,17 @@ export default class DWTUserInterface extends React.Component {
                 }
                 for (let i = 0; i < results.length; ++i) {
                     let result = results[i];
-                    let loc = result.LocalizationResult;
-                    loc.left = Math.min(loc.X1, loc.X2, loc.X3, loc.X4);
-                    loc.top = Math.min(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
-                    loc.right = Math.max(loc.X1, loc.X2, loc.X3, loc.X4);
-                    loc.bottom = Math.max(loc.Y1, loc.Y2, loc.Y3, loc.Y4);
+                    let loc = result.localizationResult;
+                    let left = Math.min(loc.x1, loc.x2, loc.x3, loc.x4);
+                    let top = Math.min(loc.y1, loc.y2, loc.y3, loc.y4);
+                    let right = Math.max(loc.x1, loc.x2, loc.x3, loc.x4);
+                    let bottom = Math.max(loc.y1, loc.y2, loc.y3, loc.y4);
                     let leftBase = 1 + this.props.runtimeInfo.showAbleWidth / 2 - this.props.runtimeInfo.ImageWidth / 2 * zoom;
                     let topBase = 1 + this.props.runtimeInfo.showAbleHeight / 2 - this.props.runtimeInfo.ImageHeight / 2 * zoom;
-                    let left = leftBase + loc.left * zoom;
-                    let top = topBase + loc.top * zoom;
-                    let width = (loc.right - loc.left) * zoom;
-                    let height = (loc.bottom - loc.top) * zoom;
+                    let width = (right - left) * zoom;
+                    let height = (bottom - top) * zoom;
+                    left = leftBase + left * zoom;
+                    top = topBase + top * zoom;
                     _oldBR.push({ x: left, y: top, w: width, h: height });
                 }
                 this.setState({ barcodeRects: _oldBR });
@@ -159,7 +158,6 @@ export default class DWTUserInterface extends React.Component {
                     <Suspense>
                         <DWTController
                             Dynamsoft={this.props.Dynamsoft}
-                            dynamsoft={this.props.dynamsoft}
                             startTime={this.props.startTime}
                             features={this.props.features}
                             dwt={this.props.dwt}

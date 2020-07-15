@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import Dynamsoft from 'dwt';
-import dynamsoft from 'dynamsoft-sdk';
 const DWTUserInterface = React.lazy(() => import('./dwt/DWTUserInterface'));
 
 export default class DWT extends React.Component {
@@ -50,46 +49,111 @@ export default class DWT extends React.Component {
     containerId = 'dwtcontrolContainer';
     width = 583;
     height = 513;
+    runningEnvironment = Dynamsoft.Lib.env;
+    bWASM = false;
+    bCameraAddonUsable = false;
+    modulizeInstallJS() {
+        let _DWT_Reconnect = window.DWT_Reconnect;
+        window.DWT_Reconnect = (...args) => _DWT_Reconnect.call({ Dynamsoft: Dynamsoft }, ...args);
+        let __show_install_dialog = window._show_install_dialog;
+        window._show_install_dialog = (...args) => __show_install_dialog.call({ Dynamsoft: Dynamsoft }, ...args);
+        let _OnWebTwainOldPluginNotAllowedCallback = window.OnWebTwainOldPluginNotAllowedCallback;
+        window.OnWebTwainOldPluginNotAllowedCallback = (...args) => _OnWebTwainOldPluginNotAllowedCallback.call({ Dynamsoft: Dynamsoft }, ...args);
+        let _OnWebTwainNeedUpgradeCallback = window.OnWebTwainNeedUpgradeCallback;
+        window.OnWebTwainNeedUpgradeCallback = (...args) => _OnWebTwainNeedUpgradeCallback.call({ Dynamsoft: Dynamsoft }, ...args);
+        let _OnWebTwainPreExecuteCallback = window.OnWebTwainPreExecuteCallback;
+        window.OnWebTwainPreExecuteCallback = (...args) => _OnWebTwainPreExecuteCallback.call({ Dynamsoft: Dynamsoft }, ...args);
+        let _OnWebTwainPostExecuteCallback = window.OnWebTwainPostExecuteCallback;
+        window.OnWebTwainPostExecuteCallback = (...args) => _OnWebTwainPostExecuteCallback.call({ Dynamsoft: Dynamsoft }, ...args);
+        let _OnRemoteWebTwainNotFoundCallback = window.OnRemoteWebTwainNotFoundCallback;
+        window.OnRemoteWebTwainNotFoundCallback = (...args) => _OnRemoteWebTwainNotFoundCallback.call({ Dynamsoft: Dynamsoft }, ...args);
+        let _OnRemoteWebTwainNeedUpgradeCallback = window.OnRemoteWebTwainNeedUpgradeCallback;
+        window.OnRemoteWebTwainNeedUpgradeCallback = (...args) => _OnRemoteWebTwainNeedUpgradeCallback.call({ Dynamsoft: Dynamsoft }, ...args);
+        let _OnWebTWAINDllDownloadFailure = window.OnWebTWAINDllDownloadFailure;
+        window.OnWebTWAINDllDownloadFailure = (...args) => _OnWebTWAINDllDownloadFailure.call({ Dynamsoft: Dynamsoft }, ...args);
+    }
     componentDidMount() {
         if (Dynamsoft && (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition)) {
             this.setState({ unSupportedEnv: true });
             return;
         } else {
-            Dynamsoft.WebTwainEnv.RegisterEvent('OnWebTwainReady', () => {
-                this.handleStatusChange(1);
-                this.setState({
-                    dwt: Dynamsoft.WebTwainEnv.GetWebTwain(this.containerId)
-                });
-                this.DWObject = this.state.dwt;
-                if (this.DWObject) {
-                    /**
-                     * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
-                     */
-                    this.DWObject.RegisterEvent("OnBitmapChanged", (changedIndex, changeType) => this.handleBufferChange(changedIndex, changeType));
-                    this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => this.go(index));
-                    this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
-                    this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
-                    this.DWObject.RegisterEvent("OnPostAllTransfers", () => this.DWObject.CloseSource());
-                    this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
-                        let oldZones = this.state.zones;
-                        oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
-                        this.setState({ zones: oldZones });
-                    });
-                    this.DWObject.RegisterEvent('OnImageAreaDeSelected', () => this.setState({ zones: [] }));
-                    if (Dynamsoft.Lib.env.bWin)
-                        this.DWObject.MouseShape = false;
-                    this.handleBufferChange();
-                }
-            });
-            this.loadDWT();
+            if (this.DWObject === null)
+                this.loadDWT(true);
         }
     }
-    loadDWT() {
+    loadDWT(UseService) {
         Dynamsoft.WebTwainEnv.ProductKey = this.props.productKey;
-        Dynamsoft.WebTwainEnv.ResourcesPath = "https://tst.dynamsoft.com/libs/dwt/15.3.1";
-        dynamsoft.dbrEnv.productKey = this.props.productKey;
-        Dynamsoft.WebTwainEnv.Containers = [{ ContainerId: this.containerId, Width: this.width, Height: this.height }];
-        Dynamsoft.WebTwainEnv.Load();
+        Dynamsoft.WebTwainEnv.ResourcesPath = "dwt-resources";
+        this.innerLoadDWT(UseService)
+            .then(
+                _DWObject => {
+                    this.DWObject = _DWObject;
+                    this.basicView = {
+                        Height: this.height,
+                        Width: this.width,
+                        view: { bShow: false, Width: "80%" }
+                    }
+                    if (this.DWObject.BindViewer(this.containerId, this.basicView)) {
+                        this.DWObject.Viewer.setViewMode(1, 1);
+                        this.handleStatusChange(1);
+                        this.setState({
+                            dwt: this.DWObject
+                        });
+                        this.DWObject = this.state.dwt;
+                        if (this.DWObject) {
+                            /**
+                             * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
+                             */
+                            this.DWObject.RegisterEvent("OnBitmapChanged", (changedIndex, changeType) => this.handleBufferChange(changedIndex, changeType));
+                            this.DWObject.RegisterEvent("OnTopImageInTheViewChanged", (index) => this.go(index));
+                            this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
+                            this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
+                            this.DWObject.RegisterEvent("OnPostAllTransfers", () => this.DWObject.CloseSource());
+                            this.DWObject.RegisterEvent('OnImageAreaSelected', (nImageIndex, left, top, right, bottom, sAreaIndex) => {
+                                let oldZones = this.state.zones;
+                                oldZones.push({ x: left, y: top, width: right - left, height: bottom - top });
+                                this.setState({ zones: oldZones });
+                            });
+                            this.DWObject.RegisterEvent('OnImageAreaDeSelected', () => this.setState({ zones: [] }));
+                            if (Dynamsoft.Lib.env.bWin)
+                                this.DWObject.MouseShape = false;
+                            this.handleBufferChange();
+                        }
+                    }
+                },
+                err => {
+                    console.log(err);
+                }
+            );
+    }
+    innerLoadDWT(UseService) {
+        return new Promise((res, rej) => {
+            let checkScriptLoaded = () => {
+                if (Dynamsoft.Lib.detect.scriptLoaded) {
+                    if (UseService !== undefined)
+                        Dynamsoft.WebTwainEnv.UseLocalService = UseService;
+                    this.bWASM = this.runningEnvironment.bMobile || !Dynamsoft.WebTwainEnv.UseLocalService;
+                    this.bCameraAddonUsable = !this.bWASM && this.runningEnvironment.bWin;
+                    this.modulizeInstallJS();
+                    let dwtInitialConfig = {
+                        WebTwainId: "dwtObject"
+                    };
+                    Dynamsoft.WebTwainEnv.CreateDWTObjectEx(
+                        dwtInitialConfig,
+                        (_DWObject) => {
+                            res(_DWObject);
+                        },
+                        (errorString) => {
+                            rej(errorString)
+                        }
+                    );
+                } else
+                    setTimeout(() => {
+                        checkScriptLoaded();
+                    }, 1000);
+            }
+            checkScriptLoaded();
+        });
     }
     go(index) {
         this.DWObject.CurrentImageIndexInBuffer = index;
@@ -141,7 +205,6 @@ export default class DWT extends React.Component {
                     <Suspense fallback={<div>Loading...</div>}>
                         <DWTUserInterface
                             Dynamsoft={Dynamsoft}
-                            dynamsoft={dynamsoft}
                             features={this.features}
                             containerId={this.containerId}
                             startTime={this.state.startTime}

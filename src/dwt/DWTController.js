@@ -377,7 +377,7 @@ export default class DWTController extends React.Component {
          * NOTE: The video playing is not smooth, there is a zoom-out effect (unwanted)
          */
         if ((config && this.state.deviceSetup.isVideoOn) || !config)
-            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, function () { });
+            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, () => { });
     }
     captureImage() {
         if (this.DWObject) {
@@ -634,7 +634,7 @@ export default class DWTController extends React.Component {
                         this.props.handleStatusChange(64);
                     }
                 },
-                function (errorCode, errorString) {
+                (errorCode, errorString) => {
                     this.props.handleException({ code: errorCode, message: errorString });
                 });
         }

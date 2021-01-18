@@ -48,8 +48,8 @@ export default class DWTView extends React.Component {
             this.setState({ viewReady: true });
         }
         if (this.DWObject !== null && this.state.viewReady && !prevState.viewReady) {
-            this.DWObject.Width = this.width;
-            this.DWObject.Height = this.height;
+            this.DWObject.Viewer.width = this.width;
+            this.DWObject.Viewer.height = this.height;
         }
         if (this.props.barcodeRects.length !== 0) {
             !this.props.bNoNavigating && this.handlePreviewModeChange("1");
@@ -75,7 +75,7 @@ export default class DWTView extends React.Component {
             return;
         }
         switch (event.target.getAttribute("value")) {
-            case "editor": this.DWObject.ShowImageEditor(); break;
+            case "editor": this.imageEditor = this.DWObject.Viewer.createImageEditor();this.imageEditor.show(); break;
             case "rotateL": this.DWObject.RotateLeft(this.props.buffer.current); break;
             case "rotateR": this.DWObject.RotateRight(this.props.buffer.current); break;
             case "rotate180": this.DWObject.Rotate(this.props.buffer.current, 180, true); break;
@@ -155,7 +155,7 @@ export default class DWTView extends React.Component {
                 return;
             }
             this.setState({ previewMode: _newMode });
-            this.DWObject.SetViewMode(parseInt(_newMode), parseInt(_newMode));
+            this.DWObject.Viewer.setViewMode(parseInt(_newMode), parseInt(_newMode));
             this.DWObject.MouseShape = (parseInt(_newMode) > 1);
             this.handleNavigation("viewModeChange");
         }

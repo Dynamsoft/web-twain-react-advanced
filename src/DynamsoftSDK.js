@@ -73,13 +73,17 @@ export default class DWT extends React.Component {
         window.OnWebTWAINDllDownloadFailure = (...args) => _OnWebTWAINDllDownloadFailure.call({ Dynamsoft: Dynamsoft }, ...args);
     }
     componentDidMount() {
-        if (Dynamsoft && (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition)) {
-            this.setState({ unSupportedEnv: true });
-            return;
-        } else {
-            if (this.DWObject === null)
-                this.loadDWT(true);
-        }
+		var _this = this;
+		Dynamsoft.Ready(function(){
+
+			if (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition) {
+				_this.setState({ unSupportedEnv: true });
+				return;
+			} else {
+				if (_this.DWObject === null)
+					_this.loadDWT(true);
+			}
+		});
     }
     loadDWT(UseService) {
         Dynamsoft.WebTwainEnv.ProductKey = this.props.productKey;

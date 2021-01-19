@@ -177,11 +177,8 @@ export default class DWT extends React.Component {
         if (changeType === 4) {// Modified
             _updated = true;
         }
-        let selection = [];
-        let count = this.DWObject.SelectedImagesCount;
-        for (let i = 0; i < count; i++) {
-            selection.push(this.DWObject.GetSelectedImageIndex(i));
-        }
+		
+        let selection = this.DWObject.SelectedImagesIndices;
         this.setState({
             zones: [],
             selected: selection,

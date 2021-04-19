@@ -86,8 +86,8 @@ export default class DWT extends React.Component {
 		});
     }
     loadDWT(UseService) {
-        Dynamsoft.WebTwainEnv.ProductKey = this.props.productKey;
-        Dynamsoft.WebTwainEnv.ResourcesPath = "dwt-resources";
+        Dynamsoft.DWT.ProductKey = this.props.productKey;
+        Dynamsoft.DWT.ResourcesPath = "dwt-resources";
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
                 .then(
@@ -143,7 +143,7 @@ export default class DWT extends React.Component {
         /**
         * ConnectToTheService is overwritten here for smoother install process.
         */
-        Dynamsoft.WebTwainEnv.ConnectToTheService = () => {
+        Dynamsoft.DWT.ConnectToTheService = () => {
             innerLoad(UseService);
         };
         innerLoad(UseService);
@@ -153,14 +153,14 @@ export default class DWT extends React.Component {
             let checkScriptLoaded = () => {
                 if (Dynamsoft.Lib.detect.scriptLoaded) {
                     if (UseService !== undefined)
-                        Dynamsoft.WebTwainEnv.UseLocalService = UseService;
-                    this.bWASM = this.runningEnvironment.bMobile || !Dynamsoft.WebTwainEnv.UseLocalService;
+                        Dynamsoft.DWT.UseLocalService = UseService;
+                    this.bWASM = this.runningEnvironment.bMobile || !Dynamsoft.DWT.UseLocalService;
                     this.bCameraAddonUsable = !this.bWASM && this.runningEnvironment.bWin;
                     this.modulizeInstallJS();
                     let dwtInitialConfig = {
                         WebTwainId: "dwtObject"
                     };
-                    Dynamsoft.WebTwainEnv.CreateDWTObjectEx(
+                    Dynamsoft.DWT.CreateDWTObjectEx(
                         dwtInitialConfig,
                         (_DWObject) => {
                             res(_DWObject);

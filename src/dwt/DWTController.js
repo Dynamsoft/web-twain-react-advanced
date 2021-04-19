@@ -267,8 +267,8 @@ export default class DWTController extends React.Component {
                     ? _resolutions[i] = { value: resolutions[i].toString(), checked: true }
                     : _resolutions[i] = { value: resolutions[i].toString(), checked: false };
             }
-            _advancedSettings = Object.keys(this.Dynamsoft.EnumDWT_VideoProperty).map((_value) => { return { value: _value.substr(3) } });
-            _advancedCameraSettings = Object.keys(this.Dynamsoft.EnumDWT_CameraControlProperty).map((_value) => { return { value: _value.substr(4) } });
+            _advancedSettings = Object.keys(this.Dynamsoft.DWT.EnumDWT_VideoProperty).map((_value) => { return { value: _value.substr(3) } });
+            _advancedCameraSettings = Object.keys(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty).map((_value) => { return { value: _value.substr(4) } });
             this.setState({
                 cameraSettings: [{
                     name: "Media Type",
@@ -335,11 +335,11 @@ export default class DWTController extends React.Component {
                 let bCamera = true;
                 if (config.prop === "Video Setup") {
                     bCamera = false;
-                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + config.value]);
-                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + config.value]);
+                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + config.value]);
+                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + config.value]);
                 } else {
-                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + config.value]);
-                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + config.value]);
                 }
                 let value = basicSetting.GetValue(),
                     min = moreSetting.GetMinValue(),
@@ -389,8 +389,8 @@ export default class DWTController extends React.Component {
     loadImagesOrPDFs() {
         this.DWObject.IfShowFileDialog = true;
         this.DWObject.Addon.PDF.SetResolution(200);
-        this.DWObject.Addon.PDF.SetConvertMode(1/*this.Dynamsoft.EnumDWT_ConvertMode.CM_RENDERALL*/);
-        this.DWObject.LoadImageEx("", 5 /*this.Dynamsoft.EnumDWT_ImageType.IT_ALL*/, () => {
+        this.DWObject.Addon.PDF.SetConvertMode(1/*this.Dynamsoft.DWT.EnumDWT_ConvertMode.CM_RENDERALL*/);
+        this.DWObject.LoadImageEx("", 5 /*this.Dynamsoft.DWT.EnumDWT_ImageType.IT_ALL*/, () => {
             this.props.handleOutPutMessage("Loaded an image successfully.");
         }, (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString }));
     }
@@ -470,9 +470,9 @@ export default class DWTController extends React.Component {
                 imagesToUpload.push(this.props.buffer.current);
             }
         }
-        for (let o in this.Dynamsoft.EnumDWT_ImageType) {
-            if (o.toLowerCase().indexOf(this.state.saveFileFormat) !== -1 && this.Dynamsoft.EnumDWT_ImageType[o] < 7) {
-                fileType = this.Dynamsoft.EnumDWT_ImageType[o];
+        for (let o in this.Dynamsoft.DWT.EnumDWT_ImageType) {
+            if (o.toLowerCase().indexOf(this.state.saveFileFormat) !== -1 && this.Dynamsoft.DWT.EnumDWT_ImageType[o] < 7) {
+                fileType = this.Dynamsoft.DWT.EnumDWT_ImageType[o];
                 break;
             }
         }
@@ -502,7 +502,7 @@ export default class DWTController extends React.Component {
                     this.handleException({ code: errorCode, message: errorString });
                 });
             } else
-                this.DWObject.HTTPUpload(serverUrl, imagesToUpload, fileType, this.Dynamsoft.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
+                this.DWObject.HTTPUpload(serverUrl, imagesToUpload, fileType, this.Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
         }
     }
     // Tab 5: read Barcode & OCR
@@ -611,8 +611,8 @@ export default class DWTController extends React.Component {
         this.downloadOCRBasic(true, _features);
     }
     downloadOCRBasic(bDownloadDLL, _features) {
-        let strOCRPath = this.Dynamsoft.WebTwainEnv.ResourcesPath + "/addon/OCRx64.zip";
-        let strOCRLangPath = this.Dynamsoft.WebTwainEnv.ResourcesPath + '/addon/OCRBasicLanguages/English.zip';
+        let strOCRPath = this.Dynamsoft.DWT.ResourcesPath + "/addon/OCRx64.zip";
+        let strOCRLangPath = this.Dynamsoft.DWT.ResourcesPath + '/addon/OCRBasicLanguages/English.zip';
         if (bDownloadDLL) {
             if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
                 this.downloadOCRBasic(false, _features);
@@ -641,7 +641,7 @@ export default class DWTController extends React.Component {
     }
     ocr() {
         this.DWObject.Addon.OCR.SetLanguage('eng');
-        this.DWObject.Addon.OCR.SetOutputFormat(this.Dynamsoft.EnumDWT_OCROutputFormat.OCROF_TEXT);
+        this.DWObject.Addon.OCR.SetOutputFormat(this.Dynamsoft.DWT.EnumDWT_OCROutputFormat.OCROF_TEXT);
         if (this.props.zones.length > 0) {
             this.ocrRect(this.props.zones);
         }
@@ -698,8 +698,8 @@ export default class DWTController extends React.Component {
                 return state;
             });
             _type === "camera"
-                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + prop], _default, true)
-                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + prop], _default, true);
+                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + prop], _default, true)
+                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + prop], _default, true);
             this.setState({ bShowRangePicker: false });
         } else if (value === "close-picker") {
             this.setState({ bShowRangePicker: false });
@@ -711,8 +711,8 @@ export default class DWTController extends React.Component {
                 return state;
             });
             _type === "camera"
-                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.EnumDWT_CameraControlProperty["CCP_" + prop], value, false)
-                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.EnumDWT_VideoProperty["VP_" + prop], value, false);
+                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + prop], value, false)
+                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + prop], value, false);
         }
     }
     render() {

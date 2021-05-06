@@ -93,13 +93,11 @@ export default class DWT extends React.Component {
                 .then(
                     _DWObject => {
                         this.DWObject = _DWObject;
-                        this.basicView = {
-                            Height: this.height,
-                            Width: this.width,
-                            view: { bShow: false, Width: "80%" }
-                        }
-                        if (this.DWObject.BindViewer(this.containerId, this.basicView)) {
+                        if (this.DWObject.Viewer.bind(document.getElementById(this.containerId))) {
+							this.DWObject.Viewer.width = this.width;
+							this.DWObject.Viewer.height = this.height;
                             this.DWObject.Viewer.setViewMode(1, 1);
+							this.DWObject.Viewer.show();
                             this.handleStatusChange(1);
                             this.setState({
                                 dwt: this.DWObject
@@ -122,7 +120,7 @@ export default class DWT extends React.Component {
                                     if (rect.length > 0) {
 										let currentRect = rect[rect.length - 1];
 										let oldZones = this.state.zones;
-										if(rect.length == 1)
+										if(rect.length === 1)
 											oldZones = [];
 										oldZones.push({ x: currentRect.x, y: currentRect.y, width: currentRect.width, height: currentRect.height });
 										this.setState({ zones: oldZones });

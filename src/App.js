@@ -6,7 +6,6 @@ import './App.css';
 import DWT from './DynamsoftSDK';
 
 class App extends Component {
-  productKey = 't00891wAAABbdLEJATW3/5y5Z9zPHbvN0BoZRljs0AswZsu9Athx99uwWOdwzNYI2VwhYWZut2jfa3p+5RVLaTxvM3OPKwwcuBOa7BeQO0gQ1DWCGJVMMN2gAK5g=';
   render() {
     return (
       <div className="App">
@@ -19,7 +18,6 @@ class App extends Component {
         </header>
         <br />
         <DWT
-          productKey={this.productKey}
           features={[
             "scan",
             "camera",

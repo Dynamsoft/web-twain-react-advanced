@@ -525,7 +525,7 @@ export default class DWTController extends React.Component {
                     settings.scaleDownThreshold = 214748347;
                 else
                     settings.scaleDownThreshold = 2300;
-                settings.barcodeFormatIds = this.Dynamsoft.EnumBarcodeFormat.BF_ALL;
+                settings.barcodeFormatIds = this.Dynamsoft.DBR.EnumBarcodeFormat.BF_ALL;
                 settings.region.measuredByPercentage = 0;
                 if (this.props.zones.length > 0) {
                     let i = 0;

@@ -107,7 +107,7 @@ export default class DWT extends React.Component {
 		// Dynamsoft.DWT.ProductKey = "YOUR-PRODUCT-KEY";
 
 		/** LICENSE ALERT - THE END */
-	
+
         Dynamsoft.DWT.ResourcesPath = "dwt-resources";
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
@@ -211,7 +211,7 @@ export default class DWT extends React.Component {
 		
         let selection = this.DWObject.SelectedImagesIndices;
         this.setState({
-            zones: [],
+            //zones: [],
             selected: selection,
             buffer: {
                 updated: _updated,

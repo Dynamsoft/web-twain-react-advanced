@@ -95,7 +95,7 @@ export default class DWT extends React.Component {
 		 */
 
 		/* When using your own license, please uncomment the following lines and fill in your own information. */
-		/* For more information, please refer to https://www.dynamsoft.com/license-tracking/docs/about/licensefaq.html?ver=latest#how-to-use-a-trackable-license. */
+		/* To get a free trial, please visit https://www.dynamsoft.com/customer/license/trialLicense?product=dwt. */
 
 		// Dynamsoft.DWT.organizationID = "YOUR-ORGANIZATION-ID";
 		// Dynamsoft.DWT.handshakeCode = "A-SPECIFIC-HANDSHAKECODE";

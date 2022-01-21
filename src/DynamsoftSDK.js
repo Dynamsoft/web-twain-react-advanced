@@ -49,9 +49,6 @@ export default class DWT extends React.Component {
     containerId = 'dwtcontrolContainer';
     width = 583;
     height = 513;
-    runningEnvironment = Dynamsoft.Lib.env;
-    bWASM = false;
-    bCameraAddonUsable = false;
     modulizeInstallJS() {
         let _DWT_Reconnect = Dynamsoft.DWT_Reconnect;
         Dynamsoft.DWT_Reconnect = (...args) => _DWT_Reconnect.call({ Dynamsoft: Dynamsoft }, ...args);
@@ -86,9 +83,8 @@ export default class DWT extends React.Component {
 		});
     }
     loadDWT(UseService) {
-		Dynamsoft.DWT.Containers = [{ ContainerId: 'dwtcontrolContainer', Width: 270, Height: 350 }];
         Dynamsoft.DWT.ResourcesPath = "dwt-resources";
-		Dynamsoft.DWT.ProductKey = 't00891wAAAKBfWo4sRRVNTyLqdC7nKomEJIfBYqfXWg5mblnP0eeJi+LsMIUdQvrBf//ocS3z8MJA47R4VdO4x24uJwlqKgkuZOa7BUQHPkFNA5hFSi6lG2qOK6I=';
+		Dynamsoft.DWT.ProductKey = 't00881wAAAJiZxwKrauMDAnLQZ4prFe5v+GIzhfe6tY5KYmPHgMl/HdEi/Vt0gw0oYrLdhvNToW0YknBnPyJr0T5IkwNgUinIjHfOHUQH/gYsW0kWed4BaK4rng==';
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
                 .then(
@@ -151,32 +147,23 @@ export default class DWT extends React.Component {
         innerLoad(UseService);
     }
     innerLoadDWT(UseService) {
-        return new Promise((res, rej) => {
-            let checkScriptLoaded = () => {
-                if (Dynamsoft.Lib.detect.scriptLoaded) {
-                    if (UseService !== undefined)
-                        Dynamsoft.DWT.UseLocalService = UseService;
-                    this.bWASM = this.runningEnvironment.bMobile || !Dynamsoft.DWT.UseLocalService;
-                    this.bCameraAddonUsable = !this.bWASM && this.runningEnvironment.bWin;
-                    this.modulizeInstallJS();
-                    let dwtInitialConfig = {
-                        WebTwainId: "dwtObject"
-                    };
-                    Dynamsoft.DWT.CreateDWTObjectEx(
-                        dwtInitialConfig,
-                        (_DWObject) => {
-                            res(_DWObject);
-                        },
-                        (errorString) => {
-                            rej(errorString)
-                        }
-                    );
-                } else
-                    setTimeout(() => {
-                        checkScriptLoaded();
-                    }, 1000);
-            }
-            checkScriptLoaded();
+        return new Promise((res, rej) => {   
+
+			if (UseService !== undefined)
+				Dynamsoft.DWT.UseLocalService = UseService;
+			this.modulizeInstallJS();
+			let dwtInitialConfig = {
+				WebTwainId: "dwtObject"
+			};
+			Dynamsoft.DWT.CreateDWTObjectEx(
+				dwtInitialConfig,
+				(_DWObject) => {
+					res(_DWObject);
+				},
+				(errorString) => {
+					rej(errorString)
+				}
+			);
         });
     }
     go(index) {

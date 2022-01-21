@@ -67,7 +67,6 @@ export default class DWTController extends React.Component {
         };
     }
     initialShownTabs = 127;
-    scannerReady = false;
     cameraReady = false;
     barcodeReady = false;
     ocrReady = false;
@@ -141,7 +140,6 @@ export default class DWTController extends React.Component {
         this.setState({
             deviceSetup: oldDeviceSetup
         });
-        this.scannerReady = true;
         if (value === "noscanner") return;
         if (this.Dynamsoft.Lib.env.bMac) {
             if (value.indexOf("ICA") === 0) {

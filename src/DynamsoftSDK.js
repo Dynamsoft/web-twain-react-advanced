@@ -84,7 +84,7 @@ export default class DWT extends React.Component {
     }
     loadDWT(UseService) {
         Dynamsoft.DWT.ResourcesPath = "dwt-resources";
-		Dynamsoft.DWT.ProductKey = 't00881wAAAJiZxwKrauMDAnLQZ4prFe5v+GIzhfe6tY5KYmPHgMl/HdEi/Vt0gw0oYrLdhvNToW0YknBnPyJr0T5IkwNgUinIjHfOHUQH/gYsW0kWed4BaK4rng==';
+		Dynamsoft.DWT.ProductKey = 't00901wAAAFGokK55GCTHFf8RWZ8bKjNRD1O+Gf0xA6MUdkmYI6zSueLnBjy55bNxl/YW1HkZykS/h0xYHBuFFwIDbexR567425Cx3hnuwAewN5DyXtRd/ATLnyy+';
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
                 .then(

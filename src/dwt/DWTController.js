@@ -63,7 +63,8 @@ export default class DWTController extends React.Component {
             bUseFileUploader: false,
             bMulti: false,
             readingBarcode: false,
-            ocring: false
+            ocring: false,
+            bWin: this.props.Dynamsoft.navInfo.bWin
         };
     }
     initialShownTabs = 127;
@@ -95,13 +96,19 @@ export default class DWTController extends React.Component {
             this.DWObject = this.props.dwt;
             if (this.DWObject) {
                 if (this.props.features & 0b1) {
-                    let vCount = this.DWObject.SourceCount;
-                    let sourceNames = [];
-                    for (let i = 0; i < vCount; i++)
-                        sourceNames.push(this.DWObject.GetSourceNameItems(i));
-                    this.setState({ scanners: sourceNames });
-                    if (sourceNames.length > 0)
-                        this.onSourceChange(sourceNames[0]);
+                    this.DWObject.GetDevicesAsync().then((devices)=>{
+                        let sourceNames = [];
+                        for (var i = 0; i < devices.length; i++) { // Get how many sources are installed in the system
+                            sourceNames.push(devices[i].displayName);
+                        }
+
+                        this.setState({ scanners: sourceNames});
+                        if (sourceNames.length > 0)
+                            this.onSourceChange(sourceNames[0]);
+
+                    }).catch(function (exp) {
+                        alert(exp.message);
+                    });
                 }
                 if (this.props.features & 0b10) {
                     let cameraNames = this.DWObject.Addon.Webcam.GetSourceList();
@@ -193,16 +200,16 @@ export default class DWTController extends React.Component {
         });
     }
     acquireImage() {
-        this.DWObject.CloseSource();
-        for (let i = 0; i < this.DWObject.SourceCount; i++) {
-            if (this.DWObject.GetSourceNameItems(i) === this.state.deviceSetup.currentScanner) {
-                this.DWObject.SelectSourceByIndex(i);
-                break;
+        this.DWObject.GetDevicesAsync().then((devices)=>{   
+            for (var i = 0; i < devices.length; i++) { // Get how many sources are installed in the system
+                if (devices[i].displayName === this.state.deviceSetup.currentScanner) {
+                    return devices[i];
+                }
             }
-        }
-        this.DWObject.OpenSource();
-        this.DWObject.AcquireImage(
-            {
+        }).then((device) =>{
+            return this.DWObject.SelectDeviceAsync(device);
+        }).then(()=>{
+            return this.DWObject.AcquireImageAsync({
                 IfShowUI: this.state.deviceSetup.bShowUI,
                 PixelType: this.state.deviceSetup.nPixelType,
                 Resolution: this.state.deviceSetup.nResolution,
@@ -215,10 +222,15 @@ export default class DWTController extends React.Component {
                 /**
                  * NOTE: No errors are being logged!!
                  */
-            },
-            () => this.props.handleOutPutMessage("Acquire success!", "important"),
-            () => this.props.handleOutPutMessage("Acquire failure!", "error")
-        );
+            });
+        }).then(()=>{
+            return this.DWObject.CloseSourceAsync();
+        }).then(()=>{
+            this.props.handleOutPutMessage("Acquire success!", "important")
+        }).catch((exp) => {
+            this.props.handleOutPutMessage("Acquire failure!", "error")
+            alert(exp.message);
+        });
     }
     // Tab 2: Camera    
     onCameraChange(value) {
@@ -783,7 +795,7 @@ export default class DWTController extends React.Component {
                                 </div>
                             </li>
                         ) : ""}
-                        {this.props.features & 0b10 ? (
+                        {this.state.bWin && (this.props.features & 0b10) ? (
                             <li>
                                 <div className="divType" tabIndex="2" controlindex="2" onClick={(event) => this.handleTabs(event)} onKeyUp={(event) => this.handleTabs(event)}>
                                     <div className={this.state.shownTabs & 2 ? "mark_arrow expanded" : "mark_arrow collapsed"} ></div>
@@ -861,7 +873,7 @@ export default class DWTController extends React.Component {
                                                 : ""}
                                         </li>
                                         <li className="tc">
-                                            {(this.props.features & 0b1000) ? <button tabIndex="4" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('local')} >Save to Local</button> : ""}
+                                            {(this.state.bWin && (this.props.features & 0b1000)) ? <button tabIndex="4" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('local')} >Save to Local</button> : ""}
                                             {(this.props.features & 0b10000) ? <button tabIndex="4" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_4p marginL_2p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('server')} >Upload to Server</button> : ""}
                                         </li>
                                     </ul>
@@ -877,7 +889,7 @@ export default class DWTController extends React.Component {
                                     <ul>
                                         <li className="tc">
                                             {(this.props.features & 0b100000) ? <button tabIndex="5" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 || this.state.readingBarcode ? "disabled" : ""} onClick={() => this.readBarcode()} >{this.state.readingBarcode ? "Reading..." : "Read Barcode"}</button> : ""}
-                                            {(this.props.features & 0b1000000) ? <button tabIndex="5" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 || this.state.ocring ? "disabled" : ""} onClick={() => this.ocr()}>{this.state.ocring ? "Ocring..." : "OCR (English)"}</button> : ""}
+                                            {(this.props.features & 0b1000000 ) ? <button tabIndex="5" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 || this.state.ocring ? "disabled" : ""} onClick={() => this.ocr()}>{this.state.ocring ? "Ocring..." : "OCR (English)"}</button> : ""}
                                         </li>
                                         {this.props.barcodeRects.length > 0 &&
                                             (<li><button tabIndex="5" className="majorButton enabled fullWidth" onClick={() => this.props.handleBarcodeResults("clear")}>Clear Barcode Rects</button></li>)

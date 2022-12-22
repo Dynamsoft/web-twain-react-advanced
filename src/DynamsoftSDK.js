@@ -11,7 +11,7 @@ export default class DWT extends React.Component {
                 if (this.featureSet[value]) this.features += this.featureSet[value];
                 return this.features;
             });
-            this.initialStatus = 255 - (this.features & 0b11100011);
+            this.initialStatus = this.features - (this.features & 0b11100011);
         }
         this.state = {
             startTime: (new Date()).getTime(),
@@ -70,19 +70,19 @@ export default class DWT extends React.Component {
     componentDidMount() {
 		var _this = this;
 		Dynamsoft.Ready(function(){
-
-			if (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bChromeEdition) {
-				_this.setState({ unSupportedEnv: true });
-				return;
-			} else {
-				if (_this.DWObject === null)
-					_this.loadDWT(true);
-			}
+			if (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bHTML5Edition) {
+               // _this.setState({ unSupportedEnv: true });
+                _this.featureSet = { scan: 0b1, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, uploader: 0b10000000 };
+                _this.features = 0b10111101;
+                _this.initialStatus = 0;
+            }
+            if (_this.DWObject === null)
+                _this.loadDWT(true);
 		});
     }
     loadDWT(UseService) {
         Dynamsoft.DWT.ResourcesPath = "/dwt-resources";
-		Dynamsoft.DWT.ProductKey = 't00891wAAAEbOWXicCg/1bwa29gTMj4S89ctUTkXBm+c5T4rfmfK+D7o7BxNdhMwAQhsRyqJ3AZfqg+fUDZ+dlQ7IHcOPlAHfBcF6F7iDMkC8gaSmKpbjBOJTLOo=';
+		Dynamsoft.DWT.ProductKey = 't00911wAAAADbfnwI5uy1JWvasWT5YxguvheeyGDejTzJcn8N5yL+L7rM9MnS6PMBUVuQEFXM2cZ8I0RHHWehYoP6bTNzx/sdgH+g188NDNOKAWwFpHqeU1xPq3susA==';
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
                 .then(
@@ -97,7 +97,7 @@ export default class DWT extends React.Component {
                             this.setState({
                                 dwt: this.DWObject
                             });
-                            this.DWObject = this.state.dwt;
+                            //this.DWObject = this.state.dwt;
                             if (this.DWObject) {
                                 /**
                                  * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
@@ -206,25 +206,24 @@ export default class DWT extends React.Component {
     }
     render() {
         return (
-            this.state.unSupportedEnv ? <div>Please use Chrome, Firefox or Edge on Windows!</div>
-                : <div>
-                    <Suspense fallback={<div>Loading...</div>}>
-                        <DWTUserInterface
-                            Dynamsoft={Dynamsoft}
-                            features={this.features}
-                            containerId={this.containerId}
-                            startTime={this.state.startTime}
-                            dwt={this.state.dwt}
-                            status={this.state.status}
-                            buffer={this.state.buffer}
-                            selected={this.state.selected}
-                            zones={this.state.zones}
-                            runtimeInfo={this.state.runtimeInfo}
-                            handleViewerSizeChange={(viewSize) => this.handleViewerSizeChange(viewSize)}
-                            handleStatusChange={(value) => this.handleStatusChange(value)}
-                            handleBufferChange={() => this.handleBufferChange()}
-                        /></Suspense>
-                </div>
+            <div>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <DWTUserInterface
+                        Dynamsoft={Dynamsoft}
+                        features={this.features}
+                        containerId={this.containerId}
+                        startTime={this.state.startTime}
+                        dwt={this.state.dwt}
+                        status={this.state.status}
+                        buffer={this.state.buffer}
+                        selected={this.state.selected}
+                        zones={this.state.zones}
+                        runtimeInfo={this.state.runtimeInfo}
+                        handleViewerSizeChange={(viewSize) => this.handleViewerSizeChange(viewSize)}
+                        handleStatusChange={(value) => this.handleStatusChange(value)}
+                        handleBufferChange={() => this.handleBufferChange()}
+                    /></Suspense>
+            </div>
         );
     }
 }

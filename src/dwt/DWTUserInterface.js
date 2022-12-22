@@ -57,7 +57,7 @@ export default class DWTUserInterface extends React.Component {
                 text = text.join(" & ");
             text += "ready...";
         }
-        if (_status === 255) {
+        if (_status === this.props.features) {
             if (_statusChange)
                 text = "_ALLDONE_" + text;
             else

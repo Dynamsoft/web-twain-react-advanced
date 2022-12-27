@@ -1,40 +1,50 @@
-## Introduction
+# Dynamic Web TWAIN React Advanced
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). It utilizes the SDK [Dynamic Web TWAIN](https://www.dynamsoft.com/Products/WebTWAIN_Overview.aspx) to provide the following functionalities
 
 * Scan documents from physical scanners
-* Capture images from Webcams
-* Read local documents (bmp/jpg/png/tif/pdf)
-* View and process the documents already scanned/captured/read
-    * Simple edits (rotate/flip/mirror/crop, etc.)
-    * Save locally or upload to the server
-    * Extract barcode or text
+* Capture images from webcams
+* Load documents from local disk (bmp/jpg/png/tif/pdf)
+* View and process the documents already scanned/captured/loaded
+  * Editing (rotate/flip/mirror/crop, etc.)
+  * Saving or uploading
+  * Barcode reading
 
-## What You Should Know
-- [![](https://img.shields.io/badge/Download-Offline%20SDK-orange)](https://www.dynamsoft.com/web-twain/downloads)
-- [![](https://img.shields.io/badge/Get-30--day%20FREE%20Trial%20License-blue)](https://www.dynamsoft.com/customer/license/trialLicense/?product=dwt)
+## Usage
 
-## Available Scripts
+1. Apply for a [30-day free trial license](https://www.dynamsoft.com/customer/license/trialLicense?product=dwt) of Dynamic Web TWAIN.
 
-In the project directory, you can run:
+2. Update the license key in `document-scanner.component.ts` file:
 
-### `npm install` && `npm start`
+   ```
+   Dynamsoft.DWT.ProductKey = "LICENSE-KEY";
+   ```
 
-Sets up and runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+3. Install the dependencies:
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+   ```
+   npm install
+   ```
 
-### `cd server` && `npm install` && `node server.js`
+4. Run the application as follows:
 
-Sets up and runs the server piece which is used solely for receiving uploaded files.
+   ```
+   npm start
+   ```
 
-### `npm run build`
+5. Set up and run the server piece which is used solely for receiving uploaded files. Run the  command-line as follows:
 
-Builds the app for production to the `build` folder.<br />
+   ```
+   cd server
+   npm install
+   node server.js
+   ```
+
+## Build
+
+Run `npm run build` to build the project. The build artifacts will be stored in the `build/` directory. 
 It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified and the filenames include the hashes.<br />
+The build is minified and the filenames include the hashes.
 Your app is ready to be deployed!
 

@@ -110,6 +110,11 @@ export default class DWT extends React.Component {
 								});
                                 this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
                                 this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
+								this.DWObject.RegisterEvent("OnBufferChanged", (e) => {
+                                    if(e.action === 'shift' && e.currentId !==  -1){
+                                        this.handleBufferChange()
+                                    }
+                                });
                                 this.DWObject.RegisterEvent("OnPostAllTransfers", () => this.DWObject.CloseSource());
                                 this.DWObject.Viewer.on('pageAreaSelected', (nImageIndex, rect) => {
                                     if (rect.length > 0) {

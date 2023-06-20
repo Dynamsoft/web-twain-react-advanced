@@ -47,7 +47,7 @@ export default class DWT extends React.Component {
     initialStatus = 0;
     DWObject = null;
     containerId = 'dwtcontrolContainer';
-    width = 583;
+    width = 585;
     height = 513;
     modulizeInstallJS() {
         let _DWT_Reconnect = Dynamsoft.DWT_Reconnect;
@@ -82,7 +82,7 @@ export default class DWT extends React.Component {
     }
     loadDWT(UseService) {
         Dynamsoft.DWT.ResourcesPath = "/dwt-resources";
-		Dynamsoft.DWT.ProductKey = 't0100CgEAAI/Kalkph+rANa7xvFeYzy2ZJaF0sV188r8K/knF/akFHHvAHdHAtGHQJrpxP+nqlDJkXOD65sKMbWhdmp6b7QgCWLr5A0huNQqu+DW0v3gAgcFwAvEGSBQj0nwHo981mg==';
+		Dynamsoft.DWT.ProductKey = 't0106KwEAAHS5i/IQMtobY1KiE0ohnvp0rYQ6Odqe3YSTuwoeLvNCke4y7UccAqchMe1OUgSW/vPP42qfMZqjyorwWR/DnRUBbMP5AyjcPbyr+HVod/EEDJNDB2wFSOh/Xnlxg6lISUkO19Q75w==';
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
                 .then(
@@ -193,8 +193,8 @@ export default class DWT extends React.Component {
                 this.setState({
                     runtimeInfo: {
                         curImageTimeStamp: (new Date()).getTime(),
-                        showAbleWidth: this.DWObject.HowManyImagesInBuffer > 1 ? this.width - 16 : this.width,
-                        showAbleHeight: this.height,
+                        showAbleWidth: (this.DWObject.HowManyImagesInBuffer > 1 ? this.width - 12 : this.width) -4,
+                        showAbleHeight: this.height - 4,
                         ImageWidth: this.DWObject.GetImageWidth(this.state.buffer.current),
                         ImageHeight: this.DWObject.GetImageHeight(this.state.buffer.current)
                     }

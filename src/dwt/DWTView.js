@@ -38,7 +38,7 @@ export default class DWTView extends React.Component {
     }
     re = /^\d+$/;
     DWObject = null;
-    width = "583px"
+    width = "585px"
     height = "513px";
     navigatorRight = "60px";
     navigatorWidth = "585px";

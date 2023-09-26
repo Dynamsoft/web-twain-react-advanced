@@ -398,8 +398,12 @@ export default class DWTController extends React.Component {
     // Tab 3: Load
     loadImagesOrPDFs() {
         this.DWObject.IfShowFileDialog = true;
-        this.DWObject.Addon.PDF.SetResolution(200);
-        this.DWObject.Addon.PDF.SetConvertMode(1/*this.Dynamsoft.DWT.EnumDWT_ConvertMode.CM_RENDERALL*/);
+        this.DWObject.Addon.PDF.SetReaderOptions({
+            convertMode: this.Dynamsoft.DWT.EnumDWT_ConvertMode.CM_RENDERALL,
+            renderOptions: {
+                resolution: 200
+            }
+        });
         this.DWObject.LoadImageEx("", 5 /*this.Dynamsoft.DWT.EnumDWT_ImageType.IT_ALL*/, () => {
             this.props.handleOutPutMessage("Loaded an image successfully.");
         }, (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString }));

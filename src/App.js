@@ -25,7 +25,6 @@ class App extends Component {
             "save",
             "upload",
             "barcode",
-            "ocr",
             "uploader"
           ]}
         />

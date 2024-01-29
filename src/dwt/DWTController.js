@@ -63,14 +63,12 @@ export default class DWTController extends React.Component {
             bUseFileUploader: false,
             bMulti: false,
             readingBarcode: false,
-            ocring: false,
             bWin: this.props.Dynamsoft.navInfo.bWin
         };
     }
     initialShownTabs = 127;
     cameraReady = false;
     barcodeReady = false;
-    ocrReady = false;
     fileUploaderReady = false;
     Dynamsoft = this.props.Dynamsoft;
     DWObject = null;
@@ -120,20 +118,17 @@ export default class DWTController extends React.Component {
                     this.initBarcodeReader(this.props.features);
                 }
                 if (this.props.features & 0b1000000) {
-                    this.initOCR(this.props.features);
-                }
-                if (this.props.features & 0b10000000) {
                     this.Dynamsoft.FileUploader.Init("", (objFileUploader) => {
                         this.fileUploaderManager = objFileUploader;
                         if (!this.fileUploaderReady) {
                             this.fileUploaderReady = true;
-                            this.props.handleStatusChange(128);
+                            this.props.handleStatusChange(64);
                         }
                     }, (errorCode, errorString) => {
                         this.handleException({ code: errorCode, message: errorString });
                         if (!this.fileUploaderReady) {
                             this.fileUploaderReady = true;
-                            this.props.handleStatusChange(128);
+                            this.props.handleStatusChange(64);
                         }
                     });
                 }
@@ -519,7 +514,7 @@ export default class DWTController extends React.Component {
                 this.DWObject.HTTPUpload(serverUrl, imagesToUpload, fileType, this.Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
         }
     }
-    // Tab 5: read Barcode & OCR
+    // Tab 5: read Barcode 
     initBarcodeReader(_features) {
         this.DWObject.Addon.BarcodeReader.getRuntimeSettings()
             .then(settings => {
@@ -620,87 +615,6 @@ export default class DWTController extends React.Component {
         this.setState({ readingBarcode: false });
         this.dbrResults = [];
         this.Dynamsoft.Lib.hideMask();
-    }
-    // OCR
-    initOCR(_features) {
-        this.downloadOCRBasic(true, _features);
-    }
-    downloadOCRBasic(bDownloadDLL, _features) {
-        let strOCRPath = this.Dynamsoft.DWT.ResourcesPath + "/addon/OCRx64.zip";
-        let strOCRLangPath = this.Dynamsoft.DWT.ResourcesPath + '/addon/OCRBasicLanguages/English.zip';
-        if (bDownloadDLL) {
-            if (this.DWObject.Addon.OCR.IsModuleInstalled()) { /*console.log('OCR dll is installed');*/
-                this.downloadOCRBasic(false, _features);
-            } else {
-                this.DWObject.Addon.OCR.Download(
-                    strOCRPath,
-                    () => { /*console.log('OCR dll is installed');*/
-                        this.downloadOCRBasic(false);
-                    },
-                    (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString })
-                );
-            }
-        } else {
-            this.DWObject.Addon.OCR.DownloadLangData(
-                strOCRLangPath,
-                () => {
-                    if (!this.ocrReady) {
-                        this.ocrReady = true;
-                        this.props.handleStatusChange(64);
-                    }
-                },
-                (errorCode, errorString) => {
-                    this.props.handleException({ code: errorCode, message: errorString });
-                });
-        }
-    }
-    ocr() {
-        this.DWObject.Addon.OCR.SetLanguage('eng');
-        this.DWObject.Addon.OCR.SetOutputFormat(this.Dynamsoft.DWT.EnumDWT_OCROutputFormat.OCROF_TEXT);
-        if (this.props.zones.length > 0) {
-            this.ocrRect(this.props.zones);
-        }
-        else {
-            this.DWObject.Addon.OCR.Recognize(
-                this.props.buffer.current,
-                (imageId, result) => {
-                    if (result === null) {
-                        this.props.handleOutPutMessage("Nothing found!", "important");
-                        return;
-                    }
-                    this.props.handleOutPutMessage("", "", true);
-                    this.props.handleOutPutMessage("OCR result:", "important");
-                    this.props.handleOutPutMessage(this.Dynamsoft.Lib.base64.decode(result.Get()), "info", false, true);
-                },
-                (errorCode, errorString) => {
-                    this.props.handleException({ code: errorCode, message: errorString });
-                }
-            );
-        }
-    }
-    ocrRect(_zones) {
-        let doRectOCR = (_zone, _zoneId) => {
-            this.DWObject.Addon.OCR.RecognizeRect(
-                this.props.buffer.current,
-                _zone.x, _zone.y, _zone.x + _zone.width, _zone.y + _zone.height,
-                (imageId, left, top, right, bottom, result) => {
-                    if (result === null) {
-                        this.props.handleOutPutMessage("Nothing found in the rect [" + left + ", " + top + ", " + right + ", " + bottom + "]", "important");
-                        return;
-                    }
-                    if (_zoneId === 0)
-                        this.props.handleOutPutMessage("", "", true);
-                    this.props.handleOutPutMessage("OCR result in the rect [" + left + ", " + top + ", " + right + ", " + bottom + "]", "important");
-                    this.props.handleOutPutMessage(this.Dynamsoft.Lib.base64.decode(result.Get()), "info", false, true);
-                    (++_zoneId < _zones.length) && doRectOCR(_zones[_zoneId], _zoneId);
-                },
-                (errorCode, errorString) => {
-                    this.props.handleException({ code: errorCode, message: errorString });
-                    (++_zoneId < _zones.length) && doRectOCR(_zones[_zoneId], _zoneId);
-                }
-            );
-        }
-        doRectOCR(_zones[0], 0);
     }
     handleRangeChange(event) {
         let value = event.target.value ? event.target.value : event.target.getAttribute("value");
@@ -872,7 +786,7 @@ export default class DWTController extends React.Component {
                                             <label><input tabIndex="4" type="checkbox"
                                                 checked={(this.state.saveFileFormat === "pdf" || this.state.saveFileFormat === "tif") && (this.state.bMulti ? "checked" : "")}
                                                 value="multiPage" disabled={(this.state.saveFileFormat === "pdf" || this.state.saveFileFormat === "tif") ? "" : "disabled"} onChange={(e) => this.handleSaveConfigChange(e)} />Upload Multiple Pages</label>
-                                            {((this.props.features & 0b10000) && (this.props.features & 0b10000000))
+                                            {((this.props.features & 0b10000) && (this.props.features & 0b1000000))
                                                 ? <label>
                                                     <input tabIndex="4" title="Use Uploader" type="checkbox" onChange={(e) => this.toggleUseUploade(e)} />Use File Uploader</label>
                                                 : ""}
@@ -885,7 +799,7 @@ export default class DWTController extends React.Component {
                                 </div>
                             </li>
                         ) : ""}
-                        {(this.props.features & 0b100000) || (this.props.features & 0b1000000) ? (
+                        {(this.props.features & 0b100000)? (
                             <li>
                                 <div className="divType" tabIndex="5" controlindex="16" onClick={(event) => this.handleTabs(event)} onKeyUp={(event) => this.handleTabs(event)}>
                                     <div className={this.state.shownTabs & 16 ? "mark_arrow expanded" : "mark_arrow collapsed"} ></div>
@@ -894,7 +808,6 @@ export default class DWTController extends React.Component {
                                     <ul>
                                         <li className="tc">
                                             {(this.props.features & 0b100000) ? <button tabIndex="5" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 || this.state.readingBarcode ? "disabled" : ""} onClick={() => this.readBarcode()} >{this.state.readingBarcode ? "Reading..." : "Read Barcode"}</button> : ""}
-                                            {(this.props.features & 0b1000000 ) ? <button tabIndex="5" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_48p marginL_2p"} disabled={this.props.buffer.count === 0 || this.state.ocring ? "disabled" : ""} onClick={() => this.ocr()}>{this.state.ocring ? "Ocring..." : "OCR (English)"}</button> : ""}
                                         </li>
                                         {this.props.barcodeRects.length > 0 &&
                                             (<li><button tabIndex="5" className="majorButton enabled fullWidth" onClick={() => this.props.handleBarcodeResults("clear")}>Clear Barcode Rects</button></li>)

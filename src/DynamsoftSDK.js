@@ -11,7 +11,7 @@ export default class DWT extends React.Component {
                 if (this.featureSet[value]) this.features += this.featureSet[value];
                 return this.features;
             });
-            this.initialStatus = this.features - (this.features & 0b11100011);
+            this.initialStatus = this.features - (this.features & 0b1100011);
         }
         this.state = {
             startTime: (new Date()).getTime(),
@@ -22,8 +22,7 @@ export default class DWT extends React.Component {
              * 1:  "Core Ready..." (scan)
              * 2:  "Camera Ready..."
              * 32: "BarcodeReader Ready..."
-             * 64: "OCR engine Ready..."
-             * 128:"Uploader Ready..."
+             * 64: "Uploader Ready..."
              */
             status: this.initialStatus,
             selected: [],
@@ -42,8 +41,8 @@ export default class DWT extends React.Component {
             }
         };
     }
-    featureSet = { scan: 0b1, camera: 0b10, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, ocr: 0b1000000, uploader: 0b10000000 };
-    features = 0b11111111;
+    featureSet = { scan: 0b1, camera: 0b10, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, uploader: 0b1000000};
+    features = 0b1111111;
     initialStatus = 0;
     DWObject = null;
     containerId = 'dwtcontrolContainer';
@@ -72,8 +71,8 @@ export default class DWT extends React.Component {
 		Dynamsoft.Ready(function(){
 			if (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bHTML5Edition) {
                // _this.setState({ unSupportedEnv: true });
-                _this.featureSet = { scan: 0b1, load: 0b100, save: 0b1000, upload: 0b10000, uploader: 0b10000000 };
-                _this.features = 0b10011101;
+                _this.featureSet = { scan: 0b1, load: 0b100, save: 0b1000, upload: 0b10000, uploader: 0b1000000 };
+                _this.features = 0b1011101;
                 _this.initialStatus = 0;
             }
             if (_this.DWObject === null)
@@ -81,8 +80,16 @@ export default class DWT extends React.Component {
 		});
     }
     loadDWT(UseService) {
+        Dynamsoft.OnLicenseError = function (message, errorCode) {
+            if(errorCode == -2808)
+              message = '<div style="padding:0">Sorry. Your product key has expired. You can purchase a full license at the <a target="_blank" href="https://www.dynamsoft.com/store/dynamic-web-twain/#DynamicWebTWAIN">online store</a>.</div><div style="padding:0">Or, you can try requesting a new product key at <a target="_blank" href="https://www.dynamsoft.com/customer/license/trialLicense?product=dwt&utm_source=in-product">this page</a>.</div><div style="padding:0">If you need any help, please <a target="_blank" href="https://www.dynamsoft.com/company/contact/">contact us</a>.</div>';
+              Dynamsoft.DWT.ShowMessage(message, {
+              width: 680,
+              headerStyle: 2
+            });
+         };
         Dynamsoft.DWT.ResourcesPath = "/dwt-resources";
-		Dynamsoft.DWT.ProductKey = 't0107KwEAAGoasMG9xI2Iav49dLPDNR+pjYp+ZwC2Mlvgf6RlAzGLYngM9RNg61sTaf9/OD1pJlJXhwmYhR5+GMEoOwjbuYGgASjT+QPI3FtFsOLXoefiCRicwwBsBUgYf159kSEbmSTpAaZBPWg=';
+		Dynamsoft.DWT.ProductKey = 'DLS2eyJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSJ9';
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
                 .then(

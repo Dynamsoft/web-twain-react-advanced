@@ -51,8 +51,7 @@ export default class DWTUserInterface extends React.Component {
             (_statusChange & 1) && text.push("Core module ");
             (_statusChange & 2) && text.push("Webcam module ");
             (_statusChange & 32) && text.push("Barcode Reader module ");
-            (_statusChange & 64) && text.push("OCR module ");
-            (_statusChange & 128) && text.push("File Uploader module ");
+            (_statusChange & 64) && text.push("File Uploader module ");
             if (text.length > 1)
                 text = text.join(" & ");
             text += "ready...";
@@ -181,14 +180,6 @@ export default class DWTUserInterface extends React.Component {
                         messages={this.state.messages}
                         bNoScroll={this.state.bNoScroll}
                     />
-                    <div className="DWT_Notice">
-                        <p><strong>Platform &amp;Browser Support:</strong></p>Chrome|Firefox|Edge on Windows
-                            <p><strong>OCR:</strong> </p> Only English with OCR Basic is demonstrated.<br />
-                            Click &nbsp;
-                            <u><a href='https://www.dynamsoft.com/Products/ocr-basic-languages.aspx'>here</a></u>
-                            &nbsp;for other supported languages and&nbsp;
-                            <u><a href='https://www.dynamsoft.com/Products/cpp-ocr-library.aspx'>here</a></u> for the differences betwen two available OCR engines.
-                    </div>
                 </div>
             </div >
         );

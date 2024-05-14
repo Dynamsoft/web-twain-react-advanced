@@ -132,3 +132,7 @@
     border-radius: 3px;
     cursor: pointer;
 }
+
+.dvs-imageEditor-changeSizeBox input, .dvs-imageEditor-rotateBox input {
+    box-sizing:content-box
+}

@@ -197,7 +197,7 @@ export default class DWTView extends React.Component {
                             </ul>
                         </div>
                     </div>
-                    <div style={{ position: "relative", float: "left", width: this.width, height: this.height }} id={this.props.containerId}>
+                    <div style={{ position: "relative", float: "left", width: "500px", height: this.height }} id={this.props.containerId}>
                         {this.props.barcodeRects.map((_rect, _index) => (
                             <div key={_index} className="barcodeInfoRect" style={{ left: _rect.x + "px", top: _rect.y + "px", width: _rect.w + "px", height: _rect.h + "px" }} >
                                 <div className="spanContainer"><span>[{_index + 1}]</span>

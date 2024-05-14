@@ -99,6 +99,7 @@ export default class DWT extends React.Component {
 							this.DWObject.Viewer.width = this.width;
 							this.DWObject.Viewer.height = this.height;
                             this.DWObject.Viewer.setViewMode(1, 1);
+                            this.DWObject.Viewer.autoChangeIndex = true;
 							this.DWObject.Viewer.show();
                             this.handleStatusChange(1);
                             this.setState({
@@ -213,8 +214,8 @@ export default class DWT extends React.Component {
         this.setState((state) => { return { status: state.status + value } });
     }
     handleViewerSizeChange(viewSize) {
-        this.width = viewSize.width;
-        this.height = viewSize.height;
+       // this.width = viewSize.width;
+       // this.height = viewSize.height;
     }
     render() {
         return (

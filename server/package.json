@@ -4,7 +4,7 @@
   "homepage": ".",
   "private": true,
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "^4.20.0",
     "formidable": "^1.2.1"
   },
   "scripts": {

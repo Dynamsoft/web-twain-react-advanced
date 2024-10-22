@@ -37,19 +37,19 @@ export default class DWTView extends React.Component {
         };
     }
     re = /^\d+$/;
-    DWObject = null;
+    DWTObject = null;
     width = "585px"
     height = "513px";
     navigatorRight = "60px";
     navigatorWidth = "585px";
     componentDidUpdate(prevProps, prevState) {
         if (this.props.dwt !== prevProps.dwt) {
-            this.DWObject = this.props.dwt;
+            this.DWTObject = this.props.dwt;
             this.setState({ viewReady: true });
         }
-        if (this.DWObject !== null && this.state.viewReady && !prevState.viewReady) {
-            this.DWObject.Viewer.width = this.width;
-            this.DWObject.Viewer.height = this.height;
+        if (this.DWTObject !== null && this.state.viewReady && !prevState.viewReady) {
+            this.DWTObject.Viewer.width = this.width;
+            this.DWTObject.Viewer.height = this.height;
         }
         if (this.props.barcodeRects.length !== 0) {
             !this.props.bNoNavigating && this.handlePreviewModeChange("1");
@@ -75,14 +75,14 @@ export default class DWTView extends React.Component {
             return;
         }
         switch (event.target.getAttribute("value")) {
-            case "editor": this.imageEditor = this.DWObject.Viewer.createImageEditor();this.imageEditor.show(); break;
-            case "rotateL": this.DWObject.RotateLeft(this.props.buffer.current); break;
-            case "rotateR": this.DWObject.RotateRight(this.props.buffer.current); break;
-            case "rotate180": this.DWObject.Rotate(this.props.buffer.current, 180, true); break;
-            case "mirror": this.DWObject.Mirror(this.props.buffer.current); break;
-            case "flip": this.DWObject.Flip(this.props.buffer.current); break;
-            case "removeS": this.DWObject.RemoveAllSelectedImages(); break;
-            case "removeA": this.DWObject.RemoveAllImages(); this.handleNavigation("removeAll"); break;
+            case "editor": this.imageEditor = this.DWTObject.Viewer.createImageEditor();this.imageEditor.show(); break;
+            case "rotateL": this.DWTObject.RotateLeft(this.props.buffer.current); break;
+            case "rotateR": this.DWTObject.RotateRight(this.props.buffer.current); break;
+            case "rotate180": this.DWTObject.Rotate(this.props.buffer.current, 180, true); break;
+            case "mirror": this.DWTObject.Mirror(this.props.buffer.current); break;
+            case "flip": this.DWTObject.Flip(this.props.buffer.current); break;
+            case "removeS": this.DWTObject.RemoveAllSelectedImages(); break;
+            case "removeA": this.DWTObject.RemoveAllImages(); this.handleNavigation("removeAll"); break;
             case "changeSize": this.setState({ bShowChangeSizeUI: !this.state.bShowChangeSizeUI }); break;
             case "crop": this.crop(); break;
             case "changeImageSizeOK": this.changeImageSizeOK(); break;
@@ -105,7 +105,7 @@ export default class DWTView extends React.Component {
         })
     }
     changeImageSizeOK() {
-        this.DWObject.ChangeImageSize(this.props.buffer.current, this.state.newWidth, this.state.newHeight, parseInt(this.state.InterpolationMethod));
+        this.DWTObject.ChangeImageSize(this.props.buffer.current, this.state.newWidth, this.state.newHeight, parseInt(this.state.InterpolationMethod));
         this.setState({ bShowChangeSizeUI: !this.state.bShowChangeSizeUI });
     }
     crop() {
@@ -115,7 +115,7 @@ export default class DWTView extends React.Component {
             this.props.handleOutPutMessage("Please select only one rectangle to crop!", "error");
         } else {
             let _zone = this.props.zones[0];
-            this.DWObject.Crop(
+            this.DWTObject.Crop(
                 this.props.buffer.current,
                 _zone.x, _zone.y, _zone.x + _zone.width, _zone.y + _zone.height
             );
@@ -126,13 +126,13 @@ export default class DWTView extends React.Component {
             default://viewModeChange, removeAll
                 break;
             case "first":
-                this.DWObject.CurrentImageIndexInBuffer = 0; break;
+                this.DWTObject.CurrentImageIndexInBuffer = 0; break;
             case "last":
-                this.DWObject.CurrentImageIndexInBuffer = this.props.buffer.count - 1; break;
+                this.DWTObject.CurrentImageIndexInBuffer = this.props.buffer.count - 1; break;
             case "previous":
-                this.DWObject.CurrentImageIndexInBuffer = (this.props.buffer.current > 0) && (this.props.buffer.current - 1); break;
+                this.DWTObject.CurrentImageIndexInBuffer = (this.props.buffer.current > 0) && (this.props.buffer.current - 1); break;
             case "next":
-                this.DWObject.CurrentImageIndexInBuffer = (this.props.buffer.current < this.props.buffer.count - 1) && (this.props.buffer.current + 1); break;
+                this.DWTObject.CurrentImageIndexInBuffer = (this.props.buffer.current < this.props.buffer.count - 1) && (this.props.buffer.current + 1); break;
         }
         this.props.handleBufferChange();
     }
@@ -155,8 +155,8 @@ export default class DWTView extends React.Component {
                 return;
             }
             this.setState({ previewMode: _newMode });
-            this.DWObject.Viewer.setViewMode(parseInt(_newMode), parseInt(_newMode));
-            this.DWObject.MouseShape = (parseInt(_newMode) > 1);
+            this.DWTObject.Viewer.setViewMode(parseInt(_newMode), parseInt(_newMode));
+            this.DWTObject.MouseShape = (parseInt(_newMode) > 1);
             this.handleNavigation("viewModeChange");
         }
     }

@@ -44,7 +44,7 @@ export default class DWT extends React.Component {
     featureSet = { scan: 0b1, camera: 0b10, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, uploader: 0b1000000};
     features = 0b1111111;
     initialStatus = 0;
-    DWObject = null;
+    DWTObject = null;
     containerId = 'dwtcontrolContainer';
     width = 585;
     height = 513;
@@ -75,7 +75,7 @@ export default class DWT extends React.Component {
                 _this.features = 0b1011101;
                 _this.initialStatus = 0;
             }
-            if (_this.DWObject === null)
+            if (_this.DWTObject === null)
                 _this.loadDWT(true);
 		});
     }
@@ -93,38 +93,38 @@ export default class DWT extends React.Component {
         let innerLoad = (UseService) => {
             this.innerLoadDWT(UseService)
                 .then(
-                    _DWObject => {
-                        this.DWObject = _DWObject;
-                        if (this.DWObject.Viewer.bind(document.getElementById(this.containerId))) {
-							this.DWObject.Viewer.width = this.width;
-							this.DWObject.Viewer.height = this.height;
-                            this.DWObject.Viewer.setViewMode(1, 1);
-                            this.DWObject.Viewer.autoChangeIndex = true;
-							this.DWObject.Viewer.show();
+                    _DWTObject => {
+                        this.DWTObject = _DWTObject;
+                        if (this.DWTObject.Viewer.bind(document.getElementById(this.containerId))) {
+							this.DWTObject.Viewer.width = this.width;
+							this.DWTObject.Viewer.height = this.height;
+                            this.DWTObject.Viewer.setViewMode(1, 1);
+                            this.DWTObject.Viewer.autoChangeIndex = true;
+							this.DWTObject.Viewer.show();
                             this.handleStatusChange(1);
                             this.setState({
-                                dwt: this.DWObject
+                                dwt: this.DWTObject
                             });
-                            //this.DWObject = this.state.dwt;
-                            if (this.DWObject) {
+                            //this.DWTObject = this.state.dwt;
+                            if (this.DWTObject) {
                                 /**
                                  * NOTE: RemoveAll doesn't trigger bitmapchanged nor OnTopImageInTheViewChanged!!
                                  */
-                                this.DWObject.RegisterEvent("OnBitmapChanged", (changedIndex, changeType) => this.handleBufferChange(changedIndex, changeType));
-                                this.DWObject.Viewer.on("topPageChanged", (index, bByScrollBar) => { 
-									if (bByScrollBar || this.DWObject.isUsingActiveX()){
+                                this.DWTObject.RegisterEvent("OnBitmapChanged", (changedIndex, changeType) => this.handleBufferChange(changedIndex, changeType));
+                                this.DWTObject.Viewer.on("topPageChanged", (index, bByScrollBar) => { 
+									if (bByScrollBar || this.DWTObject.isUsingActiveX()){
 										this.go(index);
 									}
 								});
-                                this.DWObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
-                                this.DWObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
-								this.DWObject.RegisterEvent("OnBufferChanged", (e) => {
+                                this.DWTObject.RegisterEvent("OnPostTransfer", () => this.handleBufferChange());
+                                this.DWTObject.RegisterEvent("OnPostLoad", () => this.handleBufferChange());
+								this.DWTObject.RegisterEvent("OnBufferChanged", (e) => {
                                     if(e.action === 'shift' && e.currentId !==  -1){
                                         this.handleBufferChange()
                                     }
                                 });
-                                this.DWObject.RegisterEvent("OnPostAllTransfers", () => this.DWObject.CloseSource());
-                                this.DWObject.Viewer.on('pageAreaSelected', (nImageIndex, rect) => {
+                                this.DWTObject.RegisterEvent("OnPostAllTransfers", () => this.DWTObject.CloseSource());
+                                this.DWTObject.Viewer.on('pageAreaSelected', (nImageIndex, rect) => {
                                     if (rect.length > 0) {
 										let currentRect = rect[rect.length - 1];
 										let oldZones = this.state.zones;
@@ -134,12 +134,12 @@ export default class DWT extends React.Component {
 										this.setState({ zones: oldZones });
 									}
                                 });
-                                this.DWObject.Viewer.on('pageAreaUnselected', () => this.setState({ zones: [] }));
-								this.DWObject.Viewer.on("click", () => { 
+                                this.DWTObject.Viewer.on('pageAreaUnselected', () => this.setState({ zones: [] }));
+								this.DWTObject.Viewer.on("click", () => { 
 									this.handleBufferChange();
 								});
                                 if (Dynamsoft.Lib.env.bWin)
-                                    this.DWObject.MouseShape = false;
+                                    this.DWTObject.MouseShape = false;
                                 this.handleBufferChange();
                             }
                         }
@@ -168,8 +168,8 @@ export default class DWT extends React.Component {
 			};
 			Dynamsoft.DWT.CreateDWTObjectEx(
 				dwtInitialConfig,
-				(_DWObject) => {
-					res(_DWObject);
+				(_DWTObject) => {
+					res(_DWTObject);
 				},
 				(errorString) => {
 					rej(errorString)
@@ -178,7 +178,7 @@ export default class DWT extends React.Component {
         });
     }
     go(index) {
-        this.DWObject.CurrentImageIndexInBuffer = index;
+        this.DWTObject.CurrentImageIndexInBuffer = index;
         this.handleBufferChange();
     }
     handleBufferChange(changedIndex, changeType) {
@@ -187,24 +187,24 @@ export default class DWT extends React.Component {
             _updated = true;
         }
 		
-        let selection = this.DWObject.SelectedImagesIndices;
+        let selection = this.DWTObject.SelectedImagesIndices;
         this.setState({
             //zones: [],
             selected: selection,
             buffer: {
                 updated: _updated,
-                current: this.DWObject.CurrentImageIndexInBuffer,
-                count: this.DWObject.HowManyImagesInBuffer
+                current: this.DWTObject.CurrentImageIndexInBuffer,
+                count: this.DWTObject.HowManyImagesInBuffer
             }
         }, () => {
             if (this.state.buffer.count > 0) {
                 this.setState({
                     runtimeInfo: {
                         curImageTimeStamp: (new Date()).getTime(),
-                        showAbleWidth: (this.DWObject.HowManyImagesInBuffer > 1 ? this.width - 12 : this.width) -4,
+                        showAbleWidth: (this.DWTObject.HowManyImagesInBuffer > 1 ? this.width - 12 : this.width) -4,
                         showAbleHeight: this.height - 4,
-                        ImageWidth: this.DWObject.GetImageWidth(this.state.buffer.current),
-                        ImageHeight: this.DWObject.GetImageHeight(this.state.buffer.current)
+                        ImageWidth: this.DWTObject.GetImageWidth(this.state.buffer.current),
+                        ImageHeight: this.DWTObject.GetImageHeight(this.state.buffer.current)
                     }
                 });
             }

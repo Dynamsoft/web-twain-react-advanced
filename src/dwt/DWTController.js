@@ -71,7 +71,7 @@ export default class DWTController extends React.Component {
     barcodeReady = false;
     fileUploaderReady = false;
     Dynamsoft = this.props.Dynamsoft;
-    DWObject = null;
+    DWTObject = null;
     dbrObject = null;
     fileUploaderManager = null;
     dbrResults = [];
@@ -91,10 +91,10 @@ export default class DWTController extends React.Component {
     }
     componentDidUpdate(prevProps) {
         if (this.props.dwt !== prevProps.dwt) {
-            this.DWObject = this.props.dwt;
-            if (this.DWObject) {
+            this.DWTObject = this.props.dwt;
+            if (this.DWTObject) {
                 if (this.props.features & 0b1) {
-                    this.DWObject.GetDevicesAsync().then((devices)=>{
+                    this.DWTObject.GetDevicesAsync().then((devices)=>{
                         let sourceNames = [];
                         for (var i = 0; i < devices.length; i++) { // Get how many sources are installed in the system
                             sourceNames.push(devices[i].displayName);
@@ -109,7 +109,7 @@ export default class DWTController extends React.Component {
                     });
                 }
                 if (this.props.features & 0b10) {
-                    let cameraNames = this.DWObject.Addon.Webcam.GetSourceList();
+                    let cameraNames = this.DWTObject.Addon.Webcam.GetSourceList();
                     this.setState({ cameras: cameraNames });
                     if (cameraNames.length > 0)
                         this.onCameraChange(cameraNames[0]);
@@ -195,16 +195,16 @@ export default class DWTController extends React.Component {
         });
     }
     acquireImage() {
-        this.DWObject.GetDevicesAsync().then((devices)=>{   
+        this.DWTObject.GetDevicesAsync().then((devices)=>{   
             for (var i = 0; i < devices.length; i++) { // Get how many sources are installed in the system
                 if (devices[i].displayName === this.state.deviceSetup.currentScanner) {
                     return devices[i];
                 }
             }
         }).then((device) =>{
-            return this.DWObject.SelectDeviceAsync(device);
+            return this.DWTObject.SelectDeviceAsync(device);
         }).then(()=>{
-            return this.DWObject.AcquireImageAsync({
+            return this.DWTObject.AcquireImageAsync({
                 IfShowUI: this.state.deviceSetup.bShowUI,
                 PixelType: this.state.deviceSetup.nPixelType,
                 Resolution: this.state.deviceSetup.nResolution,
@@ -219,7 +219,7 @@ export default class DWTController extends React.Component {
                  */
             });
         }).then(()=>{
-            return this.DWObject.CloseSourceAsync();
+            return this.DWTObject.CloseSourceAsync();
         }).then(()=>{
             this.props.handleOutPutMessage("Acquire success!", "important")
         }).catch((exp) => {
@@ -241,15 +241,15 @@ export default class DWTController extends React.Component {
             }
             return;
         }
-        this.DWObject.Addon.Webcam.StopVideo();
-        if (this.DWObject.Addon.Webcam.SelectSource(value)) {
-            let mediaTypes = this.DWObject.Addon.Webcam.GetMediaType(),
+        this.DWTObject.Addon.Webcam.StopVideo();
+        if (this.DWTObject.Addon.Webcam.SelectSource(value)) {
+            let mediaTypes = this.DWTObject.Addon.Webcam.GetMediaType(),
                 _mediaTypes = [],
                 _currentmT = mediaTypes.GetCurrent();
-            let frameRates = this.DWObject.Addon.Webcam.GetFrameRate(),
+            let frameRates = this.DWTObject.Addon.Webcam.GetFrameRate(),
                 _frameRates = [],
                 _currentfR = frameRates.GetCurrent();
-            let resolutions = this.DWObject.Addon.Webcam.GetResolution(),
+            let resolutions = this.DWTObject.Addon.Webcam.GetResolution(),
                 _resolutions = [],
                 _currentRes = resolutions.GetCurrent();
             let _advancedSettings = [],
@@ -315,7 +315,7 @@ export default class DWTController extends React.Component {
         }
     }
     toggleCameraVideo(bShow) {
-        if (this.DWObject) {
+        if (this.DWTObject) {
             if (bShow) {
                 this.playVideo();
                 let oldDeviceSetup = this.state.deviceSetup;
@@ -324,7 +324,7 @@ export default class DWTController extends React.Component {
                     deviceSetup: oldDeviceSetup
                 });
             } else {
-                this.DWObject.Addon.Webcam.StopVideo();
+                this.DWTObject.Addon.Webcam.StopVideo();
                 let oldDeviceSetup = this.state.deviceSetup;
                 oldDeviceSetup.isVideoOn = false;
                 this.setState({
@@ -340,11 +340,11 @@ export default class DWTController extends React.Component {
                 let bCamera = true;
                 if (config.prop === "Video Setup") {
                     bCamera = false;
-                    basicSetting = this.DWObject.Addon.Webcam.GetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + config.value]);
-                    moreSetting = this.DWObject.Addon.Webcam.GetVideoPropertyMoreSetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + config.value]);
+                    basicSetting = this.DWTObject.Addon.Webcam.GetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + config.value]);
+                    moreSetting = this.DWTObject.Addon.Webcam.GetVideoPropertyMoreSetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + config.value]);
                 } else {
-                    basicSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + config.value]);
-                    moreSetting = this.DWObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                    basicSetting = this.DWTObject.Addon.Webcam.GetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + config.value]);
+                    moreSetting = this.DWTObject.Addon.Webcam.GetCameraControlPropertyMoreSetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + config.value]);
                 }
                 let value = basicSetting.GetValue(),
                     min = moreSetting.GetMinValue(),
@@ -369,11 +369,11 @@ export default class DWTController extends React.Component {
                 });
                 return;
             } else {
-                //this.DWObject.Addon.Webcam.StopVideo();
+                //this.DWTObject.Addon.Webcam.StopVideo();
                 switch (config.prop) {
-                    case "Frame Rate": this.DWObject.Addon.Webcam.SetFrameRate(config.value); break;
-                    case "Media Type": this.DWObject.Addon.Webcam.SetMediaType(config.value); break;
-                    case "Resolution": this.DWObject.Addon.Webcam.SetResolution(config.value); break;
+                    case "Frame Rate": this.DWTObject.Addon.Webcam.SetFrameRate(config.value); break;
+                    case "Media Type": this.DWTObject.Addon.Webcam.SetMediaType(config.value); break;
+                    case "Resolution": this.DWTObject.Addon.Webcam.SetResolution(config.value); break;
                     default: break;
                 }
             }
@@ -382,24 +382,24 @@ export default class DWTController extends React.Component {
          * NOTE: The video playing is not smooth, there is a zoom-out effect (unwanted)
          */
         if ((config && this.state.deviceSetup.isVideoOn) || !config)
-            this.DWObject.Addon.Webcam.PlayVideo(this.DWObject, 80, () => { });
+            this.DWTObject.Addon.Webcam.PlayVideo(this.DWTObject, 80, () => { });
     }
     captureImage() {
-        if (this.DWObject) {
+        if (this.DWTObject) {
             let funCaptureImage = () => setTimeout(() => { this.toggleCameraVideo(false); }, 50);
-            this.DWObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
+            this.DWTObject.Addon.Webcam.CaptureImage(funCaptureImage, funCaptureImage);
         }
     }
     // Tab 3: Load
     loadImagesOrPDFs() {
-        this.DWObject.IfShowFileDialog = true;
-        this.DWObject.Addon.PDF.SetReaderOptions({
+        this.DWTObject.IfShowFileDialog = true;
+        this.DWTObject.Addon.PDF.SetReaderOptions({
             convertMode: this.Dynamsoft.DWT.EnumDWT_ConvertMode.CM_RENDERALL,
             renderOptions: {
                 resolution: 200
             }
         });
-        this.DWObject.LoadImageEx("", 5 /*this.Dynamsoft.DWT.EnumDWT_ImageType.IT_ALL*/, () => {
+        this.DWTObject.LoadImageEx("", 5 /*this.Dynamsoft.DWT.EnumDWT_ImageType.IT_ALL*/, () => {
             this.props.handleOutPutMessage("Loaded an image successfully.");
         }, (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString }));
     }
@@ -444,8 +444,8 @@ export default class DWTController extends React.Component {
                 if (_type === "local") {
                     switch (this.state.saveFileFormat) {
                         default: break;
-                        case "tif": this.DWObject.SaveAllAsMultiPageTIFF(fileName, onSuccess, onFailure); break;
-                        case "pdf": this.DWObject.SaveAllAsPDF(fileName, onSuccess, onFailure); break;
+                        case "tif": this.DWTObject.SaveAllAsMultiPageTIFF(fileName, onSuccess, onFailure); break;
+                        case "pdf": this.DWTObject.SaveAllAsPDF(fileName, onSuccess, onFailure); break;
                     }
                 }
                 else {
@@ -456,8 +456,8 @@ export default class DWTController extends React.Component {
                 if (_type === "local") {
                     switch (this.state.saveFileFormat) {
                         default: break;
-                        case "tif": this.DWObject.SaveSelectedImagesAsMultiPageTIFF(fileName, onSuccess, onFailure); break;
-                        case "pdf": this.DWObject.SaveSelectedImagesAsMultiPagePDF(fileName, onSuccess, onFailure); break;
+                        case "tif": this.DWTObject.SaveSelectedImagesAsMultiPageTIFF(fileName, onSuccess, onFailure); break;
+                        case "pdf": this.DWTObject.SaveSelectedImagesAsMultiPagePDF(fileName, onSuccess, onFailure); break;
                     }
                 }
                 else {
@@ -468,11 +468,11 @@ export default class DWTController extends React.Component {
             if (_type === "local") {
                 switch (this.state.saveFileFormat) {
                     default: break;
-                    case "bmp": this.DWObject.SaveAsBMP(fileName, this.props.buffer.current, onSuccess, onFailure); break;
-                    case "jpg": this.DWObject.SaveAsJPEG(fileName, this.props.buffer.current, onSuccess, onFailure); break;
-                    case "tif": this.DWObject.SaveAsTIFF(fileName, this.props.buffer.current, onSuccess, onFailure); break;
-                    case "png": this.DWObject.SaveAsPNG(fileName, this.props.buffer.current, onSuccess, onFailure); break;
-                    case "pdf": this.DWObject.SaveAsPDF(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "bmp": this.DWTObject.SaveAsBMP(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "jpg": this.DWTObject.SaveAsJPEG(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "tif": this.DWTObject.SaveAsTIFF(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "png": this.DWTObject.SaveAsPNG(fileName, this.props.buffer.current, onSuccess, onFailure); break;
+                    case "pdf": this.DWTObject.SaveAsPDF(fileName, this.props.buffer.current, onSuccess, onFailure); break;
                 }
             }
             else {
@@ -499,7 +499,7 @@ export default class DWTController extends React.Component {
                 job.ServerUrl = serverUrl;
                 job.FileName = fileName;
                 job.ImageType = fileType;
-                this.DWObject.GenerateURLForUploadData(imagesToUpload, fileType, (resultURL, newIndices, enumImageType) => {
+                this.DWTObject.GenerateURLForUploadData(imagesToUpload, fileType, (resultURL, newIndices, enumImageType) => {
                     job.SourceValue.Add(resultURL, fileName);
                     job.OnUploadTransferPercentage = (job, sPercentage) => {
                         this.props.handleOutPutMessage("Uploading...(" + sPercentage + "%)");
@@ -511,12 +511,12 @@ export default class DWTController extends React.Component {
                     this.handleException({ code: errorCode, message: errorString });
                 });
             } else
-                this.DWObject.HTTPUpload(serverUrl, imagesToUpload, fileType, this.Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
+                this.DWTObject.HTTPUpload(serverUrl, imagesToUpload, fileType, this.Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary, fileName, onSuccess, onFailure);
         }
     }
     // Tab 5: read Barcode 
     initBarcodeReader(_features) {
-        this.DWObject.Addon.BarcodeReader.getRuntimeSettings()
+        this.DWTObject.Addon.BarcodeReader.getRuntimeSettings()
             .then(settings => {
                 if (!this.barcodeReady) {
                     this.barcodeReady = true;
@@ -528,9 +528,9 @@ export default class DWTController extends React.Component {
         this.Dynamsoft.Lib.showMask();
         this.setState({ readingBarcode: true });
         this.props.handleNavigating(false);
-        this.DWObject.Addon.BarcodeReader.getRuntimeSettings()
+        this.DWTObject.Addon.BarcodeReader.getRuntimeSettings()
             .then(settings => {
-                if (this.DWObject.GetImageBitDepth(this.props.buffer.current) === 1)
+                if (this.DWTObject.GetImageBitDepth(this.props.buffer.current) === 1)
                     settings.scaleDownThreshold = 214748347;
                 else
                     settings.scaleDownThreshold = 2300;
@@ -570,7 +570,7 @@ export default class DWTController extends React.Component {
     }
     doReadBarode(settings, callback) {
         let bHasCallback = this.Dynamsoft.Lib.isFunction(callback);
-        this.DWObject.Addon.BarcodeReader.updateRuntimeSettings(settings)
+        this.DWTObject.Addon.BarcodeReader.updateRuntimeSettings(settings)
             .then(settings => {
                 // Make sure the same image is on display
                 let userData = this.props.runtimeInfo.curImageTimeStamp;
@@ -607,7 +607,7 @@ export default class DWTController extends React.Component {
                     });
                     bHasCallback ? callback() : outputResults();
                 };
-                this.DWObject.Addon.BarcodeReader.decode(this.props.buffer.current).then(onDbrReadSuccess, onDbrReadFail);
+                this.DWTObject.Addon.BarcodeReader.decode(this.props.buffer.current).then(onDbrReadSuccess, onDbrReadFail);
             });
     }
     doneReadingBarcode() {
@@ -627,8 +627,8 @@ export default class DWTController extends React.Component {
                 return state;
             });
             _type === "camera"
-                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + prop], _default, true)
-                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + prop], _default, true);
+                ? this.DWTObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + prop], _default, true)
+                : this.DWTObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + prop], _default, true);
             this.setState({ bShowRangePicker: false });
         } else if (value === "close-picker") {
             this.setState({ bShowRangePicker: false });
@@ -640,8 +640,8 @@ export default class DWTController extends React.Component {
                 return state;
             });
             _type === "camera"
-                ? this.DWObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + prop], value, false)
-                : this.DWObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + prop], value, false);
+                ? this.DWTObject.Addon.Webcam.SetCameraControlPropertySetting(this.Dynamsoft.DWT.EnumDWT_CameraControlProperty["CCP_" + prop], value, false)
+                : this.DWTObject.Addon.Webcam.SetVideoPropertySetting(this.Dynamsoft.DWT.EnumDWT_VideoProperty["VP_" + prop], value, false);
         }
     }
     render() {

@@ -1,3 +1,4 @@
+const path = require('path');
 var formidable = require('formidable');
 var util = require('util');
 var express = require('express');
@@ -12,25 +13,42 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.post('/upload', function (req, res) {
-    var form = new formidable.IncomingForm();
-    form.parse(req, function (err, fields, files) {
-        // console.log(util.inspect({
-        //     fields: fields,
-        //     files: files
-        // }));
+const root = __dirname; // __dirname
+const uploadedFolderFullPath = [root, path.sep, "uploaded"].join('');
+if (!fs.existsSync(uploadedFolderFullPath)) {
+  fs.mkdirSync(uploadedFolderFullPath);
+}
 
-        fs.readFile(files.RemoteFile.path, function (err, data) {
-            // save file from temp dir to new dir
-            var newPath = __dirname + "/uploaded/" + files.RemoteFile.name;
-            fs.writeFile(newPath, data, function (err) {
-                if (err) throw err;
-                console.log('file saved');
-                res.end();
-            });
+app.post('/upload', function (req, res) {
+    let form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+   
+      if(!fields || !files || !files.RemoteFile || files.RemoteFile.length==0) {
+   
+        if(!fields)
+          res.write('no fields');
+   
+        if(!files)
+          res.write('no files');
+        else if(!files.RemoteFile || files.RemoteFile.length==0)
+          res.write('no files.RemoteFile');
+   
+        res.statusCode = 200;
+        res.end();
+      }
+   
+      fs.readFile(files.RemoteFile[0].filepath, function (err, data) {
+   
+        // save file from temp dir to new dir     
+        let fullName = [uploadedFolderFullPath, path.sep, files.RemoteFile[0].originalFilename].join('');
+        fs.writeFile(fullName, data, function (err) {
+          if (err) throw err;
+          console.log('file saved');
+          res.end();
         });
+      });
     });
-})
+  })
 
 var server = app.listen(2020, function () {
     var host = server.address().address;

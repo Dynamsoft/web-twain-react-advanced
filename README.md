@@ -11,7 +11,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
   * Barcode reading
 
 ## Usage
-Environment: Node.js v18.16.0
+Environment: Node.js v22.14.0
 1. Apply for a [30-day free trial license](https://www.dynamsoft.com/customer/license/trialLicense?product=dwt) of Dynamic Web TWAIN.
 
 2. Update the license key in `src\DynamsoftSDK.js` file:
@@ -29,7 +29,7 @@ Environment: Node.js v18.16.0
 4. Run the application as follows:
 
    ```
-   npm start
+   npm run start
    ```
 
 5. Set up and run the server piece which is used solely for receiving uploaded files. Run the  command-line as follows:

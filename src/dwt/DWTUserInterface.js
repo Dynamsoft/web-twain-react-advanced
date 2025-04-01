@@ -68,7 +68,7 @@ export default class DWTUserInterface extends React.Component {
         if (results === "clear")
             this.setState({ barcodeRects: [] });
         else {
-            let _oldBR = this.state.barcodeRects;
+            let _newBR = [];
             if (results.length > 0) {
                 let zoom;
                 if (this.props.runtimeInfo.showAbleWidth >= this.props.runtimeInfo.ImageWidth && this.props.runtimeInfo.showAbleHeight >= this.props.runtimeInfo.ImageHeight) {
@@ -91,10 +91,10 @@ export default class DWTUserInterface extends React.Component {
                     let height = (bottom - top) * zoom;
                     left = leftBase + left * zoom;
                     top = topBase + top * zoom;
-                    _oldBR.push({ x: left, y: top, w: width, h: height });
+                    _newBR.push({ x: left, y: top, w: width, h: height });
                 }
-                this.setState({ barcodeRects: _oldBR });
             }
+            this.setState({ barcodeRects: _newBR });
         }
     }
     handleOutPutMessage(message, type, bReset, bNoScroll) {

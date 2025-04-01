@@ -71,8 +71,8 @@ export default class DWT extends React.Component {
 		Dynamsoft.Ready(function(){
 			if (!Dynamsoft.Lib.env.bWin || !Dynamsoft.Lib.product.bHTML5Edition) {
                // _this.setState({ unSupportedEnv: true });
-                _this.featureSet = { scan: 0b1, load: 0b100, save: 0b1000, upload: 0b10000, uploader: 0b1000000 };
-                _this.features = 0b1011101;
+                _this.featureSet = { scan: 0b1, load: 0b100, save: 0b1000, upload: 0b10000, barcode: 0b100000, uploader: 0b1000000 };
+                _this.features = 0b1111101;
                 _this.initialStatus = 0;
             }
             if (_this.DWTObject === null)
@@ -81,7 +81,7 @@ export default class DWT extends React.Component {
     }
     loadDWT(UseService) {
         Dynamsoft.OnLicenseError = function (message, errorCode) {
-            if(errorCode == -2808)
+            if(errorCode === -2808)
               message = '<div style="padding:0">Sorry. Your product key has expired. You can purchase a full license at the <a target="_blank" href="https://www.dynamsoft.com/store/dynamic-web-twain/#DynamicWebTWAIN">online store</a>.</div><div style="padding:0">Or, you can try requesting a new product key at <a target="_blank" href="https://www.dynamsoft.com/customer/license/trialLicense?product=dwt&utm_source=in-product">this page</a>.</div><div style="padding:0">If you need any help, please <a target="_blank" href="https://www.dynamsoft.com/company/contact/">contact us</a>.</div>';
               Dynamsoft.DWT.ShowMessage(message, {
               width: 680,
@@ -138,6 +138,7 @@ export default class DWT extends React.Component {
 								this.DWTObject.Viewer.on("click", () => { 
 									this.handleBufferChange();
 								});
+                
                                 if (Dynamsoft.Lib.env.bWin)
                                     this.DWTObject.MouseShape = false;
                                 this.handleBufferChange();

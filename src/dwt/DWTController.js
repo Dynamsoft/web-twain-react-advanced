@@ -241,7 +241,7 @@ export default class DWTController extends React.Component {
             }
             return;
         }
-        this.DWTObject.Addon.Webcam.StopVideo();
+        this.toggleCameraVideo(false);
         if (this.DWTObject.Addon.Webcam.SelectSource(value)) {
             let mediaTypes = this.DWTObject.Addon.Webcam.GetMediaType(),
                 _mediaTypes = [],
@@ -317,6 +317,9 @@ export default class DWTController extends React.Component {
     toggleCameraVideo(bShow) {
         if (this.DWTObject) {
             if (bShow) {
+                // clear barcode rects
+                this.props.handleBarcodeResults("clear");
+                
                 this.playVideo();
                 let oldDeviceSetup = this.state.deviceSetup;
                 oldDeviceSetup.isVideoOn = true;
@@ -516,6 +519,16 @@ export default class DWTController extends React.Component {
     }
     // Tab 5: read Barcode 
     initBarcodeReader(_features) {
+        
+        if(this.DWTObject.Viewer) {
+            this.DWTObject.Viewer.on("wheel", ()=>{
+                this.props.handleBarcodeResults("clear");
+            });
+            this.DWTObject.Viewer.on("scroll", ()=>{
+                this.props.handleBarcodeResults("clear");
+            });
+        }
+
         this.DWTObject.Addon.BarcodeReader.getRuntimeSettings()
             .then(settings => {
                 if (!this.barcodeReady) {
@@ -525,9 +538,19 @@ export default class DWTController extends React.Component {
             }, (ex) => this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) }));
     }
     readBarcode() {
+        
+        // close video
+        this.toggleCameraVideo(false);
+
         this.Dynamsoft.Lib.showMask();
+        this.props.handleBarcodeResults("clear");
         this.setState({ readingBarcode: true });
         this.props.handleNavigating(false);
+        
+        if(this.DWTObject.Viewer) {
+            this.DWTObject.Viewer.gotoPage(this.DWTObject.CurrentImageIndexInBuffer);
+        }
+        
         this.DWTObject.Addon.BarcodeReader.getRuntimeSettings()
             .then(settings => {
                 if (this.DWTObject.GetImageBitDepth(this.props.buffer.current) === 1)
@@ -792,7 +815,7 @@ export default class DWTController extends React.Component {
                                                 : ""}
                                         </li>
                                         <li className="tc">
-                                            {(this.state.bWin && (this.props.features & 0b1000)) ? <button tabIndex="4" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('local')} >Save to Local</button> : ""}
+                                            {(this.props.features & 0b1000) ? <button tabIndex="4" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p" : "majorButton enabled width_48p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('local')} >Save to Local</button> : ""}
                                             {(this.props.features & 0b10000) ? <button tabIndex="4" className={this.props.buffer.count === 0 ? "majorButton disabled width_48p marginL_2p" : "majorButton enabled width_4p marginL_2p"} disabled={this.props.buffer.count === 0 ? "disabled" : ""} onClick={() => this.saveOrUploadImage('server')} >Upload to Server</button> : ""}
                                         </li>
                                     </ul>

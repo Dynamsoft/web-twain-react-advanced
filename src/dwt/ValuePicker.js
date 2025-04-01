@@ -19,7 +19,7 @@ export default class ValuePicker extends React.Component {
         let _valuePacks = this.props.valuePacks;
         if (this.state.currentValues.length === 0 || this.props.targetObject !== prevProps.targetObject) {
             for (let i = 0; i < _valuePacks.length; i++) {
-                if (_valuePacks[i].name === this.props.current) {
+                if (_valuePacks[i].name === this.state.current) {
                     this.setState({ currentValues: _valuePacks[i].items }, () => this.changeScrollTop());
                     return;
                 }
@@ -50,6 +50,7 @@ export default class ValuePicker extends React.Component {
         for (let i = 0; i < this.props.valuePacks.length; i++) {
             if (this.props.valuePacks[i].name === packName) {
                 this.setState({ currentValues: this.props.valuePacks[i].items, current: packName });
+                //this.props.current = packName;
                 break;
             }
         }

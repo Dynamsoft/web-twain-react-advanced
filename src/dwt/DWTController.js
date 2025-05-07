@@ -93,6 +93,17 @@ export default class DWTController extends React.Component {
         if (this.props.dwt !== prevProps.dwt) {
             this.DWTObject = this.props.dwt;
             if (this.DWTObject) {
+
+                // from v19.0
+                this.DWTObject.Addon.PDF.SetReaderOptions({
+                    convertMode: this.Dynamsoft.DWT.EnumDWT_ConvertMode.CM_RENDERALL,
+                    renderOptions: {
+                        renderAnnotations: true,
+                        resolution: 200
+                    },
+                    preserveUnmodifiedOnSave: true
+                });
+
                 if (this.props.features & 0b1) {
                     this.DWTObject.GetDevicesAsync().then((devices)=>{
                         let sourceNames = [];
@@ -327,12 +338,14 @@ export default class DWTController extends React.Component {
                     deviceSetup: oldDeviceSetup
                 });
             } else {
-                this.DWTObject.Addon.Webcam.StopVideo();
-                let oldDeviceSetup = this.state.deviceSetup;
-                oldDeviceSetup.isVideoOn = false;
-                this.setState({
-                    deviceSetup: oldDeviceSetup
-                });
+                if(this.state.deviceSetup.isVideoOn) {
+                    this.DWTObject.Addon.Webcam.StopVideo();
+                    let oldDeviceSetup = this.state.deviceSetup;
+                    oldDeviceSetup.isVideoOn = false;
+                    this.setState({
+                        deviceSetup: oldDeviceSetup
+                    });
+                }
             }
         }
     }
@@ -396,12 +409,6 @@ export default class DWTController extends React.Component {
     // Tab 3: Load
     loadImagesOrPDFs() {
         this.DWTObject.IfShowFileDialog = true;
-        this.DWTObject.Addon.PDF.SetReaderOptions({
-            convertMode: this.Dynamsoft.DWT.EnumDWT_ConvertMode.CM_RENDERALL,
-            renderOptions: {
-                resolution: 200
-            }
-        });
         this.DWTObject.LoadImageEx("", 5 /*this.Dynamsoft.DWT.EnumDWT_ImageType.IT_ALL*/, () => {
             this.props.handleOutPutMessage("Loaded an image successfully.");
         }, (errorCode, errorString) => this.props.handleException({ code: errorCode, message: errorString }));
@@ -538,6 +545,12 @@ export default class DWTController extends React.Component {
             }, (ex) => this.props.handleException({ code: -6, message: 'Initializing Barcode Reader failed: ' + (ex.message || ex) }));
     }
     readBarcode() {
+
+        let previewModeEl = document.querySelector('.previewMode');
+        if (previewModeEl && previewModeEl.value !== "1") {
+            this.props.handleOutPutMessage("Cannot read barcode in this view mode. Please switch to 1x1 view mode.", "error");
+            return;
+        }
         
         // close video
         this.toggleCameraVideo(false);

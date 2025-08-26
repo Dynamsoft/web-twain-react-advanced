@@ -75,6 +75,11 @@ export default class DWTController extends React.Component {
     dbrObject = null;
     fileUploaderManager = null;
     dbrResults = [];
+
+    strMediaType = '';
+    strResolution = '';
+    frameRate = 0;
+
     handleTabs(event) {
         if (event.keyCode && event.keyCode !== 32) return;
         event.target.blur();
@@ -143,6 +148,7 @@ export default class DWTController extends React.Component {
                         }
                     });
                 }
+
             }
         }
     }
@@ -268,6 +274,11 @@ export default class DWTController extends React.Component {
             mediaTypes = mediaTypes._resultlist;
             frameRates = frameRates._resultlist;
             resolutions = resolutions._resultlist;
+
+            this.strMediaType = _currentmT;
+            this.strResolution = _currentRes;
+            this.frameRate = _currentfR;
+
             for (let i = 0; i < mediaTypes.length - 1; i++) {
                 mediaTypes[i] === _currentmT
                     ? _mediaTypes[i] = { value: mediaTypes[i].toString(), checked: true }
@@ -385,12 +396,19 @@ export default class DWTController extends React.Component {
                 });
                 return;
             } else {
-                //this.DWTObject.Addon.Webcam.StopVideo();
+
+                let bChanged = false;
                 switch (config.prop) {
-                    case "Frame Rate": this.DWTObject.Addon.Webcam.SetFrameRate(config.value); break;
-                    case "Media Type": this.DWTObject.Addon.Webcam.SetMediaType(config.value); break;
-                    case "Resolution": this.DWTObject.Addon.Webcam.SetResolution(config.value); break;
+                    case "Frame Rate": if(this.frameRate != parseInt(config.value)) { this.frameRate = parseInt(config.value); bChanged = true; } break;
+                    case "Media Type": if(this.strMediaType != config.value) { this.strMediaType = config.value; bChanged = true;  } break;
+                    case "Resolution": if(this.strResolution != config.value) { this.strResolution = config.value; bChanged = true;  } break;
                     default: break;
+                }
+
+                if(bChanged) {
+                    this.DWTObject.Addon.Webcam.SetMediaType(this.strMediaType);
+                    this.DWTObject.Addon.Webcam.SetResolution(this.strResolution);
+                    this.DWTObject.Addon.Webcam.SetFrameRate(this.frameRate);
                 }
             }
         }

@@ -1,37 +1,28 @@
 {
-  "name": "dwt-react-advanced",
-  "version": "0.1.0",
-  "homepage": ".",
-  "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/user-event": "^14.4.3",
-    "dwt": "19.2.0",
-    "ncp": "^2.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
-  },
-  "scripts": {
-    "start": "ncp node_modules/dwt/dist public/dwt-resources && react-scripts start",
-    "build": "react-scripts build && ncp node_modules/dwt/dist build/dwt-resources",
-    "test": "ncp node_modules/dwt/dist public/dwt-resources && react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+    "name": "dwt-react-vite",
+    "version": "0.1.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "ncp node_modules/dwt/dist public/dwt-resources && vite",
+        "build": "vite build && ncp node_modules/dwt/dist dist/dwt-resources",
+        "preview": "vite preview",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "dwt": "19.3.0",
+        "react": "18.2.0",
+        "react-dom": "18.2.0"
+    },
+    "devDependencies": {
+        "@types/react": "18.2.66",
+        "@types/react-dom": "18.2.22",
+        "@vitejs/plugin-react": "4.2.1",
+        "ncp": "2.0.0",
+        "vite": "5.2.0",
+        "vitest": "1.4.0",
+        "@testing-library/jest-dom": "5.16.5",
+        "@testing-library/react": "14.0.0",
+        "@testing-library/user-event": "14.4.3"
+    }
 }

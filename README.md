@@ -1,6 +1,6 @@
 # Dynamic Web TWAIN React Advanced
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). It utilizes the SDK [Dynamic Web TWAIN](https://www.dynamsoft.com/Products/WebTWAIN_Overview.aspx) to provide the following functionalities
+Starting from DWT19.3, the project has been migrated from Create React App to Vite to improve performance and provide a more modern development experience. It utilizes the SDK [Dynamic Web TWAIN](https://www.dynamsoft.com/Products/WebTWAIN_Overview.aspx) to provide the following functionalities
 
 * Scan documents from physical scanners
 * Capture images from webcams
@@ -11,10 +11,15 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
   * Barcode reading
 
 ## Usage
-Environment: Node.js v22.14.0
+
+### Environment
+- Node.js v22.14.0 or higher
+- React 18.2.0
+- Vite 5.2.0
+
 1. Apply for a [30-day free trial license](https://www.dynamsoft.com/customer/license/trialLicense?product=dwt) of Dynamic Web TWAIN.
 
-2. Update the license key in `src\DynamsoftSDK.js` file:
+2. Update the license key in `src\DynamsoftSDK.jsx` file:
 
    ```
    Dynamsoft.DWT.ProductKey = "LICENSE-KEY";
@@ -23,13 +28,13 @@ Environment: Node.js v22.14.0
 3. Install the dependencies:
 
    ```
-   npm install --force
+   npm install
    ```
 
 4. Run the application as follows:
 
    ```
-   npm run start
+   npm run dev
    ```
 
 5. Set up and run the server piece which is used solely for receiving uploaded files. Run the  command-line as follows:

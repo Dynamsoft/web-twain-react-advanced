@@ -1,5 +1,6 @@
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 const formidable = require('formidable');
 const express = require('express');
 const fs = require('fs');
@@ -26,9 +27,13 @@ function isPathInside(directory, targetPath) {
 }
 
 app.post('/upload', function (req, res) {
+    const tempFilename = crypto.randomUUID();
     const form = new formidable.IncomingForm({
         uploadDir: uploadTempFolder,
-        maxFiles: 1
+        maxFiles: 1,
+        filename: function () {
+            return tempFilename;
+        }
     });
     form.parse(req, function (err, fields, files) {
         if (err) {
@@ -38,14 +43,11 @@ app.post('/upload', function (req, res) {
 
         const remoteFiles = files && files.RemoteFile;
         const upload = Array.isArray(remoteFiles) ? remoteFiles[0] : remoteFiles;
-        if (!upload || typeof upload.filepath !== "string") {
+        if (!upload) {
             return res.status(400).send("No RemoteFile was uploaded.");
         }
 
-        const tempFilePath = path.resolve(upload.filepath);
-        if (!isPathInside(uploadTempFolder, tempFilePath)) {
-            return res.status(400).send("Invalid upload path.");
-        }
+        const tempFilePath = path.join(uploadTempFolder, tempFilename);
 
         const originalFilename = typeof upload.originalFilename === "string"
             ? upload.originalFilename

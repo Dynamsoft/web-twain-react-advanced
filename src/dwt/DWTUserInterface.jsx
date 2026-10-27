@@ -103,7 +103,9 @@ export default class DWTUserInterface extends React.Component {
             _type = type;
         if (_type === "httpResponse") {
             let msgWindow = window.open("", "Response from server", "height=500,width=750,top=0,left=0,toolbar=no,menubar=no,scrollbars=no, resizable=no,location=no, status=no");
-            msgWindow.document.writeln(message);
+            if (msgWindow) {
+                msgWindow.document.body.textContent = String(message);
+            }
         } else {
             if (bNoScroll)
                 _noScroll = true;
